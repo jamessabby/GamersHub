@@ -5,7 +5,10 @@ async function register(req, res) {
     const result = await authService.registerUser(req.body);
     res.status(201).json(result);
   } catch (error) {
-    res.status(500).json({ message: "Registration failed" });
+    if (error.message === "User already exists") {
+      return res.status(409).json({ message: error.message });
+    }
+    res.status(500).json({ message: error.message || "Registration failed" });
   }
 }
 

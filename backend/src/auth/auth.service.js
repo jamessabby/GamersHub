@@ -1,35 +1,43 @@
 // hashes password
 const bcrypt = require("bcrypt");
-
-const users = [];
+const crypto = require("crypto");
+const userRepo = require("../users/user.repository");
 
 async function registerUser(data) {
   // destructured version of data.username, data.password
+  // const username = data.username
+  // const password = data.password
   const { username, password } = data;
+
+  const existingUser = await userRepo.findByUsername(username);
+  if (existingUser) {
+    throw new Error("User already exists");
+  }
 
   // forces the code to wait for bcrypt to finish the math and return the hashedPassword before moving to the next line
   const hashedPassword = await bcrypt.hash(password, 10); // algorithm runs 10 times
 
-  const newUser = {
+  // so generate exactly 50 hex chars DB column USERS.MFA_SECRET NVARCHAR(50)
+  const mfaSecret = crypto.randomBytes(25).toString("hex");
+
+  await userRepo.createUser({
     username,
-    password: hashedPassword,
-  };
+    passwordHash: hashedPassword,
+    mfaSecret,
+  });
 
-  users.push(newUser);
-
-  return "User Created Successfully";
+  return { message: "User created successfully" };
 }
 
 async function loginUser(data) {
   const { username, password } = data;
 
-  const user = users.find((u) => u.username === username);
-
+  const user = await userRepo.findByUsername(username);
   if (!user) {
     throw new Error("No user found.");
   }
 
-  const isMatch = await bcrypt.compare(password, user.password);
+  const isMatch = await bcrypt.compare(password, user.passwordHash);
 
   if (!isMatch) {
     throw new Error("Invalid Password.");
