@@ -1,0 +1,26 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  background: linear-gradient(135deg, #0b0b1f 0%, #0e1130 100%) !important;
+  min-height: 100vh;
+  color: #ffffff;
+  font-family: "Inter", "Segoe UI", system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Strip Bootstrap button defaults globally */
+button {
+  -webkit-appearance: none;
+  appearance: none;
+}

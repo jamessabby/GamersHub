@@ -1,0 +1,99 @@
+/* NAVBAR — identical to login.css */
+.navbar-custom {
+  height: 56px;
+  background-color: #0d0f1e;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.navbar-brand-custom { display: flex; align-items: center; text-decoration: none; }
+.nav-logo { height: 32px; width: auto; object-fit: contain; }
+.nav-links { list-style: none; }
+.nav-link-item {
+  color: #c0c4d8; text-decoration: none;
+  font-size: 13.5px; font-weight: 500;
+  letter-spacing: 0.01em; transition: color 0.2s;
+}
+.nav-link-item:hover, .nav-link-item.active { color: #a78bfa; }
+
+/* MAIN LAYOUT */
+.main-layout { flex: 1; height: calc(100vh - 56px); }
+.main-layout .row { height: 100%; }
+
+/* LEFT COLUMN */
+.left-col { padding: 28px 0 28px 72px; }
+.image-wrapper {
+  border-radius: 24px; overflow: hidden;
+  width: 100%;
+  height: calc(100vh - 56px - 56px);
+  max-height: 740px;
+}
+.cover-img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+/* RIGHT COLUMN */
+.right-col { padding: 0 48px; }
+
+/* REGISTER CARD */
+.register-card {
+  background-color: #1e2035;
+  border-radius: 24px;
+  padding: 36px 44px 40px;
+  width: 100%;
+  max-width: 420px;
+}
+.card-title {
+  font-size: 20px; font-weight: 600;
+  color: #ffffff; text-align: center; margin-bottom: 6px;
+}
+.card-subtitle {
+  font-size: 14px; color: #c0c4d8;
+  text-align: center; margin-bottom: 20px;
+}
+
+/* FORM FIELDS */
+.form-group-custom { display: flex; flex-direction: column; gap: 5px; margin-bottom: 10px; }
+.field-label {
+  font-size: 11px; font-weight: 600;
+  letter-spacing: 0.08em; color: #c0c4d8; text-transform: uppercase;
+}
+.input-field {
+  background-color: #ffffff; border: none; border-radius: 8px;
+  padding: 10px 14px; font-size: 14px; color: #1a1a2e;
+  outline: none; width: 100%; transition: box-shadow 0.2s;
+}
+.input-field::placeholder { color: #9ca3af; }
+.input-field:focus { box-shadow: 0 0 0 2px rgba(124,58,237,0.5); }
+.input-field.error { box-shadow: 0 0 0 2px rgba(239,68,68,0.5); }
+
+/* DIVIDER */
+.divider-row { text-align: center; margin: 14px 0 12px; }
+.divider-text { font-size: 13px; color: #8a8fa8; }
+
+/* GOOGLE BUTTON */
+.btn-google {
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  width: 100%; padding: 11px 16px;
+  background: linear-gradient(135deg, #7c3aed, #9b5cfa);
+  border: none; border-radius: 8px; color: #fff;
+  font-size: 14px; font-weight: 500; cursor: pointer; transition: opacity 0.2s;
+}
+.btn-google:hover { opacity: 0.9; }
+.google-icon { width: 15.67px; height: 8.086px; flex-shrink: 0; }
+.btn-google-text { flex: 1; text-align: center; }
+
+/* ALREADY HAVE ACCOUNT */
+.already-row { text-align: right; margin-top: 10px; margin-bottom: 14px; }
+.link-small-muted { font-size: 11.5px; color: #8a8fa8; }
+.link-small { font-size: 11.5px; color: #8a8fa8; text-decoration: underline; text-underline-offset: 2px; }
+.link-small:hover { color: #a78bfa; }
+
+/* SIGN IN BUTTON */
+.signin-row { text-align: center; }
+.btn-signin {
+  padding: 10px 48px;
+  background: linear-gradient(135deg, #7c3aed, #9b5cfa);
+  border: none; border-radius: 8px; color: #fff;
+  font-size: 14px; font-weight: 500; cursor: pointer; transition: opacity 0.2s;
+}
+.btn-signin:hover { opacity: 0.9; }

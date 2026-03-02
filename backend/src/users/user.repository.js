@@ -3,10 +3,6 @@ const { sql, pool, poolConnect } = require("../config/db");
 async function createUser({ username, passwordHash, mfaSecret }) {
   await poolConnect;
 
-  if (username) {
-    throw new Error("User already exists.")
-  }
-
   const result = await pool
     .request()
     .input("username", sql.NVarChar(50), username)
@@ -36,6 +32,8 @@ async function findByUsername(username) {
     `);
   return result.recordset[0];
 }
+
+const 
 
 module.exports = {
   createUser,

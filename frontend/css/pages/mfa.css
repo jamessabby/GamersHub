@@ -1,0 +1,75 @@
+body {
+  padding-top: 60px; /* offset fixed navbar */
+}
+
+.mfa-card {
+  background-color: #1e1e2e;
+  border-radius: 24px;
+  padding: 2.5rem 2.5rem 2rem;
+  width: 100%;
+  max-width: 420px;
+}
+
+.mfa-title {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #ffffff;
+  text-align: center;
+  margin-bottom: 0.6rem;
+}
+
+.mfa-subtitle {
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.65);
+  text-align: left;
+  margin-bottom: 1.2rem;
+}
+
+.mfa-form {
+  display: flex;
+  flex-direction: column;
+}
+
+.mfa-label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.7);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 0.4rem;
+}
+
+.mfa-input {
+  background-color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  padding: 0.65rem 1rem;
+  font-size: 0.9rem;
+  color: #333;
+  outline: 2px solid #7c3aed;
+  width: 100%;
+}
+
+.mfa-input::placeholder {
+  color: #aaa;
+}
+
+.mfa-input:focus {
+  outline: 2px solid #6d28d9;
+}
+
+.mfa-btn {
+  background-color: #7c3aed;
+  color: #ffffff;
+  border: none;
+  border-radius: 10px;
+  padding: 0.55rem 2.5rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.mfa-btn:hover {
+  background-color: #6d28d9;
+}

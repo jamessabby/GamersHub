@@ -1,0 +1,123 @@
+/* ── NAVBAR ── */
+.gh-navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  background: transparent !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
+
+.gh-nav-links {
+  list-style: none;
+}
+
+.gh-nav-link {
+  font-size: 14px;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.85);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.gh-nav-link:hover {
+  color: #a78bfa;
+}
+
+.gh-nav-link.active {
+  color: #a78bfa;
+}
+
+/* ── HERO ── */
+.gh-hero {
+  padding-top: 56px; /* exact navbar height offset */
+}
+
+.gh-hero-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  max-width: 640px;
+  width: 100%;
+  padding: 0 16px;
+}
+
+.gh-hero-logo {
+  width: 236px;
+  height: auto;
+  object-fit: contain;
+  margin-bottom: 24px;
+  display: block;
+}
+
+.gh-headline {
+  font-size: 1.45rem;
+  font-weight: 600;
+  color: #ffffff;
+  margin-bottom: 12px;
+  line-height: 1.3;
+}
+
+.gh-subtext {
+  font-size: 0.9rem;
+  color: #cbd5e1;
+  line-height: 1.65;
+  max-width: 460px;
+  margin-bottom: 0;
+}
+
+/* ── BUTTONS — must override Bootstrap completely ── */
+.gh-btn-primary,
+.gh-btn-primary:focus,
+.gh-btn-primary:active {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #9b7bff !important;
+  color: #000000 !important;
+  border: none !important;
+  border-radius: 8px !important;
+  padding: 11px 28px !important;
+  font-size: 0.95rem !important;
+  font-weight: 600 !important;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  box-shadow: none !important;
+  outline: none !important;
+  text-decoration: none;
+  min-width: 150px;
+}
+
+.gh-btn-primary:hover {
+  background-color: #7c5ce0 !important;
+  color: #000000 !important;
+}
+
+.gh-btn-secondary,
+.gh-btn-secondary:focus,
+.gh-btn-secondary:active {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background-color: transparent !important;
+  color: #ffffff !important;
+  border: 1.5px solid #ffffff !important;
+  border-radius: 8px !important;
+  padding: 11px 28px !important;
+  font-size: 0.95rem !important;
+  font-weight: 500 !important;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  box-shadow: none !important;
+  outline: none !important;
+  text-decoration: none;
+  min-width: 140px;
+}
+
+.gh-btn-secondary:hover {
+  background-color: rgba(255, 255, 255, 0.08) !important;
+  color: #ffffff !important;
+}
