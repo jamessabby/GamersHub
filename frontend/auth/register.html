@@ -1,84 +1,191 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>GamersHub – Register</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"/>
   <link rel="stylesheet" href="../css/theme.css"/>
   <link rel="stylesheet" href="../css/pages/register.css"/>
 </head>
 <body>
 
-  <!-- NAVBAR: copied verbatim from login.html -->
+  <div class="stars" id="stars"></div>
+
   <nav class="navbar-custom d-flex align-items-center justify-content-between px-4">
     <a href="#" class="navbar-brand-custom">
-      <img src="../assets/icons/gamershub-logo.png" alt="GamersHub" class="nav-logo"
+      <img src="../assets/img/logo.png" alt="GamersHub" class="nav-logo"
            onerror="this.style.display='none'"/>
     </a>
     <div class="nav-links d-flex gap-4 align-items-center">
-      <a href="#" class="nav-link-item active">Home</a>
+      <a href="#" class="nav-link-item">Home</a>
       <a href="#" class="nav-link-item">Tournaments</a>
-      <a href="#" class="nav-link-item">Login</a>
+      <a href="../auth/login.html" class="nav-link-item active">Login</a>
     </div>
   </nav>
 
   <div class="main-layout container-fluid p-0">
     <div class="row g-0 h-100">
 
+      <!-- LEFT: IMAGE CAROUSEL -->
       <div class="col-6 left-col d-flex align-items-start">
         <div class="image-wrapper">
-          <img src="../assets/img/ml-cover.jpg" alt="Mobile Legends Cover" class="cover-img"/>
+
+          <div class="carousel-track" id="carouselTrack">
+            <div class="carousel-slide active">
+              <img src="../assets/img/valo-cover.jpg" alt="Valorant" class="cover-img"/>
+            </div>
+            <div class="carousel-slide">
+              <img src="../assets/img/ml-cover.jpg" alt="Mobile Legends" class="cover-img"/>
+            </div>
+            <div class="carousel-slide">
+              <img src="../assets/img/game1.jpg" alt="Game 3" class="cover-img"/>
+            </div>
+            <div class="carousel-slide">
+              <img src="../assets/img/game2.jpg" alt="Game 4" class="cover-img"/>
+            </div>
+          </div>
+
+          <div class="image-overlay"></div>
+
+          <!-- hero text -->
+          <div class="hero-text">
+            <p class="hero-tagline" id="heroTagline">Dive into the Ultimate Gaming Experience</p>
+            <p class="hero-sub" id="heroSub">Join us and master the art of competitive gaming</p>
+          </div>
+
+          <!-- dots -->
+          <div class="carousel-dots" id="carouselDots">
+            <button class="dot active" data-index="0"></button>
+            <button class="dot" data-index="1"></button>
+            <button class="dot" data-index="2"></button>
+            <button class="dot" data-index="3"></button>
+          </div>
+
+          <!-- arrows -->
+          <button class="carousel-arrow arrow-prev" id="arrowPrev">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor" stroke-width="2.5">
+              <polyline points="15 18 9 12 15 6"/>
+            </svg>
+          </button>
+          <button class="carousel-arrow arrow-next" id="arrowNext">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor" stroke-width="2.5">
+              <polyline points="9 18 15 12 9 6"/>
+            </svg>
+          </button>
+
+          <!-- progress bar -->
+          <div class="carousel-progress">
+            <div class="carousel-progress-bar" id="progressBar"></div>
+          </div>
+
         </div>
       </div>
 
+      <!-- RIGHT: REGISTER CARD -->
       <div class="col-6 right-col d-flex align-items-center justify-content-center">
-        <div class="register-card">
+        <div class="register-card" id="registerCard">
 
-          <h2 class="card-title">Welcome to GamersHub</h2>
-          <p class="card-subtitle">Sign in to your account</p>
+          <div class="card-glow-ring"></div>
 
-          <div class="form-group-custom">
-            <label class="field-label">NAME</label>
-            <input type="text" class="input-field" placeholder="Type your name" id="firstName"/>
+          <!-- header -->
+          <div class="card-header-area">
+            <div class="brand-icon">
+              <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+                <circle cx="14" cy="14" r="12" stroke="url(#rIconGrad)" stroke-width="1.5"/>
+                <circle cx="14" cy="14" r="5" fill="url(#rIconGrad)" opacity="0.8"/>
+                <defs>
+                  <linearGradient id="rIconGrad" x1="2" y1="2" x2="26" y2="26">
+                    <stop stop-color="#a78bfa"/>
+                    <stop offset="1" stop-color="#7c3aed"/>
+                  </linearGradient>
+                </defs>
+              </svg>
+            </div>
+            <h2 class="card-title">Join <span class="title-accent">GamersHub</span></h2>
+            <p class="card-subtitle">Create your account and enter the arena</p>
           </div>
 
+          <!-- social sign-up -->
+          <div class="social-buttons mb-4">
+            <button class="btn-social btn-google-s" id="googleBtn">
+              <svg width="17" height="17" viewBox="0 0 18 18">
+                <path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" fill="#4285F4"/>
+                <path d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.258c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z" fill="#34A853"/>
+                <path d="M3.964 10.707A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.707V4.961H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.039l3.007-2.332z" fill="#FBBC05"/>
+                <path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.961L3.964 7.293C4.672 5.163 6.656 3.58 9 3.58z" fill="#EA4335"/>
+              </svg>
+              <span>Google</span>
+            </button>
+            <button class="btn-social btn-facebook-s" id="facebookBtn">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="#1877F2">
+                <path d="M24 12.073C24 5.405 18.627 0 12 0S0 5.405 0 12.073C0 18.1 4.388 23.094 10.125 24v-8.437H7.078v-3.49h3.047V9.41c0-3.025 1.792-4.697 4.533-4.697 1.312 0 2.686.236 2.686.236v2.97h-1.513c-1.491 0-1.956.93-1.956 1.886v2.268h3.328l-.532 3.49h-2.796V24C19.612 23.094 24 18.1 24 12.073z"/>
+              </svg>
+              <span>Facebook</span>
+            </button>
+          </div>
+
+          <div class="divider-row">
+            <span class="divider-line"></span>
+            <span class="divider-text">or continue with email</span>
+            <span class="divider-line"></span>
+          </div>
+
+          <!-- form -->
           <div class="form-group-custom">
-            <label class="field-label">NAME</label>
-            <input type="text" class="input-field" placeholder="Type your name" id="lastName"/>
+            <label class="field-label">USERNAME</label>
+            <div class="input-wrap">
+              <input type="text" class="input-field" placeholder="Choose a username"
+                     id="username" autocomplete="username"/>
+            </div>
+            <p class="error-message" id="usernameError"></p>
           </div>
 
           <div class="form-group-custom">
             <label class="field-label">EMAIL</label>
-            <input type="email" class="input-field" placeholder="Type your email" id="email"/>
+            <div class="input-wrap">
+              <input type="email" class="input-field" placeholder="Enter your email"
+                     id="email" autocomplete="email"/>
+            </div>
+            <p class="error-message" id="emailError"></p>
           </div>
 
           <div class="form-group-custom">
             <label class="field-label">PASSWORD</label>
-            <input type="password" class="input-field" placeholder="Type your password" id="password"/>
+            <div class="input-wrap">
+              <input type="password" class="input-field" placeholder="Create a password"
+                     id="password" autocomplete="new-password"/>
+              <button class="toggle-password" id="togglePassword" tabindex="-1">
+                <svg id="eyeIcon" width="15" height="15" viewBox="0 0 24 24"
+                     fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                  <circle cx="12" cy="12" r="3"/>
+                </svg>
+              </button>
+            </div>
+            <p class="error-message" id="passwordError"></p>
           </div>
 
           <div class="form-group-custom">
             <label class="field-label">CONFIRM PASSWORD</label>
-            <input type="password" class="input-field" placeholder="Confirm your password" id="confirmPassword"/>
+            <div class="input-wrap">
+              <input type="password" class="input-field" placeholder="Repeat your password"
+                     id="confirmPassword" autocomplete="new-password"/>
+            </div>
+            <p class="error-message" id="confirmError"></p>
           </div>
 
-          <div class="divider-row">
-            <span class="divider-text">or</span>
-          </div>
-
-          <button class="btn-google" id="googleBtn">
-            <img src="../assets/icons/google-logo.svg" alt="Google" class="google-icon"/>
-            <span class="btn-google-text">Or sign in with Google</span>
+          <button class="btn-register" id="registerBtn">
+            <span class="btn-text">Create Account</span>
+            <span class="btn-loader d-none" id="btnLoader"></span>
           </button>
 
-          <div class="already-row">
-            <span class="link-small-muted">Already have an account? <a href="#" class="link-small">Log in</a></span>
-          </div>
-
-          <div class="signin-row">
-            <button class="btn-signin" id="signInBtn">Sign in</button>
-          </div>
+          <p class="sign-in-link">Already have an account? <a href="../auth/login.html" class="link-small">Sign in</a></p>
 
         </div>
       </div>

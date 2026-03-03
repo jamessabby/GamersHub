@@ -12,15 +12,71 @@ body {
 }
 
 body {
-  background: linear-gradient(135deg, #0b0b1f 0%, #0e1130 100%) !important;
+  background-color: #07071a;
   min-height: 100vh;
   color: #ffffff;
   font-family: "Inter", "Segoe UI", system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
 }
 
-/* Strip Bootstrap button defaults globally */
 button {
   -webkit-appearance: none;
   appearance: none;
+}
+
+/* ── ANIMATED BACKGROUND ── */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  background:
+    radial-gradient(
+      ellipse 80% 60% at 50% 40%,
+      rgba(120, 60, 255, 0.13) 0%,
+      transparent 70%
+    ),
+    radial-gradient(
+      ellipse 60% 40% at 80% 80%,
+      rgba(80, 20, 180, 0.08) 0%,
+      transparent 60%
+    ),
+    radial-gradient(
+      ellipse 50% 50% at 20% 20%,
+      rgba(60, 20, 120, 0.07) 0%,
+      transparent 60%
+    ),
+    linear-gradient(160deg, #07071a 0%, #0b0b2e 40%, #0d0a25 70%, #07071a 100%);
+  animation: bgPulse 12s ease-in-out infinite alternate;
+  pointer-events: none;
+}
+
+/* ── VIGNETTE ── */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  background: radial-gradient(
+    ellipse 100% 100% at 50% 50%,
+    transparent 40%,
+    rgba(0, 0, 0, 0.45) 100%
+  );
+  pointer-events: none;
+}
+
+@keyframes bgPulse {
+  0% {
+    opacity: 1;
+    filter: hue-rotate(0deg);
+  }
+  50% {
+    opacity: 0.92;
+    filter: hue-rotate(15deg);
+  }
+  100% {
+    opacity: 1;
+    filter: hue-rotate(0deg);
+  }
 }

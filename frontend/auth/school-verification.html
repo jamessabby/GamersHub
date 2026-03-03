@@ -1,1 +1,211 @@
-.
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GamersHub – School Verification</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+    />
+    <link rel="stylesheet" href="../css/theme.css" />
+    <link rel="stylesheet" href="../css/pages/school-verification.css" />
+  </head>
+  <body>
+    <div class="stars" id="stars"></div>
+
+    <nav class="navbar-custom d-flex align-items-center justify-content-between px-4">
+      <a href="#" class="navbar-brand-custom">
+        <img
+          src="../assets/img/logo.png"
+          alt="GamersHub"
+          class="nav-logo"
+          onerror="this.style.display='none'"
+        />
+      </a>
+      <div class="nav-links d-flex gap-4 align-items-center">
+        <a href="#" class="nav-link-item">Home</a>
+        <a href="#" class="nav-link-item">Tournaments</a>
+        <a href="../auth/login.html" class="nav-link-item active">Login</a>
+      </div>
+    </nav>
+
+    <div class="sv-layout container-fluid p-0">
+      <div class="row g-0 h-100">
+
+        <!-- LEFT: CAROUSEL -->
+        <div class="col-6 left-col d-flex align-items-start">
+          <div class="image-wrapper">
+            <div class="carousel-track" id="carouselTrack">
+              <div class="carousel-slide active">
+                <img src="../assets/img/valo-cover.jpg" alt="Valorant" class="cover-img" />
+              </div>
+              <div class="carousel-slide">
+                <img src="../assets/img/ml-cover.jpg" alt="Mobile Legends" class="cover-img" />
+              </div>
+              <div class="carousel-slide">
+                <img src="../assets/img/cs-cover.jpg" alt="CS2" class="cover-img" />
+              </div>
+              <div class="carousel-slide">
+                <img src="../assets/img/lol-cover.jpg" alt="League of Legends" class="cover-img" />
+              </div>
+            </div>
+
+            <div class="image-overlay"></div>
+
+            <div class="slide-label" id="slideLabel">
+              <span class="game-tag" id="gameTag">VALORANT</span>
+              <p class="game-desc" id="gameDesc">Tactical 5v5 character-based shooter</p>
+            </div>
+
+            <div class="carousel-dots" id="carouselDots">
+              <button class="dot active" data-index="0"></button>
+              <button class="dot" data-index="1"></button>
+              <button class="dot" data-index="2"></button>
+              <button class="dot" data-index="3"></button>
+            </div>
+
+            <button class="carousel-arrow arrow-prev" id="arrowPrev">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                   stroke="currentColor" stroke-width="2.5">
+                <polyline points="15 18 9 12 15 6" />
+              </svg>
+            </button>
+            <button class="carousel-arrow arrow-next" id="arrowNext">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                   stroke="currentColor" stroke-width="2.5">
+                <polyline points="9 18 15 12 9 6" />
+              </svg>
+            </button>
+
+            <div class="carousel-progress">
+              <div class="carousel-progress-bar" id="progressBar"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- RIGHT: VERIFICATION CARD -->
+        <div class="col-6 right-col d-flex align-items-center justify-content-center">
+          <div class="sv-card" id="svCard">
+            <div class="card-glow-ring"></div>
+
+            <div class="card-header-area">
+              <div class="brand-icon">
+                <svg width="26" height="26" viewBox="0 0 32 32" fill="none">
+                  <path
+                    d="M4 12L16 4l12 8v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V12z"
+                    stroke="url(#schoolGrad)" stroke-width="1.6" stroke-linejoin="round"
+                  />
+                  <path
+                    d="M12 28V18h8v10"
+                    stroke="url(#schoolGrad)" stroke-width="1.6" stroke-linejoin="round"
+                  />
+                  <defs>
+                    <linearGradient id="schoolGrad" x1="4" y1="4" x2="28" y2="28">
+                      <stop stop-color="#a78bfa" />
+                      <stop offset="1" stop-color="#7c3aed" />
+                    </linearGradient>
+                  </defs>
+                </svg>
+              </div>
+              <h2 class="card-title">School <span class="title-accent">Verification</span></h2>
+              <p class="card-subtitle">Confirm your student identity to join tournaments</p>
+            </div>
+
+            <!-- lockout banner -->
+            <div class="lockout-banner d-none" id="lockoutBanner">
+              <span class="lockout-icon">🔒</span>
+              <span>Too many attempts. Try again in <strong id="lockCountdown">30s</strong></span>
+            </div>
+
+            <!-- school email -->
+            <div class="form-group-custom">
+              <label class="field-label">SCHOOL EMAIL</label>
+              <div class="input-wrap">
+                <input
+                  type="email"
+                  class="input-field"
+                  placeholder="yourname@dlsud.edu.ph"
+                  id="schoolEmail"
+                  autocomplete="email"
+                />
+              </div>
+              <p class="error-message" id="emailError"></p>
+            </div>
+
+            <!-- student number -->
+            <div class="form-group-custom">
+              <label class="field-label">STUDENT NUMBER</label>
+              <div class="input-wrap">
+                <input
+                  type="text"
+                  class="input-field"
+                  placeholder="8-digit student number"
+                  id="studentNumber"
+                  inputmode="numeric"
+                  maxlength="8"
+                  autocomplete="off"
+                />
+              </div>
+              <p class="error-message" id="studentError"></p>
+            </div>
+
+            <!-- college department -->
+            <div class="form-group-custom">
+              <label class="field-label">COLLEGE / DEPARTMENT</label>
+              <div class="input-wrap">
+                <input
+                  type="text"
+                  class="input-field"
+                  placeholder="e.g. College of Engineering"
+                  id="department"
+                  autocomplete="off"
+                />
+              </div>
+              <p class="error-message" id="deptError"></p>
+            </div>
+
+            <!-- course & year level -->
+            <div class="form-group-custom">
+              <label class="field-label">COURSE & YEAR LEVEL</label>
+              <div class="input-wrap">
+                <input
+                  type="text"
+                  class="input-field"
+                  placeholder="e.g. CPE31, BSCS4"
+                  id="courseYear"
+                  autocomplete="off"
+                />
+              </div>
+              <p class="error-message" id="courseError"></p>
+            </div>
+
+            <button class="btn-submit" id="submitBtn">
+              <span class="btn-text">Verify Student Identity</span>
+              <span class="btn-loader d-none" id="btnLoader"></span>
+            </button>
+
+            <div class="back-row">
+              <a href="../auth/login.html" class="link-back">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                     stroke="currentColor" stroke-width="2">
+                  <polyline points="15 18 9 12 15 6" />
+                </svg>
+                Back to login
+              </a>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <script src="../js/pages/school-verification.js"></script>
+  </body>
+</html>

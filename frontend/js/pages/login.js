@@ -1,24 +1,347 @@
-document.addEventListener('DOMContentLoaded', () => {
-  const loginBtn = document.getElementById('loginBtn');
-  const googleBtn = document.getElementById('googleBtn');
-  const usernameInput = document.getElementById('username');
-  const passwordInput = document.getElementById('password');
+(() => {
+  const MAX_ATTEMPTS = 5;
+  const LOCKOUT_MS = 15 * 60 * 1000;
+  const LOAD_DELAY_MS = 1200;
+  const STORAGE_KEY = "gh_login_attempts";
 
-  loginBtn.addEventListener('click', () => {
-    const username = usernameInput.value.trim();
-    const password = passwordInput.value.trim();
+  const usernameInput = document.getElementById("username");
+  const passwordInput = document.getElementById("password");
+  const usernameError = document.getElementById("usernameError");
+  const passwordError = document.getElementById("passwordError");
+  const loginBtn = document.getElementById("loginBtn");
+  const btnText = loginBtn.querySelector(".btn-text");
+  const btnLoader = document.getElementById("btnLoader");
+  const googleBtn = document.getElementById("googleBtn");
+  const facebookBtn = document.getElementById("facebookBtn");
+  const lockoutBanner = document.getElementById("lockoutBanner");
+  const countdownEl = document.getElementById("countdownTimer");
+  const togglePwd = document.getElementById("togglePassword");
+  const eyeIcon = document.getElementById("eyeIcon");
 
-    if (!username || !password) {
-      alert('Please enter your username and password.');
-      return;
+  let countdownInterval = null;
+
+  /* ── STARS ── */
+  function buildStars() {
+    const container = document.getElementById("stars");
+    if (!container) return;
+    const frag = document.createDocumentFragment();
+    for (let i = 0; i < 80; i++) {
+      const s = document.createElement("div");
+      s.className = "star";
+      const size = Math.random() * 1.8 + 0.4;
+      s.style.cssText = `
+        left:${Math.random() * 100}%;
+        top:${Math.random() * 100}%;
+        width:${size}px; height:${size}px;
+        --d:${(Math.random() * 3 + 2).toFixed(1)}s;
+        --delay:${(Math.random() * 5).toFixed(1)}s;
+        --min-o:${(Math.random() * 0.1 + 0.05).toFixed(2)};
+        --max-o:${(Math.random() * 0.5 + 0.3).toFixed(2)};
+      `;
+      frag.appendChild(s);
+    }
+    container.appendChild(frag);
+  }
+
+  /* ── PASSWORD TOGGLE ── */
+  togglePwd?.addEventListener("click", () => {
+    const isText = passwordInput.type === "text";
+    passwordInput.type = isText ? "password" : "text";
+    eyeIcon.innerHTML = isText
+      ? '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>'
+      : '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/>';
+  });
+
+  /* ── ERRORS ── */
+  function showError(input, el, msg) {
+    input.classList.remove("input-error");
+    void input.offsetWidth;
+    input.classList.add("input-error");
+    el.textContent = msg;
+    el.classList.add("visible");
+  }
+
+  function clearError(input, el) {
+    input.classList.remove("input-error");
+    el.textContent = "";
+    el.classList.remove("visible");
+  }
+
+  function clearAll() {
+    clearError(usernameInput, usernameError);
+    clearError(passwordInput, passwordError);
+  }
+
+  /* ── VALIDATION ── */
+  function isValidEmail(v) {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
+  }
+  function looksLikeEmail(v) {
+    return v.includes("@");
+  }
+
+  function validate() {
+    const u = usernameInput.value.trim();
+    const p = passwordInput.value.trim();
+    let ok = true;
+
+    if (!u) {
+      showError(usernameInput, usernameError, "Username or email is required.");
+      ok = false;
+    } else if (looksLikeEmail(u) && !isValidEmail(u)) {
+      showError(
+        usernameInput,
+        usernameError,
+        "Please enter a valid email address.",
+      );
+      ok = false;
+    } else {
+      clearError(usernameInput, usernameError);
     }
 
-    console.log('Login attempt:', { username });
-    // TODO: integrate with auth API
-  });
+    if (!p) {
+      showError(passwordInput, passwordError, "Password is required.");
+      ok = false;
+    } else {
+      clearError(passwordInput, passwordError);
+    }
 
-  googleBtn.addEventListener('click', () => {
-    console.log('Google sign-in initiated');
-    // TODO: integrate with Google OAuth
-  });
-});
+    return ok;
+  }
+
+  /* ── ATTEMPTS ── */
+  function getData() {
+    try {
+      return (
+        JSON.parse(localStorage.getItem(STORAGE_KEY)) || {
+          count: 0,
+          lockedUntil: null,
+        }
+      );
+    } catch {
+      return { count: 0, lockedUntil: null };
+    }
+  }
+  function saveData(d) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(d));
+  }
+  function resetAttempts() {
+    saveData({ count: 0, lockedUntil: null });
+  }
+
+  function increment() {
+    const d = getData();
+    d.count++;
+    if (d.count >= MAX_ATTEMPTS) d.lockedUntil = Date.now() + LOCKOUT_MS;
+    saveData(d);
+    return d;
+  }
+
+  function isLocked() {
+    const { lockedUntil } = getData();
+    if (!lockedUntil) return false;
+    if (Date.now() < lockedUntil) return true;
+    resetAttempts();
+    return false;
+  }
+
+  function remaining() {
+    const { lockedUntil } = getData();
+    return lockedUntil ? Math.max(0, lockedUntil - Date.now()) : 0;
+  }
+
+  /* ── COOLDOWN ── */
+  function fmt(ms) {
+    const t = Math.ceil(ms / 1000);
+    return `${String(Math.floor(t / 60)).padStart(2, "0")}:${String(t % 60).padStart(2, "0")}`;
+  }
+
+  function startCooldown() {
+    setLocked(true);
+    lockoutBanner.classList.remove("d-none");
+    countdownEl.textContent = fmt(remaining());
+    clearInterval(countdownInterval);
+    countdownInterval = setInterval(() => {
+      const r = remaining();
+      countdownEl.textContent = fmt(r);
+      if (r <= 0) {
+        clearInterval(countdownInterval);
+        resetAttempts();
+        setLocked(false);
+        lockoutBanner.classList.add("d-none");
+      }
+    }, 1000);
+  }
+
+  function setLocked(v) {
+    usernameInput.disabled = v;
+    passwordInput.disabled = v;
+    loginBtn.disabled = v;
+    googleBtn.disabled = v;
+    facebookBtn.disabled = v;
+  }
+
+  /* ── LOADING ── */
+  function setLoading(v) {
+    btnText.textContent = v ? "Signing in…" : "Login";
+    v
+      ? btnLoader.classList.remove("d-none")
+      : btnLoader.classList.add("d-none");
+    loginBtn.disabled = googleBtn.disabled = facebookBtn.disabled = v;
+  }
+
+  /* ── AUTH ── */
+  function simulateAuth(u, p) {
+    return new Promise((res, rej) =>
+      setTimeout(
+        () => (u === "admin" && p === "admin123" ? res() : rej()),
+        LOAD_DELAY_MS,
+      ),
+    );
+  }
+
+  /* ── LOGIN HANDLER ── */
+  async function handleLogin() {
+    clearAll();
+    if (isLocked()) {
+      startCooldown();
+      return;
+    }
+    if (!validate()) return;
+    setLoading(true);
+    try {
+      await simulateAuth(
+        usernameInput.value.trim(),
+        passwordInput.value.trim(),
+      );
+      resetAttempts();
+      btnText.textContent = "✓ Welcome back";
+      setTimeout(() => {
+        window.location.href = "../index.html";
+      }, 900);
+    } catch {
+      setLoading(false);
+      const d = increment();
+      if (d.count >= MAX_ATTEMPTS) {
+        startCooldown();
+      } else {
+        const left = MAX_ATTEMPTS - d.count;
+        const msg = `Invalid credentials. ${left} attempt${left !== 1 ? "s" : ""} remaining.`;
+        showError(usernameInput, usernameError, msg);
+        showError(passwordInput, passwordError, msg);
+      }
+    }
+  }
+
+  /* ── CAROUSEL ── */
+  function initCarousel() {
+    const slides = document.querySelectorAll(".carousel-slide");
+    const dots = document.querySelectorAll(".dot");
+    const bar = document.getElementById("progressBar");
+    const prevBtn = document.getElementById("arrowPrev");
+    const nextBtn = document.getElementById("arrowNext");
+    const tagEl = document.getElementById("gameTag");
+    const descEl = document.getElementById("gameDesc");
+    const label = document.getElementById("slideLabel");
+
+    if (!slides.length) return;
+
+    const SLIDE_DATA = [
+      { tag: "VALORANT", desc: "Tactical 5v5 character-based shooter" },
+      { tag: "MOBILE LEGENDS", desc: "5v5 MOBA battle arena" },
+      { tag: "CS2", desc: "The world's premier FPS esport" },
+      { tag: "LEAGUE OF LEGENDS", desc: "Strategic team-based MOBA" },
+    ];
+
+    const INTERVAL = 5000;
+    const TICK = 50;
+    let current = 0;
+    let elapsed = 0;
+    let paused = false;
+    let timer = null;
+
+    function updateLabel(index) {
+      if (!tagEl || !descEl) return;
+      tagEl.textContent = SLIDE_DATA[index]?.tag || "";
+      descEl.textContent = SLIDE_DATA[index]?.desc || "";
+      if (label) {
+        label.classList.remove("animating");
+        void label.offsetWidth;
+        label.classList.add("animating");
+      }
+    }
+
+    function goTo(index) {
+      slides[current].classList.remove("active");
+      dots[current]?.classList.remove("active");
+      current = (index + slides.length) % slides.length;
+      slides[current].classList.add("active");
+      dots[current]?.classList.add("active");
+      updateLabel(current);
+      elapsed = 0;
+      if (bar) bar.style.width = "0%";
+    }
+
+    function tick() {
+      if (paused) return;
+      elapsed += TICK;
+      if (bar)
+        bar.style.width = Math.min((elapsed / INTERVAL) * 100, 100) + "%";
+      if (elapsed >= INTERVAL) goTo(current + 1);
+    }
+
+    prevBtn?.addEventListener("click", () => goTo(current - 1));
+    nextBtn?.addEventListener("click", () => goTo(current + 1));
+    dots.forEach((d) =>
+      d.addEventListener("click", () => goTo(Number(d.dataset.index))),
+    );
+
+    const wrapper = document.querySelector(".image-wrapper");
+    wrapper?.addEventListener("mouseenter", () => {
+      paused = true;
+    });
+    wrapper?.addEventListener("mouseleave", () => {
+      paused = false;
+    });
+
+    updateLabel(0);
+    timer = setInterval(tick, TICK);
+  }
+
+  /* ── PARALLAX ── */
+  function initParallax() {
+    const card = document.getElementById("loginCard");
+    if (!card) return;
+    document.addEventListener("mousemove", (e) => {
+      const dx = (e.clientX - window.innerWidth * 0.75) / window.innerWidth;
+      const dy = (e.clientY - window.innerHeight * 0.5) / window.innerHeight;
+      card.style.transform = `translateY(-3px) rotateY(${dx * 2}deg) rotateX(${-dy * 1.5}deg)`;
+    });
+    card.addEventListener("mouseleave", () => {
+      card.style.transform = "";
+    });
+  }
+
+  /* ── EVENTS ── */
+  usernameInput.addEventListener("input", () =>
+    clearError(usernameInput, usernameError),
+  );
+  passwordInput.addEventListener("input", () =>
+    clearError(passwordInput, passwordError),
+  );
+  [usernameInput, passwordInput].forEach((el) =>
+    el.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") handleLogin();
+    }),
+  );
+
+  loginBtn.addEventListener("click", handleLogin);
+  googleBtn.addEventListener("click", () => console.log("Google OAuth"));
+  facebookBtn.addEventListener("click", () => console.log("Facebook OAuth"));
+
+  /* ── INIT ── */
+  buildStars();
+  initParallax();
+  initCarousel();
+  if (isLocked()) startCooldown();
+})();
