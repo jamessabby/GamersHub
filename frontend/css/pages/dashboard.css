@@ -345,7 +345,7 @@ body::before {
   border-radius: 12px;
   font-size: 14px;
   font-weight: 500;
-  color: rgba(248, 113, 113, 0.6);
+  color: white;
   text-decoration: none;
   border: 1px solid transparent;
   transition:
