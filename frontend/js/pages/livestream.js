@@ -29,10 +29,11 @@
     });
   });
 
-  /* ── STREAM CARD CLICK (placeholder for future modal/player) ── */
+  /* ── STREAM CARD CLICK → open stream-view.html ── */
   document.querySelectorAll(".stream-card, .featured-card").forEach((card) => {
     card.addEventListener("click", () => {
-      /* will open stream player in future */
+      const streamId = card.dataset.streamId || "1";
+      window.location.href = "stream-view.html?streamId=" + streamId;
     });
   });
 })();

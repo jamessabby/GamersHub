@@ -1,4 +1,4 @@
-const { sql, pool, poolConnect } = require("../config/db");
+const { sql, pool, poolConnect } = require("../config/db.auth");
 
 async function createUser({ username, passwordHash, mfaSecret }) {
   await poolConnect;
@@ -32,8 +32,6 @@ async function findByUsername(username) {
     `);
   return result.recordset[0];
 }
-
-const 
 
 module.exports = {
   createUser,
