@@ -1,0 +1,515 @@
+/* ── STREAM VIEW PAGE — page-specific styles only ── */
+/* Global styles (body, navbar, sidebar) come from dashboard.css */
+
+/* ── MAIN FEED OVERRIDE — narrower to give room to comments panel ── */
+/* dashboard.css sets margin-right: 280px; that fits our comments panel perfectly */
+
+/* ── VIDEO PLAYER WRAPPER ── */
+.stream-player-wrap {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border-radius: 16px;
+  overflow: hidden;
+  background: #07060f;
+  border: 1px solid rgba(139, 92, 246, 0.15);
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.6);
+  margin-bottom: 0;
+  cursor: pointer;
+}
+
+.stream-video-placeholder {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* LIVE badge — top left */
+.stream-live-badge {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(239, 68, 68, 0.92);
+  backdrop-filter: blur(6px);
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 700;
+  font-family: "Syne", sans-serif;
+  color: #fff;
+  letter-spacing: 0.1em;
+  z-index: 10;
+}
+
+.stream-live-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #fff;
+  animation: livePulse 1.2s ease-in-out infinite;
+  flex-shrink: 0;
+}
+
+/* Viewer count — top right */
+.stream-viewer-count {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(6px);
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: 500;
+  font-family: "DM Sans", sans-serif;
+  color: #e0deff;
+  z-index: 10;
+}
+
+/* Video controls bar — bottom */
+.stream-controls-bar {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  background: linear-gradient(to top, rgba(7, 6, 15, 0.85) 0%, transparent 100%);
+  z-index: 10;
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+
+.stream-player-wrap:hover .stream-controls-bar {
+  opacity: 1;
+}
+
+.stream-controls-left,
+.stream-controls-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.stream-ctrl-btn {
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.85);
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  transition: color 0.15s, background 0.15s;
+}
+
+.stream-ctrl-btn:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.stream-timer {
+  font-size: 12px;
+  font-family: "DM Sans", sans-serif;
+  color: rgba(255, 255, 255, 0.75);
+  font-weight: 500;
+}
+
+/* ── STREAM ACTION BUTTONS ── */
+.stream-actions {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  border-top: 1px solid rgba(139, 92, 246, 0.1);
+  border-bottom: 1px solid rgba(139, 92, 246, 0.1);
+  padding: 6px 0;
+  margin-bottom: 20px;
+}
+
+.stream-action-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 11px 8px;
+  background: none;
+  border: none;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 500;
+  font-family: "DM Sans", sans-serif;
+  color: rgba(192, 196, 216, 0.65);
+  cursor: pointer;
+  transition: background 0.18s, color 0.18s;
+}
+
+.stream-action-btn:hover {
+  background: rgba(139, 92, 246, 0.08);
+  color: #c4b5fd;
+}
+
+.stream-action-btn.liked {
+  color: #a78bfa;
+}
+
+.action-count {
+  font-size: 11.5px;
+  font-weight: 500;
+  color: rgba(167, 139, 250, 0.65);
+}
+
+.stream-action-gift {
+  color: rgba(251, 191, 36, 0.65);
+}
+
+.stream-action-gift:hover {
+  background: rgba(251, 191, 36, 0.08);
+  color: #fbbf24;
+}
+
+/* ── STREAM INFO BLOCK ── */
+.stream-info-block {
+  padding-bottom: 32px;
+}
+
+/* Channel row */
+.stream-channel-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.stream-channel-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  overflow: hidden;
+  flex-shrink: 0;
+  border: 2px solid rgba(139, 92, 246, 0.3);
+  background: rgba(124, 58, 237, 0.2);
+}
+
+.stream-channel-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.stream-channel-meta {
+  flex: 1;
+  min-width: 0;
+}
+
+.stream-channel-name {
+  font-family: "Syne", sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  color: #f1f0ff;
+  line-height: 1.3;
+}
+
+.stream-channel-sub {
+  font-size: 11.5px;
+  font-family: "DM Sans", sans-serif;
+  color: rgba(192, 196, 216, 0.5);
+  margin-top: 2px;
+}
+
+.stream-follow-count {
+  color: rgba(167, 139, 250, 0.65);
+}
+
+/* Follow button */
+.btn-follow {
+  background: linear-gradient(135deg, #6d28d9, #7c3aed, #8b5cf6);
+  background-size: 200% 200%;
+  border: none;
+  border-radius: 10px;
+  padding: 8px 18px;
+  font-size: 12.5px;
+  font-weight: 600;
+  font-family: "Syne", sans-serif;
+  color: #fff;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background-position 0.3s ease, box-shadow 0.2s ease, transform 0.15s ease;
+  box-shadow: 0 4px 16px rgba(109, 40, 217, 0.3);
+}
+
+.btn-follow:hover {
+  background-position: right center;
+  box-shadow: 0 6px 24px rgba(109, 40, 217, 0.5);
+  transform: translateY(-1px);
+}
+
+.btn-follow.following {
+  background: rgba(139, 92, 246, 0.12);
+  border: 1px solid rgba(139, 92, 246, 0.3);
+  color: #a78bfa;
+  box-shadow: none;
+}
+
+/* Stream title */
+.stream-title {
+  font-family: "Syne", sans-serif;
+  font-size: 17px;
+  font-weight: 700;
+  color: #f1f0ff;
+  line-height: 1.4;
+  margin-bottom: 10px;
+}
+
+/* Stream description */
+.stream-description {
+  font-size: 13px;
+  font-family: "DM Sans", sans-serif;
+  color: rgba(192, 196, 216, 0.6);
+  line-height: 1.65;
+  margin-bottom: 14px;
+}
+
+/* Stream tags */
+.stream-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.stream-tag {
+  font-size: 11px;
+  font-weight: 500;
+  font-family: "DM Sans", sans-serif;
+  color: rgba(167, 139, 250, 0.75);
+  background: rgba(139, 92, 246, 0.1);
+  border: 1px solid rgba(139, 92, 246, 0.2);
+  border-radius: 6px;
+  padding: 3px 9px;
+}
+
+/* ── COMMENTS PANEL (right sidebar override) ── */
+.comments-panel {
+  display: flex;
+  flex-direction: column;
+  padding: 0 !important; /* override .right-sidebar padding for flex layout */
+}
+
+.comments-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 18px 12px;
+  border-bottom: 1px solid rgba(139, 92, 246, 0.1);
+  flex-shrink: 0;
+}
+
+.comments-title {
+  font-family: "Syne", sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  color: #f1f0ff;
+  margin: 0;
+}
+
+.comments-live-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  font-family: "DM Sans", sans-serif;
+  color: rgba(239, 68, 68, 0.85);
+}
+
+.comments-live-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #ef4444;
+  animation: livePulse 1.2s ease-in-out infinite;
+  flex-shrink: 0;
+}
+
+/* Scrollable comment list */
+.comments-list {
+  flex: 1;
+  overflow-y: auto;
+  list-style: none;
+  padding: 10px 18px;
+  margin: 0;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(139, 92, 246, 0.2) transparent;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.comments-list::-webkit-scrollbar {
+  width: 4px;
+}
+
+.comments-list::-webkit-scrollbar-thumb {
+  background: rgba(139, 92, 246, 0.2);
+  border-radius: 4px;
+}
+
+/* Individual comment */
+.comment-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.comment-avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  overflow: hidden;
+  flex-shrink: 0;
+  border: 1.5px solid rgba(139, 92, 246, 0.2);
+  background: rgba(124, 58, 237, 0.2);
+}
+
+.comment-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.comment-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.comment-username {
+  display: block;
+  font-size: 12.5px;
+  font-weight: 700;
+  font-family: "Syne", sans-serif;
+  color: #c4b5fd;
+  margin-bottom: 4px;
+}
+
+.comment-text {
+  font-size: 12px;
+  font-family: "DM Sans", sans-serif;
+  color: rgba(192, 196, 216, 0.75);
+  line-height: 1.5;
+  margin: 0;
+  word-break: break-word;
+}
+
+/* Comment input area */
+.comment-input-row {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 12px 14px;
+  border-top: 1px solid rgba(139, 92, 246, 0.1);
+  flex-shrink: 0;
+  background: rgba(13, 12, 25, 0.5);
+}
+
+.comment-input-avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  overflow: hidden;
+  flex-shrink: 0;
+  border: 1.5px solid rgba(139, 92, 246, 0.2);
+  background: rgba(124, 58, 237, 0.2);
+}
+
+.comment-input-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.comment-input-wrap {
+  flex: 1;
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.comment-input {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(139, 92, 246, 0.2);
+  border-radius: 20px;
+  padding: 8px 38px 8px 14px;
+  font-size: 12px;
+  font-family: "DM Sans", sans-serif;
+  color: #e0deff;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.comment-input::placeholder {
+  color: rgba(192, 196, 216, 0.35);
+}
+
+.comment-input:focus {
+  border-color: rgba(139, 92, 246, 0.45);
+  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.12);
+}
+
+.comment-send-btn {
+  position: absolute;
+  right: 6px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: rgba(139, 92, 246, 0.15);
+  border: 1px solid rgba(139, 92, 246, 0.25);
+  color: #a78bfa;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.18s, color 0.18s, transform 0.15s;
+  flex-shrink: 0;
+}
+
+.comment-send-btn:hover {
+  background: rgba(139, 92, 246, 0.3);
+  color: #c4b5fd;
+  transform: scale(1.08);
+}
+
+/* ── KEYFRAMES ── */
+@keyframes livePulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.5; transform: scale(0.85); }
+}
+
+/* ── RESPONSIVE ── */
+@media (max-width: 1024px) {
+  .right-sidebar.comments-panel {
+    position: static;
+    width: 100%;
+    height: auto;
+    max-height: 520px;
+    border-left: none;
+    border-top: 1px solid rgba(139, 92, 246, 0.1);
+  }
+
+  .main-feed.stream-view-feed {
+    margin-right: 0;
+  }
+}

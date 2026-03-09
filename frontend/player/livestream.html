@@ -1,1 +1,627 @@
-.
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GamersHub – Livestreams</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+    />
+    <link rel="stylesheet" href="../css/pages/dashboard.css" />
+    <link rel="stylesheet" href="../css/pages/livestream.css" />
+  </head>
+  <body>
+    <!-- ── TOP NAVBAR ── -->
+    <nav class="top-nav" id="topNav">
+      <div class="nav-inner">
+        <a href="#" class="nav-logo-wrap">
+          <img
+            src="../assets/img/logo.png"
+            alt="GamersHub"
+            class="nav-logo"
+            onerror="this.style.display='none'"
+          />
+        </a>
+
+        <div class="search-wrap">
+          <svg
+            class="search-icon"
+            width="15"
+            height="15"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <circle cx="11" cy="11" r="8" />
+            <line x1="21" y1="21" x2="16.65" y2="16.65" />
+          </svg>
+          <input
+            type="text"
+            class="search-input"
+            placeholder="Search streams, players, games…"
+          />
+        </div>
+
+        <div class="nav-right">
+          <button class="nav-bell" aria-label="Notifications">
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+              <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+            </svg>
+          </button>
+          <a href="#" class="nav-link-item active">Home</a>
+          <a href="#" class="nav-link-item">Tournaments</a>
+          <button class="nav-account">
+            <img
+              src="../assets/icons/player-dashboard-icons/user-profile.png"
+              alt="Account"
+              class="nav-avatar"
+              onerror="this.style.background='rgba(124,58,237,0.4)'"
+            />
+            <span>Account</span>
+          </button>
+        </div>
+      </div>
+    </nav>
+
+    <!-- ── PAGE BODY ── -->
+    <div class="page-body">
+      <!-- LEFT SIDEBAR -->
+      <aside class="left-sidebar">
+        <div class="sidebar-brand">
+          <img
+            src="../assets/img/logo.png"
+            alt="GamersHub"
+            class="sidebar-logo"
+            onerror="this.style.display='none'"
+          />
+          <span class="sidebar-brand-name">GamersHub</span>
+        </div>
+
+        <nav class="sidebar-nav">
+          <a
+            href="../player/dashboard.html"
+            class="sidebar-link"
+            data-page="home"
+          >
+            <span class="sidebar-icon">
+              <img src="../assets/icons/player-sidebar/home-icon.png" alt="" />
+            </span>
+            <span>Home</span>
+          </a>
+          <a href="#" class="sidebar-link active" data-page="livestreams">
+            <span class="sidebar-icon">
+              <img
+                src="../assets/icons/player-sidebar/livestream-icon.svg"
+                alt=""
+              />
+            </span>
+            <span>Livestreams</span>
+          </a>
+          <a href="#" class="sidebar-link" data-page="events">
+            <span class="sidebar-icon">
+              <img
+                src="../assets/icons/player-sidebar/events-icon.svg"
+                alt=""
+              />
+            </span>
+            <span>Events</span>
+          </a>
+          <a href="#" class="sidebar-link" data-page="profile">
+            <span class="sidebar-icon">
+              <img
+                src="../assets/icons/player-sidebar/profile-icon.svg"
+                alt=""
+              />
+            </span>
+            <span>Profile</span>
+          </a>
+        </nav>
+
+        <a href="../auth/login.html" class="sidebar-logout">
+          <span class="sidebar-icon">
+            <img src="../assets/icons/player-sidebar/logout-icon.svg" alt="" />
+          </span>
+          <span>Logout</span>
+        </a>
+      </aside>
+
+      <!-- GAME SELECTOR STRIP -->
+      <div class="game-selector-strip">
+        <div class="game-selector-avatar active" data-game="valorant">
+          <img
+            src="../assets/img/livestreams/valorant-select.png  "
+            alt="Valorant"
+          />
+        </div>
+        <div class="game-selector-avatar" data-game="ml">
+          <img
+            src="../assets/img/livestreams/ml-select.jpg"
+            alt="Mobile Legends"
+          />
+        </div>
+        <div class="game-selector-avatar" data-game="cod">
+          <img
+            src="../assets/img/livestreams/cod-select.jpg"
+            alt="Call of Duty"
+          />
+        </div>
+        <div class="game-selector-avatar" data-game="pubg">
+          <img src="../assets/img/livestreams/pubg-select.jpg" alt="PUBG" />
+        </div>
+      </div>
+
+      <!-- MAIN CONTENT -->
+      <main class="main-feed">
+        <!-- ── SECTION 1: FEATURED EVENTS (banner carousel area) ── -->
+        <section class="featured-section">
+          <div class="featured-grid">
+            <!-- Left small banner -->
+            <div class="featured-card featured-sm">
+              <img
+                src="../assets/img/livestreams/event1-icon.png"
+                alt="Event 1"
+                class="featured-img"
+              />
+              <div class="featured-overlay">
+                <span class="featured-badge">
+                  <span class="live-dot"></span> LIVE
+                </span>
+              </div>
+            </div>
+
+            <!-- Center large banner -->
+            <div class="featured-card featured-lg">
+              <img
+                src="../assets/img/livestreams/event2-icon.png"
+                alt="Event 2"
+                class="featured-img"
+              />
+              <div class="featured-overlay">
+                <span class="featured-badge">
+                  <span class="live-dot"></span> LIVE
+                </span>
+                <div class="featured-meta">
+                  <span class="featured-title">INCANDESCENCE 2025</span>
+                  <span class="featured-sub">Championship Finals</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Right small banner -->
+            <div class="featured-card featured-sm">
+              <img
+                src="../assets/img/livestreams/event3-icon.jpg"
+                alt="Event 3"
+                class="featured-img"
+              />
+              <div class="featured-overlay">
+                <span class="featured-badge">
+                  <span class="live-dot"></span> LIVE
+                </span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ── SECTION 2: LIVE CHANNELS ── -->
+        <section class="channels-section">
+          <div class="channels-header">
+            <h2 class="channels-title">
+              <span class="title-live-dot"></span>
+              Live Channels
+            </h2>
+            <button class="btn-see-all">See all</button>
+          </div>
+
+          <div class="channels-grid" id="channelsGrid">
+            <!-- Card 1 -->
+            <article class="stream-card" data-game="pubg">
+              <div class="stream-thumb-wrap">
+                <img
+                  src="../assets/img/livestreams/thumbnail.jpg"
+                  alt="Stream"
+                  class="stream-thumb"
+                />
+                <span class="badge-live">
+                  <span class="live-pulse"></span>LIVE
+                </span>
+                <span class="viewer-chip">
+                  <svg
+                    width="10"
+                    height="10"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2.5"
+                  >
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                    <circle cx="12" cy="12" r="3" />
+                  </svg>
+                  4.2K
+                </span>
+              </div>
+              <div class="stream-info">
+                <p class="stream-title">
+                  LIVE NOW: PUBG Finals –<br />DLSUD vs EAC
+                </p>
+                <div class="stream-meta">
+                  <img
+                    src="../assets/img/livestreams/dlsud-logo.jpg"
+                    alt="DLSUD"
+                    class="streamer-logo"
+                  />
+                  <span class="stream-game-tag">PUBG Mobile</span>
+                </div>
+              </div>
+            </article>
+
+            <!-- Card 2 -->
+            <article class="stream-card" data-game="pubg">
+              <div class="stream-thumb-wrap">
+                <img
+                  src="../assets/img/livestreams/thumbnail.jpg"
+                  alt="Stream"
+                  class="stream-thumb"
+                />
+                <span class="badge-live">
+                  <span class="live-pulse"></span>LIVE
+                </span>
+                <span class="viewer-chip">
+                  <svg
+                    width="10"
+                    height="10"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2.5"
+                  >
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                    <circle cx="12" cy="12" r="3" />
+                  </svg>
+                  3.8K
+                </span>
+              </div>
+              <div class="stream-info">
+                <p class="stream-title">
+                  LIVE NOW: PUBG Finals –<br />DLSUD vs EAC
+                </p>
+                <div class="stream-meta">
+                  <img
+                    src="../assets/img/livestreams/dlsud-logo.jpg"
+                    alt="DLSUD"
+                    class="streamer-logo"
+                  />
+                  <span class="stream-game-tag">PUBG Mobile</span>
+                </div>
+              </div>
+            </article>
+
+            <!-- Card 3 -->
+            <article class="stream-card" data-game="pubg">
+              <div class="stream-thumb-wrap">
+                <img
+                  src="../assets/img/livestreams/thumbnail.jpg"
+                  alt="Stream"
+                  class="stream-thumb"
+                />
+                <span class="badge-live">
+                  <span class="live-pulse"></span>LIVE
+                </span>
+                <span class="viewer-chip">
+                  <svg
+                    width="10"
+                    height="10"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2.5"
+                  >
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                    <circle cx="12" cy="12" r="3" />
+                  </svg>
+                  2.1K
+                </span>
+              </div>
+              <div class="stream-info">
+                <p class="stream-title">
+                  LIVE NOW: PUBG Finals –<br />DLSUD vs EAC
+                </p>
+                <div class="stream-meta">
+                  <img
+                    src="../assets/img/livestreams/dlsud-logo.jpg"
+                    alt="DLSUD"
+                    class="streamer-logo"
+                  />
+                  <span class="stream-game-tag">PUBG Mobile</span>
+                </div>
+              </div>
+            </article>
+
+            <!-- Card 4 -->
+            <article class="stream-card" data-game="valorant">
+              <div class="stream-thumb-wrap">
+                <img
+                  src="../assets/img/livestreams/thumbnail.jpg"
+                  alt="Stream"
+                  class="stream-thumb"
+                />
+                <span class="badge-live">
+                  <span class="live-pulse"></span>LIVE
+                </span>
+                <span class="viewer-chip">
+                  <svg
+                    width="10"
+                    height="10"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2.5"
+                  >
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                    <circle cx="12" cy="12" r="3" />
+                  </svg>
+                  5.7K
+                </span>
+              </div>
+              <div class="stream-info">
+                <p class="stream-title">
+                  Valorant Champions –<br />Group Stage Day 2
+                </p>
+                <div class="stream-meta">
+                  <img
+                    src="../assets/img/livestreams/dlsud-logo.jpg"
+                    alt="DLSUD"
+                    class="streamer-logo"
+                  />
+                  <span class="stream-game-tag">Valorant</span>
+                </div>
+              </div>
+            </article>
+
+            <!-- Card 5 -->
+            <article class="stream-card" data-game="ml">
+              <div class="stream-thumb-wrap">
+                <img
+                  src="../assets/img/livestreams/thumbnail.jpg"
+                  alt="Stream"
+                  class="stream-thumb"
+                />
+                <span class="badge-live">
+                  <span class="live-pulse"></span>LIVE
+                </span>
+                <span class="viewer-chip">
+                  <svg
+                    width="10"
+                    height="10"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2.5"
+                  >
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                    <circle cx="12" cy="12" r="3" />
+                  </svg>
+                  1.9K
+                </span>
+              </div>
+              <div class="stream-info">
+                <p class="stream-title">
+                  ML Bang Bang –<br />Semifinals Round 3
+                </p>
+                <div class="stream-meta">
+                  <img
+                    src="../assets/img/livestreams/dlsud-logo.jpg"
+                    alt="DLSUD"
+                    class="streamer-logo"
+                  />
+                  <span class="stream-game-tag">Mobile Legends</span>
+                </div>
+              </div>
+            </article>
+
+            <!-- Card 6 -->
+            <article class="stream-card" data-game="cod">
+              <div class="stream-thumb-wrap">
+                <img
+                  src="../assets/img/livestreams/thumbnail.jpg"
+                  alt="Stream"
+                  class="stream-thumb"
+                />
+                <span class="badge-live">
+                  <span class="live-pulse"></span>LIVE
+                </span>
+                <span class="viewer-chip">
+                  <svg
+                    width="10"
+                    height="10"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2.5"
+                  >
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                    <circle cx="12" cy="12" r="3" />
+                  </svg>
+                  3.3K
+                </span>
+              </div>
+              <div class="stream-info">
+                <p class="stream-title">
+                  COD Mobile –<br />Battle Royale Finals
+                </p>
+                <div class="stream-meta">
+                  <img
+                    src="../assets/img/livestreams/dlsud-logo.jpg"
+                    alt="DLSUD"
+                    class="streamer-logo"
+                  />
+                  <span class="stream-game-tag">COD Mobile</span>
+                </div>
+              </div>
+            </article>
+          </div>
+          <!-- /channels-grid -->
+        </section>
+      </main>
+
+      <!-- RIGHT SIDEBAR — Friends Panel -->
+      <aside class="right-sidebar">
+        <h3 class="friends-title">Friends</h3>
+        <ul class="friends-list">
+          <li class="friend-item">
+            <div class="friend-avatar">
+              <img
+                src="../assets/icons/player-dashboard-icons/user-profile.png"
+                alt=""
+                onerror="this.style.background='rgba(124,58,237,0.3)'"
+              />
+            </div>
+            <div class="friend-info">
+              <span class="friend-name">Player user</span>
+              <span class="friend-status offline">
+                <img
+                  src="../assets/icons/player-dashboard-icons/offline.svg"
+                  alt=""
+                />
+                Offline
+              </span>
+            </div>
+          </li>
+          <li class="friend-item">
+            <div class="friend-avatar">
+              <img
+                src="../assets/icons/player-dashboard-icons/user-profile.png"
+                alt=""
+                onerror="this.style.background='rgba(124,58,237,0.3)'"
+              />
+            </div>
+            <div class="friend-info">
+              <span class="friend-name">Player user</span>
+              <span class="friend-status offline">
+                <img
+                  src="../assets/icons/player-dashboard-icons/offline.svg"
+                  alt=""
+                />
+                Offline
+              </span>
+            </div>
+          </li>
+          <li class="friend-item">
+            <div class="friend-avatar">
+              <img
+                src="../assets/icons/player-dashboard-icons/user-profile.png"
+                alt=""
+                onerror="this.style.background='rgba(124,58,237,0.3)'"
+              />
+            </div>
+            <div class="friend-info">
+              <span class="friend-name">Player user</span>
+              <span class="friend-status watching">
+                <img
+                  src="../assets/icons/player-dashboard-icons/watching.png"
+                  alt=""
+                />
+                Watching Valorant
+              </span>
+            </div>
+          </li>
+          <li class="friend-item">
+            <div class="friend-avatar">
+              <img
+                src="../assets/icons/player-dashboard-icons/user-profile.png"
+                alt=""
+                onerror="this.style.background='rgba(124,58,237,0.3)'"
+              />
+            </div>
+            <div class="friend-info">
+              <span class="friend-name">Player user</span>
+              <span class="friend-status idle">
+                <img
+                  src="../assets/icons/player-dashboard-icons/idle.png"
+                  alt=""
+                />
+                Idle
+              </span>
+            </div>
+          </li>
+          <li class="friend-item">
+            <div class="friend-avatar">
+              <img
+                src="../assets/icons/player-dashboard-icons/user-profile.png"
+                alt=""
+                onerror="this.style.background='rgba(124,58,237,0.3)'"
+              />
+            </div>
+            <div class="friend-info">
+              <span class="friend-name">Player user</span>
+              <span class="friend-status busy">
+                <img
+                  src="../assets/icons/player-dashboard-icons/busy.svg"
+                  alt=""
+                />
+                Busy
+              </span>
+            </div>
+          </li>
+          <li class="friend-item">
+            <div class="friend-avatar">
+              <img
+                src="../assets/icons/player-dashboard-icons/user-profile.png"
+                alt=""
+                onerror="this.style.background='rgba(124,58,237,0.3)'"
+              />
+            </div>
+            <div class="friend-info">
+              <span class="friend-name">Player user</span>
+              <span class="friend-status watching">
+                <img
+                  src="../assets/icons/player-dashboard-icons/watching.png"
+                  alt=""
+                />
+                Watching PUBG
+              </span>
+            </div>
+          </li>
+          <li class="friend-item">
+            <div class="friend-avatar">
+              <img
+                src="../assets/icons/player-dashboard-icons/user-profile.png"
+                alt=""
+                onerror="this.style.background='rgba(124,58,237,0.3)'"
+              />
+            </div>
+            <div class="friend-info">
+              <span class="friend-name">Player user</span>
+              <span class="friend-status offline">
+                <img
+                  src="../assets/icons/player-dashboard-icons/offline.svg"
+                  alt=""
+                />
+                Offline
+              </span>
+            </div>
+          </li>
+        </ul>
+      </aside>
+    </div>
+    <!-- /page-body -->
+
+    <script src="../js/pages/livestream.js"></script>
+  </body>
+</html>
