@@ -1,7 +1,7 @@
 (() => {
+  const API_BASE = "http://localhost:3000";
   const MAX_ATTEMPTS = 5;
   const LOCKOUT_MS = 15 * 60 * 1000;
-  const LOAD_DELAY_MS = 1200;
   const STORAGE_KEY = "gh_login_attempts";
 
   const usernameInput = document.getElementById("username");
@@ -73,27 +73,13 @@
   }
 
   /* ── VALIDATION ── */
-  function isValidEmail(v) {
-    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
-  }
-  function looksLikeEmail(v) {
-    return v.includes("@");
-  }
-
   function validate() {
     const u = usernameInput.value.trim();
-    const p = passwordInput.value.trim();
+    const p = passwordInput.value;
     let ok = true;
 
     if (!u) {
-      showError(usernameInput, usernameError, "Username or email is required.");
-      ok = false;
-    } else if (looksLikeEmail(u) && !isValidEmail(u)) {
-      showError(
-        usernameInput,
-        usernameError,
-        "Please enter a valid email address.",
-      );
+      showError(usernameInput, usernameError, "Username is required.");
       ok = false;
     } else {
       clearError(usernameInput, usernameError);
@@ -191,13 +177,28 @@
   }
 
   /* ── AUTH ── */
-  function simulateAuth(u, p) {
-    return new Promise((res, rej) =>
-      setTimeout(
-        () => (u === "admin" && p === "admin123" ? res() : rej()),
-        LOAD_DELAY_MS,
-      ),
-    );
+  async function loginUser({ username, password }) {
+    const response = await fetch(`${API_BASE}/api/auth/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username, password }),
+    });
+
+    let payload = {};
+    try {
+      payload = await response.json();
+    } catch {
+      payload = {};
+    }
+
+    if (!response.ok) {
+      throw {
+        status: response.status,
+        message: payload.message || "Invalid credentials.",
+      };
+    }
+
+    return payload;
   }
 
   /* ── LOGIN HANDLER ── */
@@ -210,23 +211,24 @@
     if (!validate()) return;
     setLoading(true);
     try {
-      await simulateAuth(
-        usernameInput.value.trim(),
-        passwordInput.value.trim(),
-      );
+      await loginUser({
+        username: usernameInput.value.trim(),
+        password: passwordInput.value,
+      });
       resetAttempts();
       btnText.textContent = "✓ Welcome back";
       setTimeout(() => {
-        window.location.href = "../index.html";
+        window.location.href = "../player/dashboard.html";
       }, 900);
-    } catch {
+    } catch (err) {
       setLoading(false);
       const d = increment();
       if (d.count >= MAX_ATTEMPTS) {
         startCooldown();
       } else {
         const left = MAX_ATTEMPTS - d.count;
-        const msg = `Invalid credentials. ${left} attempt${left !== 1 ? "s" : ""} remaining.`;
+        const baseMsg = err.message || "Invalid credentials.";
+        const msg = `${baseMsg} ${left} attempt${left !== 1 ? "s" : ""} remaining.`;
         showError(usernameInput, usernameError, msg);
         showError(passwordInput, passwordError, msg);
       }

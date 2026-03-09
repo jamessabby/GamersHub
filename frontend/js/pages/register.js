@@ -1,4 +1,5 @@
 (() => {
+  const API_BASE = "http://localhost:3000";
   /* ── STARS ── */
   function buildStars() {
     const container = document.getElementById("stars");
@@ -329,43 +330,28 @@
   }
 
   /* ── SIMULATED BACKEND ── */
-  const TAKEN_USERNAMES = [
-    "james",
-    "testuser",
-    "gamer123",
-    "player1",
-    "elite_gamer",
-  ];
-  const TAKEN_EMAILS = [
-    "test@test.com",
-    "admin@gamershub.com",
-    "james@gmail.com",
-  ];
-
-  function simulateBackend(username, email) {
-    return new Promise((resolve, reject) => {
-      setTimeout(
-        () => {
-          if (TAKEN_USERNAMES.includes(username.toLowerCase()))
-            reject({
-              field: "username",
-              message: "This username is already taken.",
-            });
-          else if (TAKEN_EMAILS.includes(email.toLowerCase()))
-            reject({
-              field: "email",
-              message: "An account with this email already exists.",
-            });
-          else if (Math.random() < 0.05)
-            reject({
-              field: "server",
-              message: "Server error. Please try again.",
-            });
-          else resolve();
-        },
-        1000 + Math.random() * 200,
-      );
+  async function registerUser({ username, email, password }) {
+    const response = await fetch(`${API_BASE}/api/auth/register`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username, email, password }),
     });
+
+    let payload = {};
+    try {
+      payload = await response.json();
+    } catch {
+      payload = {};
+    }
+
+    if (!response.ok) {
+      throw {
+        status: response.status,
+        message: payload.message || "Registration failed. Please try again.",
+      };
+    }
+
+    return payload;
   }
 
   /* ── REGISTER HANDLER ── */
@@ -383,7 +369,11 @@
     setLoading(true);
 
     try {
-      await simulateBackend(username, email);
+      await registerUser({
+        username,
+        email,
+        password: passwordInput.value,
+      });
       resetAttempts();
       if (btnText) btnText.textContent = "✓ Account created!";
       if (btnLoader) btnLoader.classList.add("d-none");
@@ -399,11 +389,27 @@
         return;
       }
 
-      if (err.field === "username")
-        showError(usernameInput, usernameError, err.message);
-      else if (err.field === "email")
-        showError(emailInput, emailError, err.message);
-      else
+      if (err.status === 409) {
+        if ((err.message || "").toLowerCase().includes("email")) {
+          showError(
+            emailInput,
+            emailError,
+            err.message || "An account with this email already exists.",
+          );
+        } else {
+          showError(
+            usernameInput,
+            usernameError,
+            err.message || "This username is already taken.",
+          );
+        }
+      } else if (err.status === 400) {
+        if ((err.message || "").toLowerCase().includes("email")) {
+          showError(emailInput, emailError, err.message);
+        } else {
+          showError(usernameInput, usernameError, err.message);
+        }
+      } else
         showError(
           usernameInput,
           usernameError,

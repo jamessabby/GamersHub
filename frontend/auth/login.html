@@ -183,9 +183,11 @@
                 <input
                   type="text"
                   class="input-field"
-                  placeholder="Enter username or email"
+                  placeholder="Enter username"
                   id="username"
-                  autocomplete="username"
+                  autocomplete="off"
+                  autocapitalize="off"
+                  spellcheck="false"
                 />
               </div>
               <p class="error-message" id="usernameError"></p>
@@ -199,7 +201,7 @@
                   class="input-field"
                   placeholder="Enter password"
                   id="password"
-                  autocomplete="current-password"
+                  autocomplete="new-password"
                 />
                 <button
                   class="toggle-password"
