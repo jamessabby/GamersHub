@@ -5,6 +5,9 @@ async function register(req, res) {
     const result = await authService.registerUser(req.body);
     res.status(201).json(result);
   } catch (error) {
+    if (error.statusCode) {
+      return res.status(error.statusCode).json({ message: error.message });
+    }
     if (error.message === "User already exists") {
       return res.status(409).json({ message: error.message });
     }
@@ -17,7 +20,8 @@ async function login(req, res) {
     const result = await authService.loginUser(req.body);
     res.status(200).json(result);
   } catch (error) {
-    res.status(401).json({ message: error.message });
+    const statusCode = error.statusCode || 401;
+    res.status(statusCode).json({ message: error.message });
   }
 }
 

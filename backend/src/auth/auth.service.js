@@ -7,11 +7,33 @@ async function registerUser(data) {
   // destructured version of data.username, data.password
   // const username = data.username
   // const password = data.password
-  const { username, password } = data;
+  const { username, email, password } = data;
+  if (!username || !email || !password) {
+    const error = new Error("Username, email, and password are required.");
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const normalizedEmail = String(email).trim().toLowerCase();
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+  if (!emailRegex.test(normalizedEmail)) {
+    const error = new Error("Please enter a valid email address.");
+    error.statusCode = 400;
+    throw error;
+  }
 
   const existingUser = await userRepo.findByUsername(username);
   if (existingUser) {
-    throw new Error("User already exists");
+    const error = new Error("User already exists");
+    error.statusCode = 409;
+    throw error;
+  }
+
+  const existingEmail = await userRepo.findByEmail(normalizedEmail);
+  if (existingEmail) {
+    const error = new Error("Email already exists");
+    error.statusCode = 409;
+    throw error;
   }
 
   // forces the code to wait for bcrypt to finish the math and return the hashedPassword before moving to the next line
@@ -22,6 +44,7 @@ async function registerUser(data) {
 
   await userRepo.createUser({
     username,
+    email: normalizedEmail,
     passwordHash: hashedPassword,
     mfaSecret,
   });
@@ -31,16 +54,25 @@ async function registerUser(data) {
 
 async function loginUser(data) {
   const { username, password } = data;
+  if (!username || !password) {
+    const error = new Error("Username and password are required.");
+    error.statusCode = 400;
+    throw error;
+  }
 
   const user = await userRepo.findByUsername(username);
   if (!user) {
-    throw new Error("No user found.");
+    const error = new Error("Invalid credentials.");
+    error.statusCode = 401;
+    throw error;
   }
 
   const isMatch = await bcrypt.compare(password, user.passwordHash);
 
   if (!isMatch) {
-    throw new Error("Invalid Password.");
+    const error = new Error("Invalid credentials.");
+    error.statusCode = 401;
+    throw error;
   }
 
   return { message: "Login successful" };
