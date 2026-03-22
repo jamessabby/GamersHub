@@ -1,5 +1,5 @@
 (() => {
-  const API_BASE = "http://localhost:3000";
+  const API_BASE = `http://${window.location.hostname || "localhost"}:3000`;
   /* ── STARS ── */
   function buildStars() {
     const container = document.getElementById("stars");
@@ -331,11 +331,20 @@
 
   /* ── SIMULATED BACKEND ── */
   async function registerUser({ username, email, password }) {
-    const response = await fetch(`${API_BASE}/api/auth/register`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ username, email, password }),
-    });
+    let response;
+
+    try {
+      response = await fetch(`${API_BASE}/api/auth/register`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, email, password }),
+      });
+    } catch {
+      throw {
+        status: 0,
+        message: `Cannot reach backend at ${API_BASE}. Run \`npm run dev\` in the backend folder.`,
+      };
+    }
 
     let payload = {};
     try {
@@ -389,7 +398,10 @@
         return;
       }
 
-      if (err.status === 409) {
+      if (err.status === 0) {
+        showError(usernameInput, usernameError, err.message);
+        showError(emailInput, emailError, err.message);
+      } else if (err.status === 409) {
         if ((err.message || "").toLowerCase().includes("email")) {
           showError(
             emailInput,

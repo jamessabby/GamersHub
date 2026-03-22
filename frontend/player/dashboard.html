@@ -76,7 +76,7 @@
               class="nav-avatar"
               onerror="this.style.background='rgba(124,58,237,0.4)'"
             />
-            <span>Account</span>
+            <span data-gh-user="username">Account</span>
           </button>
         </div>
       </div>
@@ -130,7 +130,7 @@
             </span>
             <span>Profile</span>
           </a>
-          <a href="../auth/login.html" class="sidebar-link">
+          <a href="../auth/logout.html" class="sidebar-link">
             <span class="sidebar-icon">
               <img
                 src="../assets/icons/player-sidebar/logout-icon.svg"
@@ -475,6 +475,8 @@
     </div>
     <!-- /page-body -->
 
+    <script src="../js/shared/auth-state.js"></script>
+    <script src="../js/shared/player-shell.js"></script>
     <script src="../js/pages/dashboard.js"></script>
   </body>
 </html>

@@ -1,1 +1,49 @@
-.
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GamersHub - Logout</title>
+    <link rel="stylesheet" href="../css/theme.css" />
+    <style>
+      body {
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        margin: 0;
+        background: radial-gradient(circle at top, #1b1833 0%, #0b0a14 55%, #06050b 100%);
+        color: #f5f7ff;
+        font-family: "DM Sans", sans-serif;
+      }
+
+      .logout-card {
+        width: min(420px, calc(100vw - 32px));
+        padding: 32px 28px;
+        border-radius: 20px;
+        background: rgba(16, 14, 30, 0.92);
+        border: 1px solid rgba(167, 139, 250, 0.2);
+        box-shadow: 0 18px 50px rgba(0, 0, 0, 0.35);
+        text-align: center;
+      }
+
+      .logout-card h1 {
+        margin: 0 0 12px;
+        font-size: 1.4rem;
+      }
+
+      .logout-card p {
+        margin: 0;
+        color: rgba(245, 247, 255, 0.75);
+      }
+    </style>
+  </head>
+  <body>
+    <main class="logout-card">
+      <h1>Signing you out</h1>
+      <p id="logoutStatus">Clearing your session...</p>
+    </main>
+
+    <script src="../js/shared/auth-state.js"></script>
+    <script src="../js/pages/logout.js"></script>
+  </body>
+</html>

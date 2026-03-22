@@ -1,8 +1,12 @@
 (() => {
+  const auth = window.GamersHubAuth;
   const API_BASE = `http://${window.location.hostname || "localhost"}:3000`;
   const MAX_ATTEMPTS = 5;
   const LOCKOUT_MS = 15 * 60 * 1000;
   const STORAGE_KEY = "gh_login_attempts";
+  const requestedRedirect = new URLSearchParams(window.location.search).get(
+    "redirect",
+  );
 
   const usernameInput = document.getElementById("username");
   const passwordInput = document.getElementById("password");
@@ -218,9 +222,15 @@
         password: passwordInput.value,
       });
       resetAttempts();
+      auth?.setSession({
+        username: usernameInput.value.trim(),
+        role: "player",
+      });
       btnText.textContent = "Welcome back";
       setTimeout(() => {
-        window.location.href = "../player/dashboard.html";
+        window.location.href = auth
+          ? auth.resolveRedirect(requestedRedirect, "../player/dashboard.html")
+          : "../player/dashboard.html";
       }, 900);
     } catch (err) {
       setLoading(false);
@@ -348,6 +358,13 @@
   loginBtn.addEventListener("click", handleLogin);
   googleBtn.addEventListener("click", () => console.log("Google OAuth"));
   facebookBtn.addEventListener("click", () => console.log("Facebook OAuth"));
+
+  if (auth?.isAuthenticated()) {
+    window.location.replace(
+      auth.resolveRedirect(requestedRedirect, "../player/dashboard.html"),
+    );
+    return;
+  }
 
   buildStars();
   initParallax();

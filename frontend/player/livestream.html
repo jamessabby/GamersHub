@@ -73,7 +73,7 @@
               class="nav-avatar"
               onerror="this.style.background='rgba(124,58,237,0.4)'"
             />
-            <span>Account</span>
+            <span data-gh-user="username">Account</span>
           </button>
         </div>
       </div>
@@ -133,7 +133,7 @@
           </a>
         </nav>
 
-        <a href="../auth/login.html" class="sidebar-logout">
+        <a href="../auth/logout.html" class="sidebar-logout">
           <span class="sidebar-icon">
             <img src="../assets/icons/player-sidebar/logout-icon.svg" alt="" />
           </span>
@@ -145,7 +145,7 @@
       <div class="game-selector-strip">
         <div class="game-selector-avatar active" data-game="valorant">
           <img
-            src="../assets/img/livestreams/valorant-select.png  "i
+            src="../assets/img/livestreams/valorant-select.png"
             alt="Valorant"
           />
         </div>
@@ -622,6 +622,8 @@
     </div>
     <!-- /page-body -->
 
+    <script src="../js/shared/auth-state.js"></script>
+    <script src="../js/shared/player-shell.js"></script>
     <script src="../js/pages/livestream.js"></script>
   </body>
 </html>
