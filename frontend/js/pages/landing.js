@@ -1,22 +1,22 @@
 document.addEventListener("DOMContentLoaded", function () {
-  /* ── EXISTING: Button navigation ── */
+  const loginUrl = new URL("./login.html", window.location.href).href;
+
   const btnGetStarted = document.getElementById("btn-get-started");
   const navLogin = document.getElementById("nav-login");
 
   if (btnGetStarted) {
     btnGetStarted.addEventListener("click", function () {
-      window.location.href = "auth/login.html";
+      window.location.href = loginUrl;
     });
   }
 
   if (navLogin) {
     navLogin.addEventListener("click", function (e) {
       e.preventDefault();
-      window.location.href = "auth/login.html";
+      window.location.href = loginUrl;
     });
   }
 
-  /* ── NAVBAR SCROLL EFFECT ── */
   const navbar = document.querySelector(".gh-navbar");
   if (navbar) {
     window.addEventListener(
@@ -32,7 +32,6 @@ document.addEventListener("DOMContentLoaded", function () {
     );
   }
 
-  /* ── PARALLAX: subtle logo movement on mouse ── */
   const heroLogo = document.querySelector(".gh-hero-logo");
   if (heroLogo) {
     document.addEventListener(

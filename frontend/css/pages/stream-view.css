@@ -8,7 +8,8 @@
 .stream-player-wrap {
   position: relative;
   width: 100%;
-  aspect-ratio: 16 / 9;
+  aspect-ratio: 16 / 8.4;
+  max-height: 420px;
   border-radius: 16px;
   overflow: hidden;
   background: #07060f;
@@ -523,6 +524,11 @@
 
 /* ── RESPONSIVE ── */
 @media (max-width: 1024px) {
+  .stream-player-wrap {
+    aspect-ratio: 16 / 9;
+    max-height: none;
+  }
+
   .right-sidebar.comments-panel {
     position: static;
     width: 100%;

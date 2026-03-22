@@ -1,5 +1,5 @@
 (() => {
-  const API_BASE = "http://localhost:3000";
+  const API_BASE = `http://${window.location.hostname || "localhost"}:3000`;
   const MAX_ATTEMPTS = 5;
   const LOCKOUT_MS = 15 * 60 * 1000;
   const STORAGE_KEY = "gh_login_attempts";
@@ -20,7 +20,6 @@
 
   let countdownInterval = null;
 
-  /* ── STARS ── */
   function buildStars() {
     const container = document.getElementById("stars");
     if (!container) return;
@@ -43,7 +42,6 @@
     container.appendChild(frag);
   }
 
-  /* ── PASSWORD TOGGLE ── */
   togglePwd?.addEventListener("click", () => {
     const isText = passwordInput.type === "text";
     passwordInput.type = isText ? "password" : "text";
@@ -52,7 +50,6 @@
       : '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/>';
   });
 
-  /* ── ERRORS ── */
   function showError(input, el, msg) {
     input.classList.remove("input-error");
     void input.offsetWidth;
@@ -72,7 +69,6 @@
     clearError(passwordInput, passwordError);
   }
 
-  /* ── VALIDATION ── */
   function validate() {
     const u = usernameInput.value.trim();
     const p = passwordInput.value;
@@ -95,7 +91,6 @@
     return ok;
   }
 
-  /* ── ATTEMPTS ── */
   function getData() {
     try {
       return (
@@ -108,9 +103,11 @@
       return { count: 0, lockedUntil: null };
     }
   }
+
   function saveData(d) {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(d));
   }
+
   function resetAttempts() {
     saveData({ count: 0, lockedUntil: null });
   }
@@ -136,7 +133,6 @@
     return lockedUntil ? Math.max(0, lockedUntil - Date.now()) : 0;
   }
 
-  /* ── COOLDOWN ── */
   function fmt(ms) {
     const t = Math.ceil(ms / 1000);
     return `${String(Math.floor(t / 60)).padStart(2, "0")}:${String(t % 60).padStart(2, "0")}`;
@@ -167,22 +163,29 @@
     facebookBtn.disabled = v;
   }
 
-  /* ── LOADING ── */
   function setLoading(v) {
-    btnText.textContent = v ? "Signing in…" : "Login";
+    btnText.textContent = v ? "Signing in..." : "Login";
     v
       ? btnLoader.classList.remove("d-none")
       : btnLoader.classList.add("d-none");
     loginBtn.disabled = googleBtn.disabled = facebookBtn.disabled = v;
   }
 
-  /* ── AUTH ── */
   async function loginUser({ username, password }) {
-    const response = await fetch(`${API_BASE}/api/auth/login`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ username, password }),
-    });
+    let response;
+
+    try {
+      response = await fetch(`${API_BASE}/api/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password }),
+      });
+    } catch {
+      throw {
+        status: 0,
+        message: `Cannot reach backend at ${API_BASE}. Run \`npm run dev\` in the backend folder.`,
+      };
+    }
 
     let payload = {};
     try {
@@ -201,7 +204,6 @@
     return payload;
   }
 
-  /* ── LOGIN HANDLER ── */
   async function handleLogin() {
     clearAll();
     if (isLocked()) {
@@ -216,12 +218,19 @@
         password: passwordInput.value,
       });
       resetAttempts();
-      btnText.textContent = "✓ Welcome back";
+      btnText.textContent = "Welcome back";
       setTimeout(() => {
         window.location.href = "../player/dashboard.html";
       }, 900);
     } catch (err) {
       setLoading(false);
+
+      if (err.status === 0) {
+        showError(usernameInput, usernameError, err.message);
+        showError(passwordInput, passwordError, err.message);
+        return;
+      }
+
       const d = increment();
       if (d.count >= MAX_ATTEMPTS) {
         startCooldown();
@@ -235,7 +244,6 @@
     }
   }
 
-  /* ── CAROUSEL ── */
   function initCarousel() {
     const slides = document.querySelectorAll(".carousel-slide");
     const dots = document.querySelectorAll(".dot");
@@ -287,8 +295,9 @@
     function tick() {
       if (paused) return;
       elapsed += TICK;
-      if (bar)
+      if (bar) {
         bar.style.width = Math.min((elapsed / INTERVAL) * 100, 100) + "%";
+      }
       if (elapsed >= INTERVAL) goTo(current + 1);
     }
 
@@ -308,9 +317,9 @@
 
     updateLabel(0);
     timer = setInterval(tick, TICK);
+    void timer;
   }
 
-  /* ── PARALLAX ── */
   function initParallax() {
     const card = document.getElementById("loginCard");
     if (!card) return;
@@ -324,7 +333,6 @@
     });
   }
 
-  /* ── EVENTS ── */
   usernameInput.addEventListener("input", () =>
     clearError(usernameInput, usernameError),
   );
@@ -341,7 +349,6 @@
   googleBtn.addEventListener("click", () => console.log("Google OAuth"));
   facebookBtn.addEventListener("click", () => console.log("Facebook OAuth"));
 
-  /* ── INIT ── */
   buildStars();
   initParallax();
   initCarousel();
