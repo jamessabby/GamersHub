@@ -14,6 +14,8 @@
   const pageRoutes = {
     home: "../player/dashboard.html",
     livestreams: "../player/livestream.html",
+    events: "../player/events.html",
+    profile: "../player/profile.html",
   };
 
   document.querySelectorAll(".sidebar-link[data-page]").forEach((link) => {
