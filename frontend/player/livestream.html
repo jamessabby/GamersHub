@@ -170,51 +170,85 @@
       <main class="main-feed">
         <!-- ── SECTION 1: FEATURED EVENTS (banner carousel area) ── -->
         <section class="featured-section">
-          <div class="featured-grid">
-            <!-- Left small banner -->
-            <div class="featured-card featured-sm" data-stream-id="101">
-              <img
-                src="../assets/img/livestreams/event1-icon.png"
-                alt="Event 1"
-                class="featured-img"
-              />
-              <div class="featured-overlay">
-                <span class="featured-badge">
-                  <span class="live-dot"></span> LIVE
-                </span>
-              </div>
-            </div>
-
-            <!-- Center large banner -->
-            <div class="featured-card featured-lg" data-stream-id="102">
-              <img
-                src="../assets/img/livestreams/event2-icon.png"
-                alt="Event 2"
-                class="featured-img"
-              />
-              <div class="featured-overlay">
-                <span class="featured-badge">
-                  <span class="live-dot"></span> LIVE
-                </span>
-                <div class="featured-meta">
-                  <span class="featured-title">INCANDESCENCE 2025</span>
-                  <span class="featured-sub">Championship Finals</span>
+          <div class="featured-carousel" id="featuredCarousel">
+            <div class="featured-slide active">
+              <div class="featured-hero-card featured-card" data-stream-id="102">
+                <img
+                  src="../assets/img/livestreams/event2-icon.png"
+                  alt="Incandescence 2025"
+                  class="featured-img"
+                />
+                <div class="featured-overlay featured-hero-overlay">
+                  <span class="featured-badge">
+                    <span class="live-dot"></span> LIVE
+                  </span>
+                  <div class="featured-meta featured-hero-meta">
+                    <span class="featured-title">INCANDESCENCE 2025</span>
+                    <span class="featured-sub">Championship Finals</span>
+                  </div>
                 </div>
               </div>
             </div>
 
-            <!-- Right small banner -->
-            <div class="featured-card featured-sm" data-stream-id="103">
-              <img
-                src="../assets/img/livestreams/event3-icon.jpg"
-                alt="Event 3"
-                class="featured-img"
-              />
-              <div class="featured-overlay">
-                <span class="featured-badge">
-                  <span class="live-dot"></span> LIVE
-                </span>
+            <div class="featured-slide">
+              <div class="featured-hero-card featured-card" data-stream-id="105">
+                <img
+                  src="../assets/img/livestreams/valorant-select.png"
+                  alt="Valorant Masters"
+                  class="featured-img"
+                />
+                <div class="featured-overlay featured-hero-overlay">
+                  <span class="featured-badge">
+                    <span class="live-dot"></span> LIVE
+                  </span>
+                  <div class="featured-meta featured-hero-meta">
+                    <span class="featured-title">Valorant Masters</span>
+                    <span class="featured-sub">Tactical 5v5 character-based shooter</span>
+                  </div>
+                </div>
               </div>
+            </div>
+
+            <div class="featured-slide">
+              <div class="featured-hero-card featured-card" data-stream-id="108">
+                <img
+                  src="../assets/img/livestreams/thumbnail.jpg"
+                  alt="PUBG Finals Weekend"
+                  class="featured-img"
+                />
+                <div class="featured-overlay featured-hero-overlay">
+                  <span class="featured-badge">
+                    <span class="live-dot"></span> LIVE
+                  </span>
+                  <div class="featured-meta featured-hero-meta">
+                    <span class="featured-title">PUBG Finals Weekend</span>
+                    <span class="featured-sub">Final lobby countdown</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <button
+              class="featured-nav featured-prev"
+              id="featuredPrev"
+              aria-label="Previous featured slide"
+              type="button"
+            >
+              &#8249;
+            </button>
+            <button
+              class="featured-nav featured-next"
+              id="featuredNext"
+              aria-label="Next featured slide"
+              type="button"
+            >
+              &#8250;
+            </button>
+
+            <div class="featured-dots" id="featuredDots" aria-label="Featured slides">
+              <button class="featured-dot active" data-index="0" aria-label="Go to featured slide 1" type="button"></button>
+              <button class="featured-dot" data-index="1" aria-label="Go to featured slide 2" type="button"></button>
+              <button class="featured-dot" data-index="2" aria-label="Go to featured slide 3" type="button"></button>
             </div>
           </div>
         </section>
@@ -627,5 +661,8 @@
     <script src="./js/livestream.js"></script>
   </body>
 </html>
+
+
+
 
 
