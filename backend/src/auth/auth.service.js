@@ -2,6 +2,7 @@
 const bcrypt = require("bcrypt");
 const crypto = require("crypto");
 const userRepo = require("../users/user.repository");
+const profileService = require("../users/user.service");
 
 async function registerUser(data) {
   // destructured version of data.username, data.password
@@ -42,14 +43,28 @@ async function registerUser(data) {
   // so generate exactly 50 hex chars DB column USERS.MFA_SECRET NVARCHAR(50)
   const mfaSecret = crypto.randomBytes(25).toString("hex");
 
-  await userRepo.createUser({
+  const createdUser = await userRepo.createUser({
     username,
     email: normalizedEmail,
     passwordHash: hashedPassword,
     mfaSecret,
   });
 
-  return { message: "User created successfully" };
+  await profileService.ensureProfileForUser({
+    userId: createdUser.userId,
+    username: createdUser.username,
+    email: createdUser.email,
+  });
+
+  return {
+    message: "User created successfully",
+    user: {
+      userId: createdUser.userId,
+      username: createdUser.username,
+      role: createdUser.userRole,
+      email: createdUser.email,
+    },
+  };
 }
 
 async function loginUser(data) {
@@ -75,7 +90,15 @@ async function loginUser(data) {
     throw error;
   }
 
-  return { message: "Login successful" };
+  return {
+    message: "Login successful",
+    user: {
+      userId: user.userId,
+      username: user.username,
+      role: user.userRole,
+      email: user.email,
+    },
+  };
 }
 
 module.exports = {

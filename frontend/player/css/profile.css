@@ -1,0 +1,797 @@
+/* ═══════════════════════════════════════════════
+   profile.css  —  GamersHub · Profile page
+   Loaded after ../shared/css/theme.css
+   Defines only profile-specific layout + components.
+   ═══════════════════════════════════════════════ */
+
+/* ─── LAYOUT ────────────────────────────────────
+   No game strip, no right sidebar on this page.
+   Main content starts right after sidebar (260px).
+   ─────────────────────────────────────────────── */
+.profile-main {
+  margin-left: 260px;
+  margin-right: 0;
+  padding: 28px 36px 60px;
+  flex: 1;
+  min-width: 0;
+}
+
+/* ─── PAGE HEADER ───────────────────────────────── */
+.profile-page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 22px;
+}
+
+.profile-page-title {
+  font-family: "Syne", sans-serif;
+  font-size: 26px;
+  font-weight: 800;
+  color: #f1f0ff;
+  letter-spacing: -0.01em;
+  margin: 0;
+}
+
+.profile-edit-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(139, 92, 246, 0.1);
+  border: 1px solid rgba(139, 92, 246, 0.28);
+  border-radius: 10px;
+  padding: 8px 18px;
+  font-family: "Syne", sans-serif;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #c4b5fd;
+  cursor: pointer;
+  transition: background 0.18s, border-color 0.18s, color 0.18s;
+}
+
+.profile-edit-toggle:hover {
+  background: rgba(139, 92, 246, 0.2);
+  border-color: rgba(139, 92, 246, 0.5);
+  color: #e0deff;
+}
+
+.profile-edit-toggle.is-editing {
+  background: rgba(239, 68, 68, 0.08);
+  border-color: rgba(239, 68, 68, 0.25);
+  color: #fca5a5;
+}
+
+/* ─── PROFILE CARD ──────────────────────────────── */
+.profile-card {
+  display: flex;
+  gap: 48px;
+  background: rgba(18, 16, 36, 0.65);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(139, 92, 246, 0.15);
+  border-radius: 20px;
+  padding: 36px 40px;
+  margin-bottom: 16px;
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.35), 0 0 60px rgba(109, 40, 217, 0.07);
+}
+
+/* ── LEFT COLUMN ── */
+.profile-left {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  min-width: 200px;
+  flex-shrink: 0;
+}
+
+/* Avatar */
+.profile-avatar-wrap {
+  position: relative;
+  width: 160px;
+  height: 160px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 3px solid rgba(139, 92, 246, 0.35);
+  box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.1), 0 8px 32px rgba(0, 0, 0, 0.5);
+  background: rgba(18, 16, 36, 0.8);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.profile-avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: filter 0.2s;
+}
+
+.profile-avatar-edit {
+  position: absolute;
+  inset: 0;
+  background: rgba(7, 6, 15, 0.7);
+  backdrop-filter: blur(2px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-family: "DM Sans", sans-serif;
+  font-size: 11px;
+  font-weight: 500;
+  color: #e0deff;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+/* Show overlay only when in edit mode (class toggled by JS) */
+.profile-avatar-wrap.editable:hover .profile-avatar-edit {
+  opacity: 1;
+}
+
+.profile-avatar-file-input {
+  display: none;
+}
+
+/* Identity below avatar */
+.profile-identity {
+  text-align: center;
+  width: 100%;
+}
+
+.profile-username {
+  font-family: "Syne", sans-serif;
+  font-size: 18px;
+  font-weight: 800;
+  color: #f1f0ff;
+  margin: 0 0 4px;
+  word-break: break-word;
+}
+
+.profile-realname {
+  font-family: "DM Sans", sans-serif;
+  font-size: 13px;
+  color: rgba(192, 196, 216, 0.65);
+  margin: 0 0 8px;
+}
+
+.profile-school-tag {
+  display: inline-block;
+  font-family: "Syne", sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: rgba(167, 139, 250, 0.75);
+  background: rgba(139, 92, 246, 0.1);
+  border: 1px solid rgba(139, 92, 246, 0.2);
+  border-radius: 6px;
+  padding: 3px 10px;
+}
+
+/* Identity edit fields */
+.profile-identity-edit {
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+}
+
+/* ── RIGHT COLUMN ── */
+.profile-right {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.profile-section-label {
+  font-family: "Syne", sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  color: #f1f0ff;
+  margin: 0;
+}
+
+/* Info grid — view mode */
+.profile-info-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px 12px;
+}
+
+.pf-info-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.pf-info-label {
+  font-family: "DM Sans", sans-serif;
+  font-size: 11.5px;
+  color: rgba(192, 196, 216, 0.45);
+  font-weight: 400;
+}
+
+.pf-info-value {
+  font-family: "DM Sans", sans-serif;
+  font-size: 13.5px;
+  color: #e0deff;
+  font-weight: 400;
+  word-break: break-word;
+}
+
+.pf-info-long {
+  font-size: 12.5px;
+}
+
+.pf-role-badge {
+  display: inline-block;
+  font-family: "Syne", sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  color: #c4b5fd;
+  background: rgba(124, 58, 237, 0.12);
+  border: 1px solid rgba(139, 92, 246, 0.25);
+  border-radius: 5px;
+  padding: 2px 8px;
+  align-self: flex-start;
+}
+
+/* Info grid — edit mode */
+.profile-edit-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+/* Sub-sections */
+.profile-subsection {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.profile-subsection-title {
+  font-family: "Syne", sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  color: #f1f0ff;
+  margin: 0;
+}
+
+.pf-sub-value {
+  font-family: "DM Sans", sans-serif;
+  font-size: 13px;
+  color: rgba(192, 196, 216, 0.7);
+}
+
+/* Games list */
+.profile-games-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.profile-games-list li {
+  font-family: "DM Sans", sans-serif;
+  font-size: 13px;
+  color: rgba(192, 196, 216, 0.7);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.profile-games-list li::before {
+  content: "";
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: rgba(167, 139, 250, 0.6);
+  flex-shrink: 0;
+}
+
+/* Games chips (edit mode) */
+.profile-games-edit {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.profile-games-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.game-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(124, 58, 237, 0.14);
+  border: 1px solid rgba(139, 92, 246, 0.3);
+  border-radius: 20px;
+  padding: 4px 12px;
+  font-family: "DM Sans", sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  color: #c4b5fd;
+}
+
+.game-chip-remove {
+  background: none;
+  border: none;
+  color: rgba(192, 196, 216, 0.5);
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  transition: color 0.15s;
+}
+
+.game-chip-remove:hover {
+  color: #f87171;
+}
+
+.pf-games-add-row {
+  display: flex;
+  gap: 8px;
+}
+
+.pf-games-input {
+  flex: 1;
+}
+
+.pf-games-add-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: rgba(139, 92, 246, 0.15);
+  border: 1px solid rgba(139, 92, 246, 0.3);
+  color: #a78bfa;
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s;
+  flex-shrink: 0;
+}
+
+.pf-games-add-btn:hover {
+  background: rgba(139, 92, 246, 0.28);
+  color: #c4b5fd;
+}
+
+/* ─── SHARED FIELD STYLES ───────────────────────── */
+.pf-field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.pf-field-span2 {
+  grid-column: span 2;
+}
+
+.pf-label {
+  font-family: "Syne", sans-serif;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: rgba(167, 139, 250, 0.65);
+}
+
+.pf-input {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(139, 92, 246, 0.22);
+  border-radius: 10px;
+  padding: 9px 14px;
+  font-family: "DM Sans", sans-serif;
+  font-size: 13px;
+  color: #e0deff;
+  outline: none;
+  width: 100%;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  -webkit-appearance: none;
+}
+
+.pf-input::placeholder {
+  color: rgba(192, 196, 216, 0.3);
+}
+
+.pf-input:focus {
+  border-color: rgba(139, 92, 246, 0.5);
+  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.12);
+}
+
+/* Colour picker styling for date input */
+.pf-input[type="date"] {
+  color-scheme: dark;
+}
+
+/* ─── SOCIAL MEDIA CARD ─────────────────────────── */
+.profile-social-card {
+  background: rgba(18, 16, 36, 0.65);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(139, 92, 246, 0.13);
+  border-radius: 20px;
+  padding: 24px 32px;
+  margin-bottom: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
+}
+
+.profile-socials-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.social-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(139, 92, 246, 0.15);
+  border-radius: 12px;
+  padding: 9px 16px;
+  cursor: pointer;
+  transition: background 0.18s, border-color 0.18s, transform 0.15s;
+  min-width: 0;
+}
+
+.social-btn:hover {
+  background: rgba(139, 92, 246, 0.1);
+  border-color: rgba(139, 92, 246, 0.35);
+  transform: translateY(-1px);
+}
+
+.social-icon-svg {
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+  border-radius: 6px;
+}
+
+.social-btn-label {
+  font-family: "Syne", sans-serif;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #c4b5fd;
+}
+
+.social-btn-link {
+  font-family: "DM Sans", sans-serif;
+  font-size: 11px;
+  color: rgba(192, 196, 216, 0.45);
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.social-btn.has-link {
+  border-color: rgba(139, 92, 246, 0.3);
+  background: rgba(124, 58, 237, 0.08);
+}
+
+/* ─── ACTION BAR (edit mode) ────────────────────── */
+.profile-action-bar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 16px 0 0;
+}
+
+.profile-action-bar.hidden {
+  display: none;
+}
+
+.pf-btn-cancel {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(139, 92, 246, 0.2);
+  border-radius: 12px;
+  padding: 10px 22px;
+  font-family: "Syne", sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  color: rgba(192, 196, 216, 0.65);
+  cursor: pointer;
+  transition: background 0.18s, color 0.18s;
+}
+
+.pf-btn-cancel:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #e0deff;
+}
+
+.pf-btn-save {
+  background: linear-gradient(135deg, #6d28d9, #7c3aed, #8b5cf6);
+  background-size: 200% 200%;
+  border: none;
+  border-radius: 12px;
+  padding: 10px 28px;
+  font-family: "Syne", sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  color: #fff;
+  cursor: pointer;
+  transition: background-position 0.3s, box-shadow 0.2s, transform 0.15s;
+  box-shadow: 0 4px 18px rgba(109, 40, 217, 0.4);
+}
+
+.pf-btn-save:hover {
+  background-position: right center;
+  box-shadow: 0 6px 26px rgba(109, 40, 217, 0.6);
+  transform: translateY(-1px);
+}
+
+/* ─── UTILITY ───────────────────────────────────── */
+.hidden {
+  display: none !important;
+}
+
+/* ─── SOCIAL MODAL ──────────────────────────────── */
+.pf-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  padding: 16px;
+  animation: pfModalFadeIn 0.22s ease;
+}
+
+.pf-modal-overlay.hidden {
+  display: none;
+}
+
+@keyframes pfModalFadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.pf-modal {
+  position: relative;
+  background: rgba(18, 16, 36, 0.98);
+  border: 1px solid rgba(139, 92, 246, 0.28);
+  border-radius: 20px;
+  padding: 32px 28px 26px;
+  width: 100%;
+  max-width: 360px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.7), 0 0 60px rgba(109, 40, 217, 0.15);
+  animation: pfModalSlideUp 0.26s cubic-bezier(0.34, 1.4, 0.64, 1);
+}
+
+@keyframes pfModalSlideUp {
+  from { transform: translateY(20px) scale(0.96); opacity: 0; }
+  to   { transform: translateY(0) scale(1);       opacity: 1; }
+}
+
+.pf-modal-close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(139, 92, 246, 0.18);
+  color: rgba(192, 196, 216, 0.55);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.18s, color 0.18s;
+}
+
+.pf-modal-close:hover {
+  background: rgba(239, 68, 68, 0.1);
+  color: #f87171;
+  border-color: rgba(239, 68, 68, 0.25);
+}
+
+.pf-modal-icon {
+  font-size: 38px;
+  line-height: 1;
+  margin-bottom: 10px;
+}
+
+.pf-modal-title {
+  font-family: "Syne", sans-serif;
+  font-size: 17px;
+  font-weight: 700;
+  color: #f1f0ff;
+  margin: 0 0 5px;
+  text-align: center;
+}
+
+.pf-modal-sub {
+  font-family: "DM Sans", sans-serif;
+  font-size: 12px;
+  color: rgba(192, 196, 216, 0.45);
+  margin: 0 0 20px;
+  text-align: center;
+}
+
+.pf-modal-field {
+  width: 100%;
+  margin-bottom: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.pf-modal-label {
+  font-family: "Syne", sans-serif;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(167, 139, 250, 0.65);
+}
+
+.pf-modal-input {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(139, 92, 246, 0.22);
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-family: "DM Sans", sans-serif;
+  font-size: 13px;
+  color: #e0deff;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.pf-modal-input::placeholder {
+  color: rgba(192, 196, 216, 0.28);
+}
+
+.pf-modal-input:focus {
+  border-color: rgba(139, 92, 246, 0.5);
+  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.12);
+}
+
+.pf-modal-actions {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 10px;
+  width: 100%;
+}
+
+.pf-modal-btn-cancel {
+  padding: 11px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(139, 92, 246, 0.18);
+  border-radius: 12px;
+  font-family: "Syne", sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  color: rgba(192, 196, 216, 0.6);
+  cursor: pointer;
+  transition: background 0.18s, color 0.18s;
+}
+
+.pf-modal-btn-cancel:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #e0deff;
+}
+
+.pf-modal-btn-save {
+  padding: 11px;
+  background: linear-gradient(135deg, #6d28d9, #7c3aed, #8b5cf6);
+  background-size: 200% 200%;
+  border: none;
+  border-radius: 12px;
+  font-family: "Syne", sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  color: #fff;
+  cursor: pointer;
+  transition: background-position 0.3s, box-shadow 0.2s, transform 0.15s;
+  box-shadow: 0 4px 16px rgba(109, 40, 217, 0.4);
+}
+
+.pf-modal-btn-save:hover {
+  background-position: right center;
+  box-shadow: 0 6px 24px rgba(109, 40, 217, 0.55);
+  transform: translateY(-1px);
+}
+
+.pf-modal-success {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  margin-top: 14px;
+  font-family: "DM Sans", sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  color: #4ade80;
+  animation: pfModalFadeIn 0.3s ease;
+}
+
+.pf-modal-success.hidden {
+  display: none;
+}
+
+.pf-input[readonly] {
+  opacity: 0.72;
+  cursor: not-allowed;
+  background: rgba(255, 255, 255, 0.035);
+}
+
+/* ─── RESPONSIVE ────────────────────────────────── */
+@media (max-width: 1100px) {
+  .profile-card {
+    flex-direction: column;
+    gap: 28px;
+  }
+
+  .profile-left {
+    flex-direction: row;
+    align-items: flex-start;
+    min-width: 0;
+  }
+
+  .profile-identity {
+    text-align: left;
+  }
+}
+
+@media (max-width: 900px) {
+  .profile-info-grid,
+  .profile-edit-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .pf-field-span2 {
+    grid-column: span 2;
+  }
+}
+
+@media (max-width: 768px) {
+  .profile-main {
+    margin-left: 0;
+    padding: 16px;
+  }
+
+  .profile-info-grid,
+  .profile-edit-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .profile-left {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .profile-identity {
+    text-align: center;
+  }
+}

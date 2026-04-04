@@ -30,7 +30,7 @@
     .forEach((link) => {
       const label = (link.textContent || "").trim().toLowerCase();
       if (label === "logout") {
-        link.setAttribute("href", "../auth/logout.html");
+        link.setAttribute("href", "../auth/logout-confirm.html");
       }
     });
 
@@ -43,4 +43,9 @@
     (link) => link.textContent.trim().toLowerCase() === "home",
   );
   homeLink?.setAttribute("href", "../player/dashboard.html");
+
+  const tournamentsLink = Array.from(
+    document.querySelectorAll(".nav-link-item"),
+  ).find((link) => link.textContent.trim().toLowerCase() === "tournaments");
+  tournamentsLink?.setAttribute("href", "../player/tournaments.html");
 })();

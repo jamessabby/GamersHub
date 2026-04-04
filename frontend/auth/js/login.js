@@ -217,14 +217,17 @@
     if (!validate()) return;
     setLoading(true);
     try {
-      await loginUser({
+      const payload = await loginUser({
         username: usernameInput.value.trim(),
         password: passwordInput.value,
       });
       resetAttempts();
+      const authenticatedUser = payload.user || {};
       auth?.setSession({
-        username: usernameInput.value.trim(),
-        role: "player",
+        userId: authenticatedUser.userId,
+        username: authenticatedUser.username || usernameInput.value.trim(),
+        role: authenticatedUser.role || "user",
+        email: authenticatedUser.email || "",
       });
       btnText.textContent = "Welcome back";
       setTimeout(() => {

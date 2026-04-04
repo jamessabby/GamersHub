@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GamersHub - Confirm Logout</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./css/logout-confirm.css" />
+  </head>
+  <body>
+    <nav class="lo-nav">
+      <div class="lo-nav-inner">
+        <a href="../player/dashboard.html" class="lo-nav-logo" aria-label="GamersHub home">
+          <img
+            src="../assets/img/logo.png"
+            alt="GamersHub"
+            class="lo-logo-img"
+            onerror="this.style.display='none'"
+          />
+        </a>
+
+        <div class="lo-nav-links">
+          <a href="../player/dashboard.html" class="lo-nav-link">Home</a>
+          <a href="../player/tournaments.html" class="lo-nav-link">Tournaments</a>
+          <a href="../auth/login.html" class="lo-nav-link">Login</a>
+        </div>
+      </div>
+    </nav>
+
+    <main class="lo-body">
+      <div class="lo-glow" aria-hidden="true"></div>
+
+      <section
+        class="lo-card"
+        role="dialog"
+        aria-labelledby="loQuestion"
+        aria-describedby="loMessage"
+        aria-modal="true"
+      >
+        <div class="lo-card-icon" aria-hidden="true">
+          <svg
+            width="28"
+            height="28"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.8"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+            <polyline points="16 17 21 12 16 7" />
+            <line x1="21" y1="12" x2="9" y2="12" />
+          </svg>
+        </div>
+
+        <h1 class="lo-card-question" id="loQuestion">
+          Are you sure you want to logout?
+        </h1>
+        <p class="lo-card-message" id="loMessage">
+          You will need to sign in again to continue using your account.
+        </p>
+
+        <div class="lo-card-actions">
+          <button class="lo-btn lo-btn-cancel" id="cancelBtn" type="button">
+            Cancel
+          </button>
+          <button class="lo-btn lo-btn-logout" id="logoutBtn" type="button">
+            Logout
+          </button>
+        </div>
+      </section>
+    </main>
+
+    <script src="../shared/js/auth-state.js" defer></script>
+    <script src="./js/logout-confirm.js" defer></script>
+  </body>
+</html>

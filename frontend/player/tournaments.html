@@ -1,3 +1,388 @@
-.
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GamersHub - Tournaments</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+    />
+    <!-- Shared base: body, top-nav, sidebar, friends panel, reset -->
+    <link rel="stylesheet" href="./css/dashboard.css" />
+    <link rel="stylesheet" href="./css/tournaments.css" />
+  </head>
+  <body>
 
+    <!-- ── TOP NAVBAR ── -->
+    <nav class="top-nav" id="topNav">
+      <div class="nav-inner">
+        <a href="#" class="nav-logo-wrap">
+          <img
+            src="../assets/img/logo.png"
+            alt="GamersHub"
+            class="nav-logo"
+            onerror="this.style.display='none'"
+          />
+        </a>
+
+        <div class="search-wrap">
+          <svg class="search-icon" width="15" height="15" viewBox="0 0 24 24"
+               fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"/>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+          </svg>
+          <input
+            type="text"
+            class="search-input"
+            placeholder="Search tournaments, teams, games..."
+            id="searchInput"
+          />
+        </div>
+
+        <div class="nav-right">
+          <button class="nav-bell" id="bellBtn" aria-label="Notifications">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor" stroke-width="2">
+              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+              <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+            </svg>
+          </button>
+          <a href="#" class="nav-link-item">Home</a>
+          <a href="#" class="nav-link-item nav-link-active">Tournaments</a>
+          <button class="nav-account" id="navAccount">
+            <img
+              src="../assets/icons/player-dashboard-icons/user-profile.png"
+              alt="Account"
+              class="nav-avatar"
+              onerror="this.style.background='rgba(124,58,237,0.4)'"
+            />
+            <span id="navAccountName" data-gh-user="username">Account</span>
+          </button>
+        </div>
+      </div>
+    </nav>
+
+    <!-- ── PAGE BODY ── -->
+    <div class="page-body">
+
+      <!-- ── LEFT SIDEBAR ── -->
+      <aside class="left-sidebar" id="leftSidebar">
+        <div class="sidebar-brand">
+          <img
+            src="../assets/img/logo.png"
+            alt="GamersHub"
+            class="sidebar-logo"
+            onerror="this.style.display='none'"
+          />
+          <span class="sidebar-brand-name">GamersHub</span>
+        </div>
+
+        <nav class="sidebar-nav">
+          <a href="./dashboard.html" class="sidebar-link" data-page="home">
+            <span class="sidebar-icon">
+              <img src="../assets/icons/player-sidebar/home-icon.png" alt="" />
+            </span>
+            <span>Home</span>
+          </a>
+          <a href="./livestream.html" class="sidebar-link" data-page="livestreams">
+            <span class="sidebar-icon">
+              <img src="../assets/icons/player-sidebar/livestream-icon.svg" alt="" />
+            </span>
+            <span>Livestreams</span>
+          </a>
+          <a href="./events.html" class="sidebar-link" data-page="events">
+            <span class="sidebar-icon">
+              <img src="../assets/icons/player-sidebar/events-icon.svg" alt="" />
+            </span>
+            <span>Events</span>
+          </a>
+          <a href="./profile.html" class="sidebar-link" data-page="profile">
+            <span class="sidebar-icon">
+              <img src="../assets/icons/player-sidebar/profile-icon.svg" alt="" />
+            </span>
+            <span>Profile</span>
+          </a>
+        </nav>
+
+        <a href="../auth/logout-confirm.html" class="sidebar-logout">
+          <span class="sidebar-icon">
+            <img src="../assets/icons/player-sidebar/logout-icon.svg" alt="" />
+          </span>
+          <span>Logout</span>
+        </a>
+      </aside>
+
+      <!-- ── MAIN CONTENT ── -->
+      <main class="trn-main" id="trnMain">
+
+        <!-- Page heading -->
+        <div class="trn-page-header">
+          <h1 class="trn-page-title">Tournaments</h1>
+        </div>
+
+        <!-- Tournament list -->
+        <section class="trn-list" id="trnList" aria-label="Tournament listings">
+
+          <!-- Tournament 1 — Valorant -->
+          <article class="trn-row" data-id="1">
+            <div class="trn-row-thumb">
+              <img
+                src="../assets/img/livestreams/valorant-select.png"
+                alt="Valorant Inter-college"
+                onerror="this.style.opacity='0'"
+              />
+              <span class="trn-row-badge trn-badge-open">Open</span>
+            </div>
+            <div class="trn-row-body">
+              <div class="trn-row-top">
+                <span class="trn-row-game-tag">Valorant</span>
+                <span class="trn-row-type">Inter-college</span>
+              </div>
+              <h2 class="trn-row-title">Valorant Inter-college</h2>
+              <p class="trn-row-desc">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
+              <div class="trn-row-meta">
+                <span class="trn-row-date">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="4" width="18" height="18" rx="2"/>
+                    <line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+                  </svg>
+                  Opening: February 19, 2026
+                </span>
+                <span class="trn-row-prize">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="8" r="6"/><path d="M15.477 12.89L17 22l-5-3-5 3 1.523-9.11"/>
+                  </svg>
+                  P5,000 Prize Pool
+                </span>
+              </div>
+            </div>
+            <button class="trn-row-cta" aria-label="View Valorant Inter-college details">
+              View Details
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <polyline points="9 18 15 12 9 6"/>
+              </svg>
+            </button>
+          </article>
+
+          <!-- Tournament 2 — MLBB -->
+          <article class="trn-row" data-id="2">
+            <div class="trn-row-thumb">
+              <img
+                src="../assets/img/livestreams/ml-select.jpg"
+                alt="MLBB Inter-department"
+                onerror="this.style.opacity='0'"
+              />
+              <span class="trn-row-badge trn-badge-reg">Registration Open</span>
+            </div>
+            <div class="trn-row-body">
+              <div class="trn-row-top">
+                <span class="trn-row-game-tag">MLBB</span>
+                <span class="trn-row-type">Inter-department</span>
+              </div>
+              <h2 class="trn-row-title">MLBB Inter-department</h2>
+              <p class="trn-row-desc">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
+              <div class="trn-row-meta">
+                <span class="trn-row-date">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="4" width="18" height="18" rx="2"/>
+                    <line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+                  </svg>
+                  Opening: February 19, 2026
+                </span>
+                <span class="trn-row-prize">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="8" r="6"/><path d="M15.477 12.89L17 22l-5-3-5 3 1.523-9.11"/>
+                  </svg>
+                  P10,000 Prize Pool
+                </span>
+              </div>
+            </div>
+            <button class="trn-row-cta" aria-label="View MLBB Inter-department details">
+              View Details
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <polyline points="9 18 15 12 9 6"/>
+              </svg>
+            </button>
+          </article>
+
+          <!-- Tournament 3 — COD -->
+          <article class="trn-row" data-id="3">
+            <div class="trn-row-thumb">
+              <img
+                src="../assets/img/livestreams/cod-select.jpg"
+                alt="CODM Inter-school tournament"
+                onerror="this.style.opacity='0'"
+              />
+              <span class="trn-row-badge trn-badge-soon">Coming Soon</span>
+            </div>
+            <div class="trn-row-body">
+              <div class="trn-row-top">
+                <span class="trn-row-game-tag">COD Mobile</span>
+                <span class="trn-row-type">Inter-school</span>
+              </div>
+              <h2 class="trn-row-title">CODM Inter-school tournament</h2>
+              <p class="trn-row-desc">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
+              <div class="trn-row-meta">
+                <span class="trn-row-date">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="4" width="18" height="18" rx="2"/>
+                    <line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+                  </svg>
+                  Opening: February 19, 2026
+                </span>
+                <span class="trn-row-prize">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="8" r="6"/><path d="M15.477 12.89L17 22l-5-3-5 3 1.523-9.11"/>
+                  </svg>
+                  P8,000 Prize Pool
+                </span>
+              </div>
+            </div>
+            <button class="trn-row-cta" aria-label="View CODM tournament details">
+              View Details
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <polyline points="9 18 15 12 9 6"/>
+              </svg>
+            </button>
+          </article>
+
+          <!-- Tournament 4 — PUBG -->
+          <article class="trn-row" data-id="4">
+            <div class="trn-row-thumb">
+              <img
+                src="../assets/img/livestreams/pubg-select.jpg"
+                alt="PUBG Mobile Grand Championship"
+                onerror="this.style.opacity='0'"
+              />
+              <span class="trn-row-badge trn-badge-live">
+                <span class="trn-live-dot"></span>
+                Live Now
+              </span>
+            </div>
+            <div class="trn-row-body">
+              <div class="trn-row-top">
+                <span class="trn-row-game-tag">PUBG Mobile</span>
+                <span class="trn-row-type">University Series</span>
+              </div>
+              <h2 class="trn-row-title">PUBG Mobile Grand Championship</h2>
+              <p class="trn-row-desc">Top 16 university teams battle it out across six rounds. Live-streamed with full broadcast coverage on GamersHub.</p>
+              <div class="trn-row-meta">
+                <span class="trn-row-date">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="4" width="18" height="18" rx="2"/>
+                    <line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+                  </svg>
+                  Opening: March 22, 2026
+                </span>
+                <span class="trn-row-prize">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="8" r="6"/><path d="M15.477 12.89L17 22l-5-3-5 3 1.523-9.11"/>
+                  </svg>
+                  P20,000 Prize Pool
+                </span>
+              </div>
+            </div>
+            <button class="trn-row-cta" aria-label="View PUBG Championship details">
+              View Details
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <polyline points="9 18 15 12 9 6"/>
+              </svg>
+            </button>
+          </article>
+
+        </section>
+      </main>
+
+      <!-- ── RIGHT SIDEBAR — FRIENDS ── -->
+      <aside class="right-sidebar">
+        <h3 class="friends-title">Friends</h3>
+        <ul class="friends-list">
+
+          <li class="friend-item">
+            <div class="friend-avatar">
+              <img src="../assets/icons/player-dashboard-icons/user-profile.png" alt=""
+                   onerror="this.style.background='rgba(124,58,237,0.3)'" />
+            </div>
+            <div class="friend-info">
+              <span class="friend-name">Player user</span>
+              <span class="friend-status offline">
+                <img src="../assets/icons/player-dashboard-icons/offline.svg" alt="" />
+                Offline
+              </span>
+            </div>
+          </li>
+
+          <li class="friend-item">
+            <div class="friend-avatar">
+              <img src="../assets/icons/player-dashboard-icons/user-profile.png" alt=""
+                   onerror="this.style.background='rgba(124,58,237,0.3)'" />
+            </div>
+            <div class="friend-info">
+              <span class="friend-name">Player user</span>
+              <span class="friend-status offline">
+                <img src="../assets/icons/player-dashboard-icons/offline.svg" alt="" />
+                Offline
+              </span>
+            </div>
+          </li>
+
+          <li class="friend-item">
+            <div class="friend-avatar">
+              <img src="../assets/icons/player-dashboard-icons/user-profile.png" alt=""
+                   onerror="this.style.background='rgba(124,58,237,0.3)'" />
+            </div>
+            <div class="friend-info">
+              <span class="friend-name">Player user</span>
+              <span class="friend-status idle">
+                <img src="../assets/icons/player-dashboard-icons/idle.png" alt="" />
+                Idle
+              </span>
+            </div>
+          </li>
+
+          <li class="friend-item">
+            <div class="friend-avatar">
+              <img src="../assets/icons/player-dashboard-icons/user-profile.png" alt=""
+                   onerror="this.style.background='rgba(124,58,237,0.3)'" />
+            </div>
+            <div class="friend-info">
+              <span class="friend-name">Player user</span>
+              <span class="friend-status watching">
+                <img src="../assets/icons/player-dashboard-icons/watching.png" alt="" />
+                Watching Valorant
+              </span>
+            </div>
+          </li>
+
+          <li class="friend-item">
+            <div class="friend-avatar">
+              <img src="../assets/icons/player-dashboard-icons/user-profile.png" alt=""
+                   onerror="this.style.background='rgba(124,58,237,0.3)'" />
+            </div>
+            <div class="friend-info">
+              <span class="friend-name">Player user</span>
+              <span class="friend-status busy">
+                <img src="../assets/icons/player-dashboard-icons/busy.svg" alt="" />
+                Busy
+              </span>
+            </div>
+          </li>
+
+        </ul>
+      </aside>
+
+    </div><!-- /page-body -->
+
+    <script src="../shared/js/auth-state.js" defer></script>
+    <script src="../shared/js/player-shell.js" defer></script>
+    <script src="./js/tournaments.js" defer></script>
+  </body>
+</html>
 
