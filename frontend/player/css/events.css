@@ -73,6 +73,10 @@
   min-width: 0;
 }
 
+.events-main.events-main--solo {
+  margin-left: 260px;
+}
+
 /* ─── FEATURED HERO BANNER ─────────────────────── */
 .events-hero {
   margin-bottom: 20px;
@@ -434,6 +438,10 @@
     margin-left: 260px;
   }
 
+  .events-main.events-main--solo {
+    margin-left: 260px;
+  }
+
   .events-hero-title {
     font-size: 20px;
   }
@@ -444,6 +452,10 @@
     margin-left: 0;
     margin-right: 0;
     padding: 16px;
+  }
+
+  .events-main.events-main--solo {
+    margin-left: 0;
   }
 
   .event-row {

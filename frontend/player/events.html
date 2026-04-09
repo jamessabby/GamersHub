@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>GamersHub – Events</title>
+    <title>GamersHub - Events</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -14,13 +14,10 @@
       rel="stylesheet"
       href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
     />
-    <!-- Shared base system: body, navbar, sidebar, reset -->
     <link rel="stylesheet" href="./css/dashboard.css" />
-    <!-- Page-specific -->
     <link rel="stylesheet" href="./css/events.css" />
   </head>
   <body>
-    <!-- ── TOP NAVBAR ── -->
     <nav class="top-nav" id="topNav">
       <div class="nav-inner">
         <a href="#" class="nav-logo-wrap">
@@ -48,8 +45,8 @@
           <input
             type="text"
             class="search-input"
-            placeholder="Search"
             id="searchInput"
+            placeholder="Search events, games, schools"
           />
         </div>
 
@@ -69,23 +66,21 @@
           </button>
           <a href="#" class="nav-link-item">Home</a>
           <a href="#" class="nav-link-item">Tournaments</a>
-          <button class="nav-account" id="navAccount">
+          <button class="nav-account">
             <img
               src="../assets/icons/player-dashboard-icons/user-profile.png"
               alt="Account"
               class="nav-avatar"
               onerror="this.style.background='rgba(124,58,237,0.4)'"
             />
-            <span id="navAccountName" data-gh-user="username">Account</span>
+            <span data-gh-user="username">Account</span>
           </button>
         </div>
       </div>
     </nav>
 
-    <!-- ── PAGE BODY ── -->
     <div class="page-body">
-      <!-- ── LEFT SIDEBAR ── -->
-      <aside class="left-sidebar" id="leftSidebar">
+      <aside class="left-sidebar">
         <div class="sidebar-brand">
           <img
             src="../assets/img/logo.png"
@@ -103,11 +98,7 @@
             </span>
             <span>Home</span>
           </a>
-          <a
-            href="./livestream.html"
-            class="sidebar-link"
-            data-page="livestreams"
-          >
+          <a href="./livestream.html" class="sidebar-link" data-page="livestreams">
             <span class="sidebar-icon">
               <img
                 src="../assets/icons/player-sidebar/livestream-icon.svg"
@@ -116,25 +107,15 @@
             </span>
             <span>Livestreams</span>
           </a>
-          <a
-            href="./events.html"
-            class="sidebar-link active"
-            data-page="events"
-          >
+          <a href="./events.html" class="sidebar-link active" data-page="events">
             <span class="sidebar-icon">
-              <img
-                src="../assets/icons/player-sidebar/events-icon.svg"
-                alt=""
-              />
+              <img src="../assets/icons/player-sidebar/events-icon.svg" alt="" />
             </span>
             <span>Events</span>
           </a>
           <a href="./profile.html" class="sidebar-link" data-page="profile">
             <span class="sidebar-icon">
-              <img
-                src="../assets/icons/player-sidebar/profile-icon.svg"
-                alt=""
-              />
+              <img src="../assets/icons/player-sidebar/profile-icon.svg" alt="" />
             </span>
             <span>Profile</span>
           </a>
@@ -148,288 +129,51 @@
         </a>
       </aside>
 
-      <!-- ── GAME ICON STRIP (separate fixed column, Figma-exact) ── -->
-      <div class="game-strip" id="gameStrip">
-        <button class="game-strip-btn active" data-game="all" title="All Games">
-          <img src="../assets/img/livestreams/ml-select.jpg" alt="All" />
-        </button>
-        <button class="game-strip-btn" data-game="valorant" title="Valorant">
-          <img
-            src="../assets/img/livestreams/valorant-select.png"
-            alt="Valorant"
-          />
-        </button>
-        <button class="game-strip-btn" data-game="cod" title="Call of Duty">
-          <img src="../assets/img/livestreams/cod-select.jpg" alt="COD" />
-        </button>
-        <button class="game-strip-btn" data-game="pubg" title="PUBG Mobile">
-          <img src="../assets/img/livestreams/pubg-select.jpg" alt="PUBG" />
-        </button>
-        <button class="game-strip-btn" data-game="mlbb" title="Mobile Legends">
-          <img src="../assets/img/livestreams/event3-icon.jpg" alt="MLBB" />
-        </button>
-      </div>
-
-      <!-- ── MAIN CONTENT ── -->
-      <main class="events-main" id="eventsMain">
-        <!-- ── FEATURED BANNER ── -->
-        <section class="events-hero">
-          <div class="events-hero-inner">
-            <img
-              src="../assets/img/livestreams/event2-icon.png"
-              alt="Featured event banner"
-              class="events-hero-bg"
-              onerror="this.style.opacity='0'"
-            />
-            <div class="events-hero-overlay"></div>
-            <div class="events-hero-content">
-              <span class="events-hero-label">
-                <span class="events-hero-label-dot"></span>
-                Featured Event
-              </span>
-              <h1 class="events-hero-title">Valorant Champions Tour</h1>
-              <p class="events-hero-sub">
-                DLSUD CEAT Esports · University Championship Series
-              </p>
-              <div class="events-hero-chips">
-                <span class="events-hero-chip">
-                  <svg
-                    width="12"
-                    height="12"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                  >
-                    <rect x="3" y="4" width="18" height="18" rx="2" />
-                    <line x1="16" y1="2" x2="16" y2="6" />
-                    <line x1="8" y1="2" x2="8" y2="6" />
-                    <line x1="3" y1="10" x2="21" y2="10" />
-                  </svg>
-                  March 28, 2026
-                </span>
-                <span class="events-hero-chip">
-                  <svg
-                    width="12"
-                    height="12"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                  >
-                    <circle cx="12" cy="12" r="10" />
-                    <polyline points="12 6 12 12 16 14" />
-                  </svg>
-                  2:00 PM – 6:00 PM
-                </span>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <!-- ── FILTER PILLS ── -->
-        <div class="events-filters" id="filterBar" role="tablist">
-          <button
-            class="events-pill active"
-            data-filter="all"
-            role="tab"
-            aria-selected="true"
-          >
-            All University
-          </button>
-          <button
-            class="events-pill"
-            data-filter="community"
-            role="tab"
-            aria-selected="false"
-          >
-            Community
-          </button>
-          <button
-            class="events-pill"
-            data-filter="valorant"
-            role="tab"
-            aria-selected="false"
-          >
-            Valorant
-          </button>
-          <button
-            class="events-pill"
-            data-filter="mlbb"
-            role="tab"
-            aria-selected="false"
-          >
-            MLBB
-          </button>
-          <button
-            class="events-pill"
-            data-filter="pubg"
-            role="tab"
-            aria-selected="false"
-          >
-            PUBG Mobile
-          </button>
-          <button
-            class="events-pill"
-            data-filter="cod"
-            role="tab"
-            aria-selected="false"
-          >
-            COD Mobile
-          </button>
-        </div>
-
-        <!-- ── EVENT ROWS ── -->
-        <section
-          class="events-list"
-          id="eventsList"
-          aria-label="Upcoming events"
-        >
-          <article class="event-row" data-filter="mlbb">
-            <div class="event-row-thumb">
-              <img
-                src="../assets/img/livestreams/event1-icon.png"
-                alt="MLBB Championship"
-                onerror="this.style.opacity='0'"
-              />
-            </div>
-            <div class="event-row-body">
-              <h3 class="event-row-title">MLBB Championship: DLSUD vs NU-D</h3>
-              <p class="event-row-desc">
-                Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do
-                eiusmod tempor incididunt ut labore et dolore magna aliqua.
-              </p>
-              <p class="event-row-meta">Date: February 19, 2026</p>
-              <p class="event-row-meta">Time: 1:00 PM – 4:00 PM</p>
-              <span class="event-row-org">DLSUD ULS</span>
-            </div>
-          </article>
-
-          <article class="event-row" data-filter="valorant">
-            <div class="event-row-thumb">
-              <img
-                src="../assets/img/livestreams/event2-icon.png"
-                alt="Valorant Championship"
-                onerror="this.style.opacity='0'"
-              />
-            </div>
-            <div class="event-row-body">
-              <h3 class="event-row-title">
-                Valorant Championship: DLSUD vs NU-D
-              </h3>
-              <p class="event-row-desc">
-                Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do
-                eiusmod tempor incididunt ut labore et dolore magna aliqua.
-              </p>
-              <p class="event-row-meta">Date: February 19, 2026</p>
-              <p class="event-row-meta">Time: 4:00 PM – 6:00 PM</p>
-              <span class="event-row-org">DLSUD ULS</span>
-            </div>
-          </article>
-
-          <article class="event-row" data-filter="pubg">
-            <div class="event-row-thumb">
-              <img
-                src="../assets/img/livestreams/thumbnail.jpg"
-                alt="PUBG Grand Finals"
-                onerror="this.style.opacity='0'"
-              />
-            </div>
-            <div class="event-row-body">
-              <h3 class="event-row-title">
-                PUBG Mobile Grand Finals – Season 4
-              </h3>
-              <p class="event-row-desc">
-                Top 16 university teams battle it out across six rounds.
-                Live-streamed with full broadcast coverage on GamersHub.
-              </p>
-              <p class="event-row-meta">Date: March 22, 2026</p>
-              <p class="event-row-meta">Time: 10:00 AM – 5:00 PM</p>
-              <span class="event-row-org">DLSUD CEAT</span>
-            </div>
-          </article>
-
-          <article class="event-row" data-filter="community">
-            <div class="event-row-thumb">
-              <img
-                src="../assets/img/livestreams/event3-icon.jpg"
-                alt="Community Cup"
-                onerror="this.style.opacity='0'"
-              />
-            </div>
-            <div class="event-row-body">
-              <h3 class="event-row-title">
-                GamersHub Community Cup – Spring 2026
-              </h3>
-              <p class="event-row-desc">
-                Open to all registered players. Multi-title festival bracket
-                across MLBB, Valorant, and PUBG Mobile in one day.
-              </p>
-              <p class="event-row-meta">Date: April 5, 2026</p>
-              <p class="event-row-meta">Time: 9:00 AM – 8:00 PM</p>
-              <span class="event-row-org">GHub Community</span>
-            </div>
-          </article>
-
-          <article class="event-row" data-filter="cod">
-            <div class="event-row-thumb">
-              <img
-                src="../assets/img/livestreams/cod-select.jpg"
-                alt="COD Intercollege Showdown"
-                onerror="this.style.opacity='0'"
-              />
-            </div>
-            <div class="event-row-body">
-              <h3 class="event-row-title">COD Mobile Intercollege Showdown</h3>
-              <p class="event-row-desc">
-                Four colleges in a full round-robin bracket. Finals streamed
-                live with 3.2K concurrent viewers on GamersHub.
-              </p>
-              <p class="event-row-meta">Date: March 8, 2026</p>
-              <p class="event-row-meta">Time: 1:00 PM – 7:00 PM</p>
-              <span class="event-row-org">DLSUD ULS</span>
-            </div>
-          </article>
-
-          <article class="event-row" data-filter="community">
-            <div class="event-row-thumb">
-              <img
-                src="../assets/img/livestreams/dlsud-logo.jpg"
-                alt="Freshmen Cup"
-                onerror="this.style.opacity='0'"
-              />
-            </div>
-            <div class="event-row-body">
-              <h3 class="event-row-title">Freshmen Esports Cup 2026</h3>
-              <p class="event-row-desc">
-                First-year-exclusive tournament. Register your squad in MLBB,
-                Valorant, or PUBG and compete for exclusive GamersHub badges.
-              </p>
-              <p class="event-row-meta">Date: April 12, 2026</p>
-              <p class="event-row-meta">Time: 8:00 AM – 6:00 PM</p>
-              <span class="event-row-org">GHub Community</span>
-            </div>
-          </article>
-
-          <!-- Empty state -->
-          <div class="events-empty hidden" id="eventsEmpty">
-            <div class="events-empty-icon">🎮</div>
-            <p class="events-empty-title">No events found</p>
-            <p class="events-empty-sub">
-              Try a different filter or check back soon.
+      <main class="events-main events-main--solo">
+        <section class="gh-page-shell">
+          <div class="gh-page-heading">
+            <span class="gh-page-kicker">Campus Events</span>
+            <h1 class="gh-page-title">Events</h1>
+            <p class="gh-page-subtitle">
+              Event listings will appear here once organizers publish real
+              schedules and event records to the platform.
             </p>
           </div>
+
+          <section class="dashboard-empty-card">
+            <div>
+              <div class="gh-empty-icon">EVT</div>
+              <h2 class="gh-empty-title">No upcoming events yet</h2>
+              <p class="gh-empty-subtitle">
+                We removed placeholder tournaments and sample dates so this page
+                now reflects the actual database state instead of mock content.
+              </p>
+              <div class="gh-empty-actions">
+                <button
+                  type="button"
+                  class="gh-empty-button"
+                  data-gh-notification-title="Event alerts enabled"
+                  data-gh-notification-body="New event announcements will be saved in your notification panel when organizers start publishing events."
+                  data-gh-notification-href="../player/events.html"
+                  data-gh-notification-label="Saved To Notifications"
+                >
+                  Notify Me About New Events
+                </button>
+                <a href="./tournaments.html" class="gh-empty-button ghost">
+                  Open Tournaments
+                </a>
+              </div>
+              <p class="gh-empty-note">
+                This keeps the page clean until the SSMS event data is ready.
+              </p>
+            </div>
+          </section>
         </section>
       </main>
     </div>
-    <!-- /page-body -->
 
-    <!-- Shared scripts (auth state, player shell) — optional, won't break if missing -->
     <script src="../shared/js/auth-state.js" defer></script>
     <script src="../shared/js/player-shell.js" defer></script>
-    <!-- Page script -->
     <script src="./js/events.js" defer></script>
   </body>
 </html>
-
-

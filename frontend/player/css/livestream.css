@@ -57,6 +57,10 @@
   margin-left: 332px;
 }
 
+.main-feed.main-feed--solo {
+  margin-left: 260px;
+}
+
 /* ── FEATURED EVENTS SECTION ── */
 .featured-section {
   margin-bottom: 28px;
@@ -384,6 +388,10 @@
     margin-left: 260px;
   } /* revert to sidebar-only offset */
 
+  .main-feed.main-feed--solo {
+    margin-left: 260px;
+  }
+
   .featured-slide {
     transform: translateY(18px);
   }
@@ -416,6 +424,10 @@
 @media (max-width: 480px) {
   .channels-grid {
     grid-template-columns: 1fr;
+  }
+
+  .main-feed.main-feed--solo {
+    margin-left: 0;
   }
 }
 

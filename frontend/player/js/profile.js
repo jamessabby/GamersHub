@@ -6,13 +6,13 @@
 
   const defaultState = {
     userId: session.userId || null,
-    username: session.username || "Sample username",
+    username: session.username || "Account",
     email: session.email || "",
     role: session.role || "user",
     firstName: "",
     lastName: "",
     dateOfBirth: "",
-    displayName: session.username || "Sample username",
+    displayName: session.username || "",
     phoneNumber: "",
     school: "",
     schoolTag: "",

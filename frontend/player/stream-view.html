@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>GamersHub – Stream View</title>
+    <title>GamersHub - Stream View</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -18,7 +18,6 @@
     <link rel="stylesheet" href="./css/stream-view.css" />
   </head>
   <body>
-    <!-- ── TOP NAVBAR ── -->
     <nav class="top-nav" id="topNav">
       <div class="nav-inner">
         <a href="#" class="nav-logo-wrap">
@@ -46,7 +45,7 @@
           <input
             type="text"
             class="search-input"
-            placeholder="Search streams, players, games…"
+            placeholder="Search streams, players, games"
             id="searchInput"
           />
         </div>
@@ -65,10 +64,8 @@
               <path d="M13.73 21a2 2 0 0 1-3.46 0" />
             </svg>
           </button>
-
           <a href="#" class="nav-link-item">Home</a>
           <a href="#" class="nav-link-item">Tournaments</a>
-
           <button class="nav-account">
             <img
               src="../assets/icons/player-dashboard-icons/user-profile.png"
@@ -82,9 +79,7 @@
       </div>
     </nav>
 
-    <!-- ── PAGE BODY ── -->
     <div class="page-body">
-      <!-- ── LEFT SIDEBAR ── -->
       <aside class="left-sidebar" id="leftSidebar">
         <div class="sidebar-brand">
           <img
@@ -97,11 +92,7 @@
         </div>
 
         <nav class="sidebar-nav">
-          <a
-            href="../player/dashboard.html"
-            class="sidebar-link"
-            data-page="home"
-          >
+          <a href="../player/dashboard.html" class="sidebar-link" data-page="home">
             <span class="sidebar-icon">
               <img src="../assets/icons/player-sidebar/home-icon.png" alt="" />
             </span>
@@ -120,21 +111,15 @@
             </span>
             <span>Livestreams</span>
           </a>
-          <a href="#" class="sidebar-link" data-page="events">
+          <a href="../player/events.html" class="sidebar-link" data-page="events">
             <span class="sidebar-icon">
-              <img
-                src="../assets/icons/player-sidebar/events-icon.svg"
-                alt=""
-              />
+              <img src="../assets/icons/player-sidebar/events-icon.svg" alt="" />
             </span>
             <span>Events</span>
           </a>
-          <a href="#" class="sidebar-link" data-page="profile">
+          <a href="../player/profile.html" class="sidebar-link" data-page="profile">
             <span class="sidebar-icon">
-              <img
-                src="../assets/icons/player-sidebar/profile-icon.svg"
-                alt=""
-              />
+              <img src="../assets/icons/player-sidebar/profile-icon.svg" alt="" />
             </span>
             <span>Profile</span>
           </a>
@@ -148,311 +133,76 @@
         </a>
       </aside>
 
-      <!-- ── MAIN VIDEO FEED ── -->
       <main class="main-feed stream-view-feed">
-        <!-- VIDEO PLAYER -->
-        <div class="stream-player-wrap">
-          <!-- Live badge overlay -->
-          <div class="stream-live-badge">
-            <span class="stream-live-dot"></span>
-            LIVE
+        <section class="gh-page-shell">
+          <div class="gh-page-heading">
+            <span class="gh-page-kicker">Broadcast Room</span>
+            <h1 class="gh-page-title">Stream View</h1>
+            <p class="gh-page-subtitle">
+              This page is ready for real livestream sessions, but no active
+              broadcast data exists in the database yet.
+            </p>
           </div>
-          <!-- Viewer count overlay -->
-          <div class="stream-viewer-count">
-            <svg
-              width="13"
-              height="13"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-            >
-              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-              <circle cx="12" cy="12" r="3" />
-            </svg>
-            <span id="viewerCount">38.2K</span>
-          </div>
-          <!-- Placeholder video frame -->
-          <img
-            src="../assets/img/livestreams/thumbnail.jpg"
-            alt="Stream"
-            class="stream-video-placeholder"
-            onerror="this.style.background='rgba(18,16,36,0.9)'"
-          />
-          <!-- Video controls bar -->
-          <div class="stream-controls-bar">
-            <div class="stream-controls-left">
-              <button class="stream-ctrl-btn" title="Play/Pause">
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="currentColor"
-                >
-                  <rect x="6" y="4" width="4" height="16" rx="1" />
-                  <rect x="14" y="4" width="4" height="16" rx="1" />
-                </svg>
-              </button>
-              <div class="stream-timer">1:24:41 / 4:51:55</div>
+
+          <section class="stream-player-wrap stream-player-empty">
+            <div class="stream-player-empty-copy">
+              <span class="stream-player-empty-kicker">No Active Broadcast</span>
+              <h2 class="stream-player-empty-title">There is no live stream to show yet</h2>
+              <p class="stream-player-empty-sub">
+                We removed fake viewer counts, fake reactions, and sample chat so
+                this page stays aligned with the real backend state.
+              </p>
             </div>
-            <div class="stream-controls-right">
-              <button class="stream-ctrl-btn" title="Volume">
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                >
-                  <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
-                  <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
-                </svg>
-              </button>
-              <button class="stream-ctrl-btn" title="Settings">
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                >
-                  <circle cx="12" cy="12" r="3" />
-                  <path
-                    d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"
-                  />
-                </svg>
-              </button>
-              <button class="stream-ctrl-btn" title="Fullscreen">
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                >
-                  <path
-                    d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"
-                  />
-                </svg>
-              </button>
-            </div>
-          </div>
-        </div>
+          </section>
 
-        <!-- STREAM ACTION BUTTONS -->
-        <div class="stream-actions">
-          <button class="stream-action-btn" id="likeBtn">
-            <svg
-              width="18"
-              height="18"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
+          <div class="stream-actions stream-actions-empty">
+            <button
+              type="button"
+              class="stream-action-btn stream-action-btn-live"
+              data-gh-notification-title="Stream alerts enabled"
+              data-gh-notification-body="When a real stream goes live, related alerts can be surfaced in your notification panel."
+              data-gh-notification-href="../player/stream-view.html"
+              data-gh-notification-label="Saved To Notifications"
             >
-              <path
-                d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3H14z"
-              />
-              <path d="M7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3" />
-            </svg>
-            <span>Like</span>
-            <span class="action-count" id="likeCount">24.1K</span>
-          </button>
-          <button class="stream-action-btn" id="commentBtn">
-            <svg
-              width="18"
-              height="18"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-            >
-              <path
-                d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"
-              />
-            </svg>
-            <span>Comment</span>
-          </button>
-          <button class="stream-action-btn" id="shareBtn">
-            <svg
-              width="18"
-              height="18"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-            >
-              <circle cx="18" cy="5" r="3" />
-              <circle cx="6" cy="12" r="3" />
-              <circle cx="18" cy="19" r="3" />
-              <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
-              <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
-            </svg>
-            <span>Share</span>
-          </button>
-          <button class="stream-action-btn stream-action-gift" id="sendGiftBtn">
-            <svg
-              width="18"
-              height="18"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-            >
-              <polyline points="20 12 20 22 4 22 4 12" />
-              <rect x="2" y="7" width="20" height="5" />
-              <line x1="12" y1="22" x2="12" y2="7" />
-              <path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z" />
-              <path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z" />
-            </svg>
-            <span>Gift</span>
-          </button>
-        </div>
-
-        <!-- STREAM INFO -->
-        <div class="stream-info-block">
-          <div class="stream-channel-row">
-            <div class="stream-channel-avatar">
-              <img
-                src="../assets/img/livestreams/dlsud-logo.jpg"
-                alt="DLSUD CEAT Esports"
-                onerror="this.style.background='rgba(124,58,237,0.4)'"
-              />
-            </div>
-            <div class="stream-channel-meta">
-              <div class="stream-channel-name">DLSUD CEAT Esports</div>
-              <div class="stream-channel-sub">
-                Official School Esports Team ·
-                <span class="stream-follow-count">12.4K followers</span>
-              </div>
-            </div>
-            <button class="btn-follow" id="followBtn">+ Follow</button>
+              Notify Me When A Stream Starts
+            </button>
+            <a href="./livestream.html" class="stream-action-btn stream-action-btn-ghost">
+              Back To Livestreams
+            </a>
           </div>
 
-          <h1 class="stream-title">
-            LIVE | GRAND FINALS | M7 World Championship| (ENG)
-          </h1>
-
-          <p class="stream-description">
-            Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do
-            eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim
-            ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut
-            aliquip ex ea commodo consequat. Duis aute irure dolor in
-            reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla
-            pariatur. Excepteur sint occaecat cupidatat non proident, sunt in
-            culpa qui officia deserunt mollit anim id est laborum.
-          </p>
-
-          <!-- Stream tags -->
-          <div class="stream-tags">
-            <span class="stream-tag">PUBG Mobile</span>
-            <span class="stream-tag">Esports</span>
-            <span class="stream-tag">Grand Finals</span>
-            <span class="stream-tag">Championship</span>
+          <div class="stream-info-block stream-info-block-empty">
+            <div class="stream-status-line">
+              Waiting for a real livestream session record
+            </div>
+            <p class="stream-description">
+              Once a stream is created from the platform backend, this view can
+              display the actual broadcast player, metadata, reactions, and live
+              discussion instead of placeholder content.
+            </p>
           </div>
-        </div>
+        </section>
       </main>
 
-      <!-- ── RIGHT SIDEBAR — COMMENTS PANEL ── -->
       <aside class="right-sidebar comments-panel" id="commentsPanel">
         <div class="comments-header">
           <h3 class="comments-title">Comments</h3>
-          <div class="comments-live-indicator">
-            <span class="comments-live-dot"></span>
-            Live
+          <div class="comments-live-indicator comments-live-indicator-muted">
+            0 live comments
           </div>
         </div>
 
-        <!-- SCROLLABLE COMMENT LIST -->
-        <ul class="comments-list" id="commentsList">
-          <li class="comment-item">
-            <div class="comment-avatar">
-              <img
-                src="../assets/icons/player-dashboard-icons/user-profile.png"
-                alt=""
-                onerror="this.style.background='rgba(124,58,237,0.3)'"
-              />
-            </div>
-            <div class="comment-body">
-              <span class="comment-username">Sample user</span>
-              <p class="comment-text">
-                Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do
-                eiusmod tempor incididunt ut labore et dolore magna aliqua.
-              </p>
-            </div>
-          </li>
+        <div class="comments-empty-state">
+          <div>
+            <div class="gh-empty-icon">CHAT</div>
+            <p class="comments-empty-title">No live chat yet</p>
+            <p class="comments-empty-sub">
+              Comments will appear here once an active stream and real viewers
+              are present.
+            </p>
+          </div>
+        </div>
 
-          <li class="comment-item">
-            <div class="comment-avatar">
-              <img
-                src="../assets/icons/player-dashboard-icons/user-profile.png"
-                alt=""
-                onerror="this.style.background='rgba(124,58,237,0.3)'"
-              />
-            </div>
-            <div class="comment-body">
-              <span class="comment-username">Sample user</span>
-              <p class="comment-text">
-                Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do
-                eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut
-                enim ad minim veniam, quis nostrud exercitation ullamco laboris
-                nisi ut aliquip ex ea commodo consequat.
-              </p>
-            </div>
-          </li>
-
-          <li class="comment-item">
-            <div class="comment-avatar">
-              <img
-                src="../assets/icons/player-dashboard-icons/user-profile.png"
-                alt=""
-                onerror="this.style.background='rgba(124,58,237,0.3)'"
-              />
-            </div>
-            <div class="comment-body">
-              <span class="comment-username">Sample user</span>
-              <p class="comment-text">
-                Lorem ipsum dolor sit amet, consectetur adipiscing elit.
-              </p>
-            </div>
-          </li>
-
-          <li class="comment-item">
-            <div class="comment-avatar">
-              <img
-                src="../assets/icons/player-dashboard-icons/user-profile.png"
-                alt=""
-                onerror="this.style.background='rgba(124,58,237,0.3)'"
-              />
-            </div>
-            <div class="comment-body">
-              <span class="comment-username">Sample user</span>
-              <p class="comment-text">
-                Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do
-                eiusmod tempor incididunt ut labore et dolore magna aliqua.
-              </p>
-            </div>
-          </li>
-
-          <li class="comment-item">
-            <div class="comment-avatar">
-              <img
-                src="../assets/icons/player-dashboard-icons/user-profile.png"
-                alt=""
-                onerror="this.style.background='rgba(124,58,237,0.3)'"
-              />
-            </div>
-            <div class="comment-body">
-              <span class="comment-username">Sample user</span>
-              <p class="comment-text">hi po this is a sample comment</p>
-            </div>
-          </li>
-        </ul>
-
-        <!-- COMMENT INPUT -->
         <div class="comment-input-row">
           <div class="comment-input-avatar">
             <img
@@ -465,13 +215,15 @@
             <input
               type="text"
               class="comment-input"
-              placeholder="Enter your comment here"
+              placeholder="Commenting will unlock during real live sessions"
               id="commentInput"
+              disabled
             />
             <button
               class="comment-send-btn"
               id="sendCommentBtn"
               aria-label="Send"
+              disabled
             >
               <svg
                 width="14"
@@ -489,129 +241,9 @@
         </div>
       </aside>
     </div>
-    <!-- /page-body -->
-
-    <!-- ── GIFT MODAL ── -->
-    <div id="giftModalOverlay" class="gift-modal-overlay hidden">
-      <div
-        class="gift-modal"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="giftModalTitle"
-      >
-        <button class="gift-modal-close" id="closeGiftBtn" aria-label="Close">
-          <svg
-            width="16"
-            height="16"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2.5"
-          >
-            <line x1="18" y1="6" x2="6" y2="18" />
-            <line x1="6" y1="6" x2="18" y2="18" />
-          </svg>
-        </button>
-
-        <div class="gift-modal-header">
-          <div class="gift-modal-icon">🎁</div>
-          <h3 class="gift-modal-title" id="giftModalTitle">Send a Gift</h3>
-          <p class="gift-modal-sub">Support the stream with a virtual gift</p>
-        </div>
-
-        <div class="gift-modal-field">
-          <label class="gift-label" for="giftType">Gift Type</label>
-          <div class="gift-type-grid" id="giftTypeGrid">
-            <button
-              class="gift-type-opt active"
-              data-type="Star"
-              data-value="5"
-            >
-              <span class="gift-type-emoji">⭐</span>
-              <span class="gift-type-name">Star</span>
-              <span class="gift-type-price">5 pts</span>
-            </button>
-            <button class="gift-type-opt" data-type="Heart" data-value="10">
-              <span class="gift-type-emoji">❤️</span>
-              <span class="gift-type-name">Heart</span>
-              <span class="gift-type-price">10 pts</span>
-            </button>
-            <button class="gift-type-opt" data-type="Rocket" data-value="25">
-              <span class="gift-type-emoji">🚀</span>
-              <span class="gift-type-name">Rocket</span>
-              <span class="gift-type-price">25 pts</span>
-            </button>
-          </div>
-          <!-- Hidden select keeps spec-compliant value -->
-          <select id="giftType" class="gift-select-hidden" aria-hidden="true">
-            <option value="Star">Star</option>
-            <option value="Heart">Heart</option>
-            <option value="Rocket">Rocket</option>
-          </select>
-        </div>
-
-        <div class="gift-modal-field">
-          <label class="gift-label" for="giftQuantity">Quantity</label>
-          <div class="gift-qty-row">
-            <button
-              class="gift-qty-btn"
-              id="qtyMinus"
-              aria-label="Decrease quantity"
-            >
-              −
-            </button>
-            <input
-              type="number"
-              id="giftQuantity"
-              class="gift-qty-input"
-              value="1"
-              min="1"
-              max="999"
-              aria-label="Gift quantity"
-            />
-            <button
-              class="gift-qty-btn"
-              id="qtyPlus"
-              aria-label="Increase quantity"
-            >
-              +
-            </button>
-          </div>
-        </div>
-
-        <div class="gift-modal-total">
-          Total: <span id="giftTotal" class="gift-total-value">5</span>
-          <span class="gift-total-unit">pts</span>
-        </div>
-
-        <div class="gift-modal-actions">
-          <button class="gift-btn-cancel" id="cancelGiftBtn">Cancel</button>
-          <button class="gift-btn-confirm" id="confirmGiftBtn">
-            <span id="confirmBtnText">Send Gift 🎁</span>
-            <span id="confirmBtnSpinner" class="gift-spinner hidden"></span>
-          </button>
-        </div>
-
-        <div id="giftSuccessMsg" class="gift-success-msg hidden">
-          <svg
-            width="16"
-            height="16"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2.5"
-          >
-            <polyline points="20 6 9 17 4 12" />
-          </svg>
-          Gift sent successfully!
-        </div>
-      </div>
-    </div>
 
     <script src="../shared/js/auth-state.js"></script>
     <script src="../shared/js/player-shell.js"></script>
     <script src="./js/stream-view.js"></script>
   </body>
 </html>
-
-
