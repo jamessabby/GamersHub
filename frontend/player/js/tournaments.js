@@ -1,45 +1,52 @@
-/* ═══════════════════════════════════════════════
-   tournaments.js  —  GamersHub · Tournaments page
-   IIFE — no globals, no framework.
-   ═══════════════════════════════════════════════ */
 (() => {
+  const topNav = document.getElementById("topNav");
+  const bellBtn = document.getElementById("bellBtn");
+  const searchInput = document.getElementById("searchInput");
 
-  /* ── NAVBAR SCROLL SHADOW ─────────────────────── */
-  const topNav = document.getElementById('topNav');
+  function openSchedule(event) {
+    const row = event.currentTarget.closest(".trn-row");
+    const tournamentId = row?.dataset.id;
 
-  window.addEventListener('scroll', () => {
-    topNav?.classList.toggle('scrolled', window.scrollY > 8);
-  }, { passive: true });
+    if (!tournamentId) {
+      return;
+    }
 
-  /* ── BELL BADGE DISMISS ───────────────────────── */
-  const bellBtn = document.getElementById('bellBtn');
+    event.preventDefault();
+    window.location.href = `./schedule.html?tournament=${encodeURIComponent(tournamentId)}`;
+  }
 
-  bellBtn?.addEventListener('click', () => {
-    const badge = bellBtn.querySelector('.bell-badge');
-    if (badge) {
-      badge.style.transition = 'transform 0.2s ease, opacity 0.2s ease';
-      badge.style.transform  = 'scale(0)';
-      badge.style.opacity    = '0';
+  window.addEventListener(
+    "scroll",
+    () => {
+      topNav?.classList.toggle("scrolled", window.scrollY > 8);
+    },
+    { passive: true },
+  );
+
+  bellBtn?.addEventListener("click", () => {
+    const badge = bellBtn.querySelector(".bell-badge");
+
+    if (!badge) {
+      return;
+    }
+
+    badge.style.transition = "transform 0.2s ease, opacity 0.2s ease";
+    badge.style.transform = "scale(0)";
+    badge.style.opacity = "0";
+  });
+
+  document.querySelectorAll(".trn-row").forEach((row) => {
+    row.addEventListener("click", openSchedule);
+  });
+
+  document.querySelectorAll(".trn-row-cta").forEach((button) => {
+    button.addEventListener("click", openSchedule);
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "k") {
+      event.preventDefault();
+      searchInput?.focus();
     }
   });
-
-  /* ── TOURNAMENT ROW CLICKS ────────────────────── */
-  /* Stub — wire to a detail page or modal when ready */
-  document.querySelectorAll('.trn-row, .trn-row-cta').forEach((el) => {
-    el.addEventListener('click', (e) => {
-      const row = el.closest('.trn-row') || el;
-      const id  = row.dataset.id;
-      /* Future: window.location.href = `./tournament-detail.html?id=${id}`; */
-      console.log('[Tournament] clicked id:', id);
-    });
-  });
-
-  /* ── KEYBOARD SHORTCUT: Ctrl/Cmd+K → search ──── */
-  document.addEventListener('keydown', (e) => {
-    if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
-      e.preventDefault();
-      document.getElementById('searchInput')?.focus();
-    }
-  });
-
 })();

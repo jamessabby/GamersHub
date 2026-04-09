@@ -376,6 +376,103 @@ body::before {
   min-width: 0;
 }
 
+.dashboard-empty-card {
+  display: grid;
+  place-items: center;
+  min-height: 420px;
+  padding: 36px;
+  text-align: center;
+  background: rgba(18, 16, 36, 0.72);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(139, 92, 246, 0.18);
+  border-radius: 24px;
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.03) inset,
+    0 18px 44px rgba(0, 0, 0, 0.34);
+}
+
+.dashboard-empty-icon {
+  width: 72px;
+  height: 72px;
+  margin: 0 auto 18px;
+  border-radius: 22px;
+  display: grid;
+  place-items: center;
+  background:
+    radial-gradient(circle at 30% 30%, rgba(196, 181, 253, 0.24), transparent 55%),
+    rgba(124, 58, 237, 0.14);
+  border: 1px solid rgba(167, 139, 250, 0.24);
+  color: #ddd6fe;
+  font-family: "Syne", sans-serif;
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.dashboard-empty-title {
+  margin: 0;
+  color: #f5f3ff;
+  font-family: "Syne", sans-serif;
+  font-size: clamp(1.4rem, 2vw, 2rem);
+  font-weight: 700;
+}
+
+.dashboard-empty-sub {
+  max-width: 560px;
+  margin: 12px auto 0;
+  color: rgba(208, 213, 235, 0.72);
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.dashboard-empty-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 22px;
+}
+
+.dashboard-empty-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 42px;
+  padding: 0 18px;
+  border-radius: 999px;
+  border: 1px solid rgba(167, 139, 250, 0.34);
+  background: rgba(124, 58, 237, 0.14);
+  color: #f5f3ff;
+  font-family: "Syne", sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-decoration: none;
+  transition:
+    transform 0.2s ease,
+    border-color 0.2s ease,
+    background 0.2s ease;
+}
+
+.dashboard-empty-link:hover {
+  color: #f5f3ff;
+  transform: translateY(-1px);
+  border-color: rgba(196, 181, 253, 0.56);
+  background: rgba(124, 58, 237, 0.22);
+}
+
+.dashboard-empty-link-secondary {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+.dashboard-empty-link-secondary:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(196, 181, 253, 0.34);
+}
+
 /* ── CREATE POST CARD ── */
 .create-post-card {
   background: rgba(18, 16, 36, 0.7);
@@ -796,6 +893,26 @@ body::before {
   border-color: rgba(139, 92, 246, 0.12);
 }
 
+.friend-item-empty {
+  display: block;
+  padding: 16px 14px;
+  cursor: default;
+  background: rgba(255, 255, 255, 0.02);
+  border-style: dashed;
+  border-color: rgba(139, 92, 246, 0.18);
+}
+
+.friend-item-empty:hover {
+  background: rgba(255, 255, 255, 0.02);
+  border-color: rgba(139, 92, 246, 0.18);
+}
+
+.friend-empty-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
 .friend-avatar {
   width: 36px;
   height: 36px;
@@ -857,6 +974,12 @@ body::before {
 }
 .friend-status.busy {
   color: rgba(239, 68, 68, 0.7);
+}
+
+.friend-status-empty {
+  white-space: normal;
+  color: rgba(208, 213, 235, 0.65);
+  line-height: 1.55;
 }
 
 /* ── SCROLLBAR GLOBAL ── */

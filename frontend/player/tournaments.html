@@ -14,13 +14,10 @@
       rel="stylesheet"
       href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
     />
-    <!-- Shared base: body, top-nav, sidebar, friends panel, reset -->
     <link rel="stylesheet" href="./css/dashboard.css" />
     <link rel="stylesheet" href="./css/tournaments.css" />
   </head>
   <body>
-
-    <!-- ── TOP NAVBAR ── -->
     <nav class="top-nav" id="topNav">
       <div class="nav-inner">
         <a href="#" class="nav-logo-wrap">
@@ -33,10 +30,17 @@
         </a>
 
         <div class="search-wrap">
-          <svg class="search-icon" width="15" height="15" viewBox="0 0 24 24"
-               fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="11" cy="11" r="8"/>
-            <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+          <svg
+            class="search-icon"
+            width="15"
+            height="15"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <circle cx="11" cy="11" r="8" />
+            <line x1="21" y1="21" x2="16.65" y2="16.65" />
           </svg>
           <input
             type="text"
@@ -48,10 +52,16 @@
 
         <div class="nav-right">
           <button class="nav-bell" id="bellBtn" aria-label="Notifications">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
-                 stroke="currentColor" stroke-width="2">
-              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
-              <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+              <path d="M13.73 21a2 2 0 0 1-3.46 0" />
             </svg>
           </button>
           <a href="#" class="nav-link-item">Home</a>
@@ -69,10 +79,7 @@
       </div>
     </nav>
 
-    <!-- ── PAGE BODY ── -->
     <div class="page-body">
-
-      <!-- ── LEFT SIDEBAR ── -->
       <aside class="left-sidebar" id="leftSidebar">
         <div class="sidebar-brand">
           <img
@@ -119,18 +126,12 @@
         </a>
       </aside>
 
-      <!-- ── MAIN CONTENT ── -->
       <main class="trn-main" id="trnMain">
-
-        <!-- Page heading -->
         <div class="trn-page-header">
           <h1 class="trn-page-title">Tournaments</h1>
         </div>
 
-        <!-- Tournament list -->
         <section class="trn-list" id="trnList" aria-label="Tournament listings">
-
-          <!-- Tournament 1 — Valorant -->
           <article class="trn-row" data-id="1">
             <div class="trn-row-thumb">
               <img
@@ -138,7 +139,7 @@
                 alt="Valorant Inter-college"
                 onerror="this.style.opacity='0'"
               />
-              <span class="trn-row-badge trn-badge-open">Open</span>
+              <span class="trn-row-badge trn-badge-open">Registration Open</span>
             </div>
             <div class="trn-row-body">
               <div class="trn-row-top">
@@ -146,7 +147,10 @@
                 <span class="trn-row-type">Inter-college</span>
               </div>
               <h2 class="trn-row-title">Valorant Inter-college</h2>
-              <p class="trn-row-desc">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
+              <p class="trn-row-desc">
+                Registration is open. Match schedule and standings will appear after
+                teams are officially added to the tournament database.
+              </p>
               <div class="trn-row-meta">
                 <span class="trn-row-date">
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -163,15 +167,14 @@
                 </span>
               </div>
             </div>
-            <button class="trn-row-cta" aria-label="View Valorant Inter-college details">
-              View Details
+            <button class="trn-row-cta" aria-label="View Valorant Inter-college schedule">
+              View Schedule
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                 <polyline points="9 18 15 12 9 6"/>
               </svg>
             </button>
           </article>
 
-          <!-- Tournament 2 — MLBB -->
           <article class="trn-row" data-id="2">
             <div class="trn-row-thumb">
               <img
@@ -187,7 +190,10 @@
                 <span class="trn-row-type">Inter-department</span>
               </div>
               <h2 class="trn-row-title">MLBB Inter-department</h2>
-              <p class="trn-row-desc">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
+              <p class="trn-row-desc">
+                The tournament page is ready, but its brackets and rankings will
+                remain empty until approved department teams are registered.
+              </p>
               <div class="trn-row-meta">
                 <span class="trn-row-date">
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -204,15 +210,14 @@
                 </span>
               </div>
             </div>
-            <button class="trn-row-cta" aria-label="View MLBB Inter-department details">
-              View Details
+            <button class="trn-row-cta" aria-label="View MLBB Inter-department schedule">
+              View Schedule
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                 <polyline points="9 18 15 12 9 6"/>
               </svg>
             </button>
           </article>
 
-          <!-- Tournament 3 — COD -->
           <article class="trn-row" data-id="3">
             <div class="trn-row-thumb">
               <img
@@ -228,7 +233,10 @@
                 <span class="trn-row-type">Inter-school</span>
               </div>
               <h2 class="trn-row-title">CODM Inter-school tournament</h2>
-              <p class="trn-row-desc">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
+              <p class="trn-row-desc">
+                This tournament is prepared in the interface, and its schedule will
+                be published once participating schools are finalized.
+              </p>
               <div class="trn-row-meta">
                 <span class="trn-row-date">
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -245,15 +253,14 @@
                 </span>
               </div>
             </div>
-            <button class="trn-row-cta" aria-label="View CODM tournament details">
-              View Details
+            <button class="trn-row-cta" aria-label="View CODM tournament schedule">
+              View Schedule
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                 <polyline points="9 18 15 12 9 6"/>
               </svg>
             </button>
           </article>
 
-          <!-- Tournament 4 — PUBG -->
           <article class="trn-row" data-id="4">
             <div class="trn-row-thumb">
               <img
@@ -261,10 +268,7 @@
                 alt="PUBG Mobile Grand Championship"
                 onerror="this.style.opacity='0'"
               />
-              <span class="trn-row-badge trn-badge-live">
-                <span class="trn-live-dot"></span>
-                Live Now
-              </span>
+              <span class="trn-row-badge trn-badge-reg">Bracket Pending</span>
             </div>
             <div class="trn-row-body">
               <div class="trn-row-top">
@@ -272,7 +276,10 @@
                 <span class="trn-row-type">University Series</span>
               </div>
               <h2 class="trn-row-title">PUBG Mobile Grand Championship</h2>
-              <p class="trn-row-desc">Top 16 university teams battle it out across six rounds. Live-streamed with full broadcast coverage on GamersHub.</p>
+              <p class="trn-row-desc">
+                Tournament details are posted, but live matchups and leaderboard
+                positions will only appear after the final teams are entered.
+              </p>
               <div class="trn-row-meta">
                 <span class="trn-row-date">
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -289,100 +296,24 @@
                 </span>
               </div>
             </div>
-            <button class="trn-row-cta" aria-label="View PUBG Championship details">
-              View Details
+            <button class="trn-row-cta" aria-label="View PUBG Championship schedule">
+              View Schedule
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                 <polyline points="9 18 15 12 9 6"/>
               </svg>
             </button>
           </article>
-
         </section>
       </main>
 
-      <!-- ── RIGHT SIDEBAR — FRIENDS ── -->
       <aside class="right-sidebar">
         <h3 class="friends-title">Friends</h3>
-        <ul class="friends-list">
-
-          <li class="friend-item">
-            <div class="friend-avatar">
-              <img src="../assets/icons/player-dashboard-icons/user-profile.png" alt=""
-                   onerror="this.style.background='rgba(124,58,237,0.3)'" />
-            </div>
-            <div class="friend-info">
-              <span class="friend-name">Player user</span>
-              <span class="friend-status offline">
-                <img src="../assets/icons/player-dashboard-icons/offline.svg" alt="" />
-                Offline
-              </span>
-            </div>
-          </li>
-
-          <li class="friend-item">
-            <div class="friend-avatar">
-              <img src="../assets/icons/player-dashboard-icons/user-profile.png" alt=""
-                   onerror="this.style.background='rgba(124,58,237,0.3)'" />
-            </div>
-            <div class="friend-info">
-              <span class="friend-name">Player user</span>
-              <span class="friend-status offline">
-                <img src="../assets/icons/player-dashboard-icons/offline.svg" alt="" />
-                Offline
-              </span>
-            </div>
-          </li>
-
-          <li class="friend-item">
-            <div class="friend-avatar">
-              <img src="../assets/icons/player-dashboard-icons/user-profile.png" alt=""
-                   onerror="this.style.background='rgba(124,58,237,0.3)'" />
-            </div>
-            <div class="friend-info">
-              <span class="friend-name">Player user</span>
-              <span class="friend-status idle">
-                <img src="../assets/icons/player-dashboard-icons/idle.png" alt="" />
-                Idle
-              </span>
-            </div>
-          </li>
-
-          <li class="friend-item">
-            <div class="friend-avatar">
-              <img src="../assets/icons/player-dashboard-icons/user-profile.png" alt=""
-                   onerror="this.style.background='rgba(124,58,237,0.3)'" />
-            </div>
-            <div class="friend-info">
-              <span class="friend-name">Player user</span>
-              <span class="friend-status watching">
-                <img src="../assets/icons/player-dashboard-icons/watching.png" alt="" />
-                Watching Valorant
-              </span>
-            </div>
-          </li>
-
-          <li class="friend-item">
-            <div class="friend-avatar">
-              <img src="../assets/icons/player-dashboard-icons/user-profile.png" alt=""
-                   onerror="this.style.background='rgba(124,58,237,0.3)'" />
-            </div>
-            <div class="friend-info">
-              <span class="friend-name">Player user</span>
-              <span class="friend-status busy">
-                <img src="../assets/icons/player-dashboard-icons/busy.svg" alt="" />
-                Busy
-              </span>
-            </div>
-          </li>
-
-        </ul>
+        <ul class="friends-list"></ul>
       </aside>
-
-    </div><!-- /page-body -->
+    </div>
 
     <script src="../shared/js/auth-state.js" defer></script>
     <script src="../shared/js/player-shell.js" defer></script>
     <script src="./js/tournaments.js" defer></script>
   </body>
 </html>
-

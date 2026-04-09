@@ -1,0 +1,195 @@
+.lb-main {
+  padding-top: 28px;
+  padding-bottom: 40px;
+}
+
+.lb-surface {
+  background: rgba(18, 16, 36, 0.72);
+  border: 1px solid rgba(139, 92, 246, 0.16);
+  border-radius: 28px;
+  padding: 28px;
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.03) inset,
+    0 18px 50px rgba(0, 0, 0, 0.34);
+}
+
+.lb-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 28px;
+}
+
+.lb-heading-copy {
+  max-width: 680px;
+}
+
+.lb-eyebrow {
+  margin: 0 0 8px;
+  color: rgba(167, 139, 250, 0.72);
+  font-family: "Syne", sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.lb-title {
+  margin: 0;
+  color: #f5f3ff;
+  font-family: "Syne", sans-serif;
+  font-size: clamp(2rem, 3vw, 2.7rem);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+
+.lb-subtitle {
+  margin: 10px 0 0;
+  max-width: 580px;
+  color: rgba(208, 213, 235, 0.68);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.lb-schedule-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0 18px;
+  border: 1px solid rgba(196, 181, 253, 0.4);
+  border-radius: 999px;
+  background: rgba(124, 58, 237, 0.08);
+  color: #f5f3ff;
+  font-family: "Syne", sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-decoration: none;
+  transition:
+    transform 0.2s ease,
+    border-color 0.2s ease,
+    background 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.lb-schedule-btn:hover {
+  color: #f5f3ff;
+  transform: translateY(-1px);
+  border-color: rgba(196, 181, 253, 0.62);
+  background: rgba(124, 58, 237, 0.16);
+  box-shadow: 0 10px 26px rgba(91, 33, 182, 0.22);
+}
+
+.lb-board {
+  overflow: hidden;
+  border: 1px solid rgba(139, 92, 246, 0.14);
+  border-radius: 24px;
+  background:
+    linear-gradient(135deg, rgba(19, 17, 40, 0.95), rgba(13, 12, 27, 0.88)),
+    radial-gradient(circle at top left, rgba(124, 58, 237, 0.12), transparent 55%);
+  box-shadow:
+    0 16px 34px rgba(0, 0, 0, 0.26),
+    0 0 0 1px rgba(255, 255, 255, 0.02) inset;
+}
+
+.lb-table-head {
+  display: grid;
+  grid-template-columns: 120px minmax(220px, 1fr) 120px 120px;
+  gap: 16px;
+  padding: 18px 24px 16px;
+  border-bottom: 1px solid rgba(139, 92, 246, 0.1);
+  color: rgba(196, 181, 253, 0.78);
+  font-family: "Syne", sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.lb-table-body {
+  min-height: 340px;
+  padding: 24px;
+}
+
+.lb-empty-state {
+  display: grid;
+  place-items: center;
+  min-height: 292px;
+  padding: 28px;
+  text-align: center;
+  border: 1px dashed rgba(167, 139, 250, 0.24);
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.lb-empty-icon {
+  width: 64px;
+  height: 64px;
+  margin: 0 auto 16px;
+  border-radius: 20px;
+  display: grid;
+  place-items: center;
+  background:
+    radial-gradient(circle at 30% 30%, rgba(196, 181, 253, 0.24), transparent 55%),
+    rgba(124, 58, 237, 0.14);
+  border: 1px solid rgba(167, 139, 250, 0.24);
+  color: #ddd6fe;
+  font-family: "Syne", sans-serif;
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.lb-empty-title {
+  margin: 0;
+  color: #f5f3ff;
+  font-family: "Syne", sans-serif;
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.lb-empty-sub {
+  max-width: 470px;
+  margin: 10px auto 0;
+  color: rgba(208, 213, 235, 0.7);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+@media (max-width: 1100px) {
+  .lb-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .lb-table-head {
+    grid-template-columns: 90px minmax(180px, 1fr) 90px 90px;
+  }
+}
+
+@media (max-width: 768px) {
+  .lb-main {
+    padding: 18px 16px 28px;
+  }
+
+  .lb-surface {
+    padding: 18px;
+    border-radius: 22px;
+  }
+
+  .lb-schedule-btn {
+    width: 100%;
+  }
+
+  .lb-table-head {
+    display: none;
+  }
+
+  .lb-table-body {
+    padding: 18px;
+    min-height: 260px;
+  }
+}

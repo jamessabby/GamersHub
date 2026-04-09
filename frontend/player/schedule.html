@@ -1,3 +1,175 @@
-.
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GamersHub - Game Schedule</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+    />
+    <link rel="stylesheet" href="./css/dashboard.css" />
+    <link rel="stylesheet" href="./css/schedule.css" />
+  </head>
+  <body>
+    <nav class="top-nav" id="topNav">
+      <div class="nav-inner">
+        <a href="#" class="nav-logo-wrap">
+          <img
+            src="../assets/img/logo.png"
+            alt="GamersHub"
+            class="nav-logo"
+            onerror="this.style.display='none'"
+          />
+        </a>
 
+        <div class="search-wrap">
+          <svg
+            class="search-icon"
+            width="15"
+            height="15"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <circle cx="11" cy="11" r="8" />
+            <line x1="21" y1="21" x2="16.65" y2="16.65" />
+          </svg>
+          <input
+            type="text"
+            class="search-input"
+            placeholder="Search tournaments, teams, matches..."
+            id="searchInput"
+          />
+        </div>
 
+        <div class="nav-right">
+          <button class="nav-bell" id="bellBtn" aria-label="Notifications">
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+              <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+            </svg>
+            <span class="bell-badge">3</span>
+          </button>
+
+          <a href="#" class="nav-link-item">Home</a>
+          <a href="#" class="nav-link-item nav-link-active">Tournaments</a>
+
+          <button class="nav-account">
+            <img
+              src="../assets/icons/player-dashboard-icons/user-profile.png"
+              alt="Account"
+              class="nav-avatar"
+              onerror="this.style.background='rgba(124,58,237,0.4)'"
+            />
+            <span data-gh-user="username">Account</span>
+          </button>
+        </div>
+      </div>
+    </nav>
+
+    <div class="page-body">
+      <aside class="left-sidebar" id="leftSidebar">
+        <div class="sidebar-brand">
+          <img
+            src="../assets/img/logo.png"
+            alt="GamersHub"
+            class="sidebar-logo"
+            onerror="this.style.display='none'"
+          />
+          <span class="sidebar-brand-name">GamersHub</span>
+        </div>
+
+        <nav class="sidebar-nav">
+          <a href="#" class="sidebar-link" data-page="home">
+            <span class="sidebar-icon">
+              <img src="../assets/icons/player-sidebar/home-icon.png" alt="" />
+            </span>
+            <span>Home</span>
+          </a>
+          <a href="#" class="sidebar-link" data-page="livestreams">
+            <span class="sidebar-icon">
+              <img
+                src="../assets/icons/player-sidebar/livestream-icon.svg"
+                alt=""
+              />
+            </span>
+            <span>Livestreams</span>
+          </a>
+          <a href="#" class="sidebar-link" data-page="events">
+            <span class="sidebar-icon">
+              <img
+                src="../assets/icons/player-sidebar/events-icon.svg"
+                alt=""
+              />
+            </span>
+            <span>Events</span>
+          </a>
+          <a href="#" class="sidebar-link" data-page="profile">
+            <span class="sidebar-icon">
+              <img
+                src="../assets/icons/player-sidebar/profile-icon.svg"
+                alt=""
+              />
+            </span>
+            <span>Profile</span>
+          </a>
+        </nav>
+
+        <a href="../auth/logout-confirm.html" class="sidebar-logout">
+          <span class="sidebar-icon">
+            <img src="../assets/icons/player-sidebar/logout-icon.svg" alt="" />
+          </span>
+          <span>Logout</span>
+        </a>
+      </aside>
+
+      <main class="main-feed sch-main">
+        <section class="sch-surface">
+          <div class="sch-header">
+            <div class="sch-heading-copy">
+              <p class="sch-eyebrow">Tournament Schedule</p>
+              <h1 class="sch-title" id="schTournamentTitle">
+                Tournament Schedule
+              </h1>
+              <p class="sch-subtitle">
+                Tournament match information will appear here once teams and
+                schedules are available.
+              </p>
+            </div>
+
+            <a href="./leaderboards.html" class="sch-leaderboards-btn">
+              Leaderboards
+            </a>
+          </div>
+
+          <section class="sch-list" id="schList" aria-label="Match schedule"></section>
+        </section>
+      </main>
+
+      <aside class="right-sidebar">
+        <h3 class="friends-title">Friends</h3>
+        <ul class="friends-list"></ul>
+      </aside>
+    </div>
+
+    <script src="../shared/js/auth-state.js" defer></script>
+    <script src="../shared/js/player-shell.js" defer></script>
+    <script src="./js/tournament-catalog.js" defer></script>
+    <script src="./js/schedule.js" defer></script>
+  </body>
+</html>

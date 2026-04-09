@@ -4,17 +4,20 @@ document.addEventListener("DOMContentLoaded", function () {
   const btnGetStarted = document.getElementById("btn-get-started");
   const navLogin = document.getElementById("nav-login");
 
+  function redirectToLogin(event) {
+    if (event) {
+      event.preventDefault();
+    }
+
+    window.location.href = loginUrl;
+  }
+
   if (btnGetStarted) {
-    btnGetStarted.addEventListener("click", function () {
-      window.location.href = loginUrl;
-    });
+    btnGetStarted.addEventListener("click", redirectToLogin);
   }
 
   if (navLogin) {
-    navLogin.addEventListener("click", function (e) {
-      e.preventDefault();
-      window.location.href = loginUrl;
-    });
+    navLogin.addEventListener("click", redirectToLogin);
   }
 
   const navbar = document.querySelector(".gh-navbar");

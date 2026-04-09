@@ -48,4 +48,18 @@
     document.querySelectorAll(".nav-link-item"),
   ).find((link) => link.textContent.trim().toLowerCase() === "tournaments");
   tournamentsLink?.setAttribute("href", "../player/tournaments.html");
+
+  const friendsList = document.querySelector(".friends-list");
+  if (friendsList && friendsList.dataset.source !== "live") {
+    friendsList.innerHTML = `
+      <li class="friend-item friend-item-empty">
+        <div class="friend-empty-copy">
+          <span class="friend-name">No friend activity yet</span>
+          <span class="friend-status friend-status-empty">
+            Friend presence will appear here once real accounts and connection data are available.
+          </span>
+        </div>
+      </li>
+    `;
+  }
 })();
