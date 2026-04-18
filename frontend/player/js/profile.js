@@ -3,12 +3,23 @@
   const PROFILE_UI_STORAGE_KEY = "gh_profile_ui";
   const auth = window.GamersHubAuth;
   const session = auth?.getSession?.() || {};
+  const params = new URLSearchParams(window.location.search);
+  const requestedUserId = Number(params.get("userId"));
+  const viewedUserId =
+    Number.isInteger(requestedUserId) && requestedUserId > 0
+      ? requestedUserId
+      : session.userId || null;
+  const isPublicProfile = Boolean(
+    viewedUserId &&
+    session.userId &&
+    Number(viewedUserId) !== Number(session.userId),
+  );
 
   const defaultState = {
-    userId: session.userId || null,
+    userId: viewedUserId,
     username: session.username || "Account",
-    email: session.email || "",
-    role: session.role || "user",
+    email: "",
+    role: "user",
     firstName: "",
     lastName: "",
     dateOfBirth: "",
@@ -26,7 +37,7 @@
     },
   };
 
-  const uiState = loadUiState();
+  const uiState = isPublicProfile ? {} : loadUiState();
   const state = {
     ...defaultState,
     avatar: uiState.avatar || defaultState.avatar,
@@ -41,12 +52,17 @@
   let activePlatform = null;
 
   const topNav = document.getElementById("topNav");
+  const profileMain = document.getElementById("profileMain");
+  const profilePageTitle = document.getElementById("profilePageTitle");
+  const profilePageSubtitle = document.getElementById("profilePageSubtitle");
+  const profilePublicBanner = document.getElementById("profilePublicBanner");
   const editToggleBtn = document.getElementById("editToggleBtn");
   const editToggleLabel = document.getElementById("editToggleLabel");
 
   const avatarWrap = document.getElementById("avatarWrap");
   const avatarImg = document.getElementById("avatarImg");
   const avatarFileInput = document.getElementById("avatarFileInput");
+  const avatarEditOverlay = document.getElementById("avatarEditOverlay");
 
   const identityView = document.getElementById("identityView");
   const identityEdit = document.getElementById("identityEdit");
@@ -85,6 +101,7 @@
   const cancelBtn = document.getElementById("cancelBtn");
   const saveBtn = document.getElementById("saveBtn");
 
+  const socialCard = document.getElementById("profileSocialCard");
   const socialButtons = Array.from(document.querySelectorAll(".social-btn"));
   const socialLinkMap = {
     instagram: document.getElementById("igLink"),
@@ -130,8 +147,12 @@
   );
 
   editToggleBtn?.addEventListener("click", () => {
+    if (isPublicProfile) {
+      return;
+    }
+
     if (isEditing) {
-      saveProfile();
+      void saveProfile();
       return;
     }
 
@@ -139,7 +160,9 @@
   });
 
   cancelBtn?.addEventListener("click", cancelEdit);
-  saveBtn?.addEventListener("click", saveProfile);
+  saveBtn?.addEventListener("click", () => {
+    void saveProfile();
+  });
 
   addGameBtn?.addEventListener("click", addGame);
   gameInput?.addEventListener("keydown", (event) => {
@@ -151,7 +174,7 @@
 
   gamesChips?.addEventListener("click", (event) => {
     const removeButton = event.target.closest(".game-chip-remove");
-    if (!removeButton || !draft) {
+    if (!removeButton || !draft || isPublicProfile) {
       return;
     }
 
@@ -163,6 +186,11 @@
   });
 
   avatarFileInput?.addEventListener("change", (event) => {
+    if (isPublicProfile) {
+      avatarFileInput.value = "";
+      return;
+    }
+
     const file = event.target.files?.[0];
     if (!file) {
       return;
@@ -189,6 +217,10 @@
 
   socialButtons.forEach((button) => {
     button.addEventListener("click", () => {
+      if (isPublicProfile) {
+        return;
+      }
+
       openSocialModal(button.dataset.platform);
     });
   });
@@ -223,16 +255,17 @@
     }
   });
 
+  applyProfileMode();
   renderView();
   void hydrateProfile();
 
   async function hydrateProfile() {
-    if (!session.userId) {
+    if (!viewedUserId) {
       return;
     }
 
     try {
-      const response = await fetch(`${API_BASE}/api/users/profile/${session.userId}`);
+      const response = await fetch(`${API_BASE}/api/users/profile/${viewedUserId}`);
       const payload = await response.json();
 
       if (!response.ok) {
@@ -241,14 +274,17 @@
 
       applyBackendProfile(payload);
       renderView();
+      applyProfileMode();
     } catch (error) {
       console.error("Profile hydration failed:", error);
-      editToggleLabel.textContent = "Profile offline";
-      setTimeout(() => {
-        if (!isEditing) {
-          editToggleLabel.textContent = "Edit Profile";
-        }
-      }, 1800);
+      if (editToggleLabel) {
+        editToggleLabel.textContent = "Profile offline";
+        setTimeout(() => {
+          if (!isEditing && !isPublicProfile) {
+            editToggleLabel.textContent = "Edit Profile";
+          }
+        }, 1800);
+      }
     }
   }
 
@@ -270,6 +306,48 @@
       : profile.primaryGame
         ? [profile.primaryGame]
         : [];
+  }
+
+  function applyProfileMode() {
+    if (!profileMain) {
+      return;
+    }
+
+    profileMain.classList.toggle("is-readonly", isPublicProfile);
+
+    if (profilePublicBanner) {
+      profilePublicBanner.classList.toggle("hidden", !isPublicProfile);
+    }
+
+    if (profilePageSubtitle) {
+      profilePageSubtitle.classList.remove("hidden");
+      profilePageSubtitle.textContent = isPublicProfile
+        ? `Viewing @${state.username || "player"} in public profile mode.`
+        : "View and update your GamersHub player profile.";
+    }
+
+    if (profilePageTitle) {
+      profilePageTitle.textContent = isPublicProfile ? "Player Profile" : "Profile";
+    }
+
+    if (editToggleBtn) {
+      editToggleBtn.classList.toggle("hidden", isPublicProfile);
+    }
+
+    if (avatarEditOverlay) {
+      avatarEditOverlay.classList.toggle("hidden", isPublicProfile);
+    }
+
+    if (socialCard) {
+      socialCard.classList.toggle("hidden", isPublicProfile);
+    }
+
+    if (isPublicProfile) {
+      cancelEdit();
+      document.title = `GamersHub - ${state.displayName || state.username || "Player"}`;
+    } else {
+      document.title = "GamersHub - Profile";
+    }
   }
 
   function renderView() {
@@ -313,6 +391,10 @@
   }
 
   function enterEdit() {
+    if (isPublicProfile) {
+      return;
+    }
+
     draft = {
       ...state,
       primaryGames: [...state.primaryGames],
@@ -360,13 +442,15 @@
     editGamesWrap.classList.add("hidden");
     actionBar.classList.add("hidden");
     avatarWrap.classList.remove("editable");
-    editToggleBtn.classList.remove("is-editing");
-    editToggleLabel.textContent = "Edit Profile";
+    editToggleBtn?.classList.remove("is-editing");
+    if (editToggleLabel && !isPublicProfile) {
+      editToggleLabel.textContent = "Edit Profile";
+    }
     avatarImg.src = state.avatar || defaultState.avatar;
   }
 
   async function saveProfile() {
-    if (!draft || !state.userId) {
+    if (!draft || !state.userId || isPublicProfile) {
       return;
     }
 
@@ -412,7 +496,7 @@
       setSavingState(false, "Saved");
 
       setTimeout(() => {
-        if (!isEditing) {
+        if (!isEditing && !isPublicProfile) {
           editToggleLabel.textContent = "Edit Profile";
         }
       }, 1400);
@@ -420,16 +504,20 @@
       console.error("Profile save failed:", error);
       setSavingState(false, "Save failed");
       setTimeout(() => {
-        if (isEditing) {
-          editToggleLabel.textContent = "Save Changes";
-        } else {
-          editToggleLabel.textContent = "Edit Profile";
+        if (!editToggleLabel || isPublicProfile) {
+          return;
         }
+
+        editToggleLabel.textContent = isEditing ? "Save Changes" : "Edit Profile";
       }, 1800);
     }
   }
 
   function setSavingState(isSaving, label) {
+    if (!editToggleBtn || !editToggleLabel) {
+      return;
+    }
+
     editToggleBtn.classList.toggle("is-editing", isSaving || isEditing);
     editToggleLabel.textContent = label;
     saveBtn.disabled = isSaving;
@@ -460,7 +548,7 @@
   }
 
   function addGame() {
-    if (!draft) {
+    if (!draft || isPublicProfile) {
       return;
     }
 
@@ -494,6 +582,10 @@
   }
 
   function openSocialModal(platform) {
+    if (isPublicProfile) {
+      return;
+    }
+
     const meta = PLATFORM_META[platform];
     if (!meta) {
       return;
@@ -521,7 +613,7 @@
   }
 
   function saveSocialLink() {
-    if (!activePlatform) {
+    if (!activePlatform || isPublicProfile) {
       return;
     }
 
@@ -556,6 +648,10 @@
   }
 
   function saveUiState() {
+    if (isPublicProfile) {
+      return;
+    }
+
     localStorage.setItem(
       buildUiStorageKey(),
       JSON.stringify({

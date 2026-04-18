@@ -137,62 +137,32 @@
         <section class="gh-page-shell">
           <div class="gh-page-heading">
             <span class="gh-page-kicker">Broadcast Room</span>
-            <h1 class="gh-page-title">Stream View</h1>
-            <p class="gh-page-subtitle">
-              This page is ready for real livestream sessions, but no active
-              broadcast data exists in the database yet.
+            <h1 class="gh-page-title" id="streamPageTitle">Stream View</h1>
+            <p class="gh-page-subtitle" id="streamPageSubtitle">
+              Loading the selected broadcast from the stream database.
             </p>
           </div>
 
-          <section class="stream-player-wrap stream-player-empty">
-            <div class="stream-player-empty-copy">
-              <span class="stream-player-empty-kicker">No Active Broadcast</span>
-              <h2 class="stream-player-empty-title">There is no live stream to show yet</h2>
-              <p class="stream-player-empty-sub">
-                We removed fake viewer counts, fake reactions, and sample chat so
-                this page stays aligned with the real backend state.
-              </p>
-            </div>
-          </section>
+          <section class="stream-player-wrap stream-player-empty" id="streamPlayerWrap"></section>
 
-          <div class="stream-actions stream-actions-empty">
-            <button
-              type="button"
-              class="stream-action-btn stream-action-btn-live"
-              data-gh-notification-title="Stream alerts enabled"
-              data-gh-notification-body="When a real stream goes live, related alerts can be surfaced in your notification panel."
-              data-gh-notification-href="../player/stream-view.html"
-              data-gh-notification-label="Saved To Notifications"
-            >
-              Notify Me When A Stream Starts
-            </button>
-            <a href="./livestream.html" class="stream-action-btn stream-action-btn-ghost">
-              Back To Livestreams
-            </a>
-          </div>
+          <div class="stream-actions stream-actions-empty" id="streamActions"></div>
 
-          <div class="stream-info-block stream-info-block-empty">
-            <div class="stream-status-line">
-              Waiting for a real livestream session record
-            </div>
-            <p class="stream-description">
-              Once a stream is created from the platform backend, this view can
-              display the actual broadcast player, metadata, reactions, and live
-              discussion instead of placeholder content.
-            </p>
-          </div>
+          <div class="stream-info-block stream-info-block-empty" id="streamInfoBlock"></div>
         </section>
       </main>
 
       <aside class="right-sidebar comments-panel" id="commentsPanel">
         <div class="comments-header">
           <h3 class="comments-title">Comments</h3>
-          <div class="comments-live-indicator comments-live-indicator-muted">
+          <div
+            class="comments-live-indicator comments-live-indicator-muted"
+            id="commentsLiveIndicator"
+          >
             0 live comments
           </div>
         </div>
 
-        <div class="comments-empty-state">
+        <div class="comments-empty-state" id="commentsEmptyState">
           <div>
             <div class="gh-empty-icon">CHAT</div>
             <p class="comments-empty-title">No live chat yet</p>
@@ -202,6 +172,7 @@
             </p>
           </div>
         </div>
+        <ul class="comments-list hidden" id="commentsList"></ul>
 
         <div class="comment-input-row">
           <div class="comment-input-avatar">
@@ -217,13 +188,11 @@
               class="comment-input"
               placeholder="Commenting will unlock during real live sessions"
               id="commentInput"
-              disabled
             />
             <button
               class="comment-send-btn"
               id="sendCommentBtn"
               aria-label="Send"
-              disabled
             >
               <svg
                 width="14"

@@ -185,6 +185,21 @@
   object-fit: cover;
 }
 
+.sch-team-avatar {
+  width: 100%;
+  min-height: 104px;
+  display: grid;
+  place-items: center;
+  background:
+    radial-gradient(circle at 30% 20%, rgba(196, 181, 253, 0.18), transparent 56%),
+    linear-gradient(135deg, rgba(91, 33, 182, 0.5), rgba(30, 27, 75, 0.8));
+  color: #f5f3ff;
+  font-family: "Syne", sans-serif;
+  font-size: 1.5rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+
 .sch-team-info {
   min-width: 0;
 }

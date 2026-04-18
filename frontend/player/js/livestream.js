@@ -1,6 +1,10 @@
 (() => {
+  const API_BASE = `http://${window.location.hostname || "localhost"}:3000`;
   const topNav = document.getElementById("topNav");
   const searchInput = document.getElementById("searchInput");
+  const livestreamStatus = document.getElementById("livestreamStatus");
+  const streamsSection = document.getElementById("streamsSection");
+  const streamsGrid = document.getElementById("streamsGrid");
 
   window.addEventListener(
     "scroll",
@@ -16,4 +20,167 @@
       searchInput?.focus();
     }
   });
+
+  renderLoadingState();
+  void loadStreams();
+
+  async function loadStreams() {
+    try {
+      const response = await fetch(`${API_BASE}/api/streams?limit=12`);
+      const payload = await response.json();
+
+      if (!response.ok) {
+        throw new Error(payload.message || "Failed to load livestreams.");
+      }
+
+      renderStreams(payload.items || []);
+    } catch (error) {
+      console.error("Livestream loading failed:", error);
+      renderErrorState(error.message || "Failed to load livestreams.");
+    }
+  }
+
+  function renderLoadingState() {
+    if (!livestreamStatus) {
+      return;
+    }
+
+    livestreamStatus.innerHTML = `
+      <div>
+        <div class="gh-empty-icon">LIVE</div>
+        <h2 class="gh-empty-title">Loading livestreams</h2>
+        <p class="gh-empty-subtitle">
+          We are checking the real stream records in your feed database.
+        </p>
+      </div>
+    `;
+  }
+
+  function renderErrorState(message) {
+    if (!livestreamStatus) {
+      return;
+    }
+
+    livestreamStatus.classList.remove("hidden");
+    livestreamStatus.innerHTML = `
+      <div>
+        <div class="gh-empty-icon">ERR</div>
+        <h2 class="gh-empty-title">Livestreams are unavailable right now</h2>
+        <p class="gh-empty-subtitle">${escapeHtml(message)}</p>
+        <div class="gh-empty-actions">
+          <button
+            type="button"
+            class="gh-empty-button"
+            data-gh-notification-title="Livestream alerts enabled"
+            data-gh-notification-body="We will store livestream-related alerts in your notification panel once the stream service is back online."
+            data-gh-notification-href="../player/livestream.html"
+            data-gh-notification-label="Saved To Notifications"
+          >
+            Notify Me When Streams Return
+          </button>
+        </div>
+      </div>
+    `;
+    streamsSection?.classList.add("hidden");
+  }
+
+  function renderStreams(items) {
+    if (!livestreamStatus || !streamsSection || !streamsGrid) {
+      return;
+    }
+
+    if (!items.length) {
+      livestreamStatus.classList.remove("hidden");
+      livestreamStatus.innerHTML = `
+        <div>
+          <div class="gh-empty-icon">LIVE</div>
+          <h2 class="gh-empty-title">No livestreams are available yet</h2>
+          <p class="gh-empty-subtitle">
+            The page is connected to your real stream records, so it stays empty
+            until an admin or moderator creates an actual stream.
+          </p>
+          <div class="gh-empty-actions">
+            <button
+              type="button"
+              class="gh-empty-button"
+              data-gh-notification-title="Livestream alerts enabled"
+              data-gh-notification-body="We will store livestream-related alerts in your notification panel once stream publishing is active."
+              data-gh-notification-href="../player/livestream.html"
+              data-gh-notification-label="Saved To Notifications"
+            >
+              Notify Me When Streams Go Live
+            </button>
+            <a href="../player/tournaments.html" class="gh-empty-button ghost">
+              Browse Tournaments
+            </a>
+          </div>
+          <p class="gh-empty-note">
+            This avoids showing fake broadcasts, fake viewer counts, or fake
+            schools before real streaming data exists.
+          </p>
+        </div>
+      `;
+      streamsSection.classList.add("hidden");
+      return;
+    }
+
+    livestreamStatus.classList.add("hidden");
+    streamsSection.classList.remove("hidden");
+    streamsGrid.innerHTML = items.map(renderStreamCard).join("");
+  }
+
+  function renderStreamCard(stream) {
+    const thumbnail = stream.thumbnailUrl || "../assets/img/livestreams/thumbnail.jpg";
+    const liveBadge = stream.isLive
+      ? `
+        <span class="badge-live">
+          <span class="live-pulse"></span>
+          LIVE
+        </span>
+      `
+      : "";
+
+    return `
+      <a class="stream-card" href="./stream-view.html?streamId=${encodeURIComponent(stream.streamId)}">
+        <div class="stream-thumb-wrap">
+          <img class="stream-thumb" src="${escapeAttribute(thumbnail)}" alt="${escapeAttribute(stream.title)}" />
+          ${liveBadge}
+          <span class="viewer-chip">${formatCount(stream.viewerCount)} viewers</span>
+        </div>
+        <div class="stream-info">
+          <div class="stream-title">${escapeHtml(stream.title || "Untitled stream")}</div>
+          <div class="stream-meta">
+            <img
+              class="streamer-logo"
+              src="../assets/icons/player-dashboard-icons/user-profile.png"
+              alt="${escapeAttribute(stream.author?.displayName || "Streamer")}"
+            />
+            <span class="stream-game-tag">${escapeHtml(stream.gameName || "Live stream")}</span>
+          </div>
+        </div>
+      </a>
+    `;
+  }
+
+  function formatCount(value) {
+    const count = Number(value) || 0;
+    if (count >= 1000) {
+      return `${(count / 1000).toFixed(1).replace(/\.0$/, "")}K`;
+    }
+
+    return String(count);
+  }
+
+  function escapeHtml(value) {
+    return String(value || "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+  }
+
+  function escapeAttribute(value) {
+    return escapeHtml(value).replace(/`/g, "&#96;");
+  }
 })();

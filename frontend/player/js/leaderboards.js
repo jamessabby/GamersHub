@@ -1,17 +1,7 @@
 (() => {
-  const catalog = window.GamersHubTournamentCatalog || {};
+  const API_BASE = `http://${window.location.hostname || "localhost"}:3000`;
   const tournamentId =
     new URLSearchParams(window.location.search).get("tournament") || "1";
-  const tournament =
-    catalog[tournamentId] || catalog["1"] || {
-      title: "Leaderboards",
-      leaderboardSubtitle:
-        "Leaderboard rankings will appear after teams register and official match results are recorded.",
-      leaderboardEmptyTitle: "No leaderboard entries yet",
-      leaderboardEmptyBody:
-        "There are no tournament standings saved in the database for this view yet.",
-    };
-
   const topNav = document.getElementById("topNav");
   const searchInput = document.getElementById("searchInput");
   const titleNode = document.getElementById("lbTournamentTitle");
@@ -19,7 +9,7 @@
   const scheduleButton = document.getElementById("lbScheduleBtn");
   const tableBody = document.getElementById("lbTableBody");
 
-  function renderEmptyState() {
+  function renderEmptyState(title, body) {
     if (!tableBody) {
       return;
     }
@@ -28,27 +18,16 @@
       <div class="lb-empty-state">
         <div>
           <div class="lb-empty-icon">LB</div>
-          <p class="lb-empty-title">${tournament.leaderboardEmptyTitle}</p>
-          <p class="lb-empty-sub">${tournament.leaderboardEmptyBody}</p>
+          <p class="lb-empty-title">${escapeHtml(title)}</p>
+          <p class="lb-empty-sub">${escapeHtml(body)}</p>
         </div>
       </div>
     `;
   }
 
-  if (titleNode) {
-    titleNode.textContent = `${tournament.title} Leaderboards`;
-  }
-
-  if (subtitleNode) {
-    subtitleNode.textContent = tournament.leaderboardSubtitle;
-  }
-
   if (scheduleButton) {
     scheduleButton.href = `./schedule.html?tournament=${encodeURIComponent(tournamentId)}`;
   }
-
-  document.title = `GamersHub - ${tournament.title} Leaderboards`;
-  renderEmptyState();
 
   window.addEventListener(
     "scroll",
@@ -64,4 +43,83 @@
       searchInput?.focus();
     }
   });
+
+  renderEmptyState(
+    "Loading leaderboard",
+    "Connecting to the tournament database for standings.",
+  );
+  void loadLeaderboard();
+
+  async function loadLeaderboard() {
+    try {
+      const response = await fetch(
+        `${API_BASE}/api/tournaments/${encodeURIComponent(tournamentId)}/leaderboard`,
+      );
+      const payload = await response.json();
+
+      if (!response.ok) {
+        throw new Error(payload.message || "Failed to load leaderboard.");
+      }
+
+      if (titleNode) {
+        titleNode.textContent = `${payload.tournament?.title || "Tournament"} Leaderboards`;
+      }
+
+      if (subtitleNode) {
+        subtitleNode.textContent =
+          payload.items?.length
+            ? "Standings below are calculated from completed matches stored in the SSMS tournament database."
+            : "The tournament exists, but no scored match results have been recorded yet.";
+      }
+
+      document.title = `GamersHub - ${payload.tournament?.title || "Leaderboards"}`;
+
+      if (!payload.items?.length) {
+        renderEmptyState(
+          "No leaderboard entries yet",
+          "Leaderboard rows will appear after admins save match records with final scores in the MATCH table.",
+        );
+        return;
+      }
+
+      renderLeaderboard(payload.items);
+    } catch (error) {
+      console.error("Leaderboard loading failed:", error);
+      renderEmptyState(
+        "Leaderboard unavailable",
+        "The backend could not calculate tournament standings from SSMS right now.",
+      );
+    }
+  }
+
+  function renderLeaderboard(items) {
+    if (!tableBody) {
+      return;
+    }
+
+    tableBody.innerHTML = items
+      .map(
+        (entry) => `
+          <div class="lb-row">
+            <span class="lb-rank">#${entry.rank}</span>
+            <span class="lb-team-cell">
+              <span class="lb-team-name">${escapeHtml(entry.teamName)}</span>
+              <span class="lb-team-meta">${entry.played} matches played</span>
+            </span>
+            <span class="lb-stat">${entry.wins}</span>
+            <span class="lb-stat">${entry.losses}</span>
+          </div>
+        `,
+      )
+      .join("");
+  }
+
+  function escapeHtml(value) {
+    return String(value || "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+  }
 })();

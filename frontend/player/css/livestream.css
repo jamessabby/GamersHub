@@ -2,6 +2,10 @@
 /* Global styles (body, navbar, sidebar, friends panel) come from dashboard.css */
 
 /* ── GAME SELECTOR STRIP — own column between sidebar and main feed ── */
+.hidden {
+  display: none !important;
+}
+
 .game-selector-strip {
   position: fixed;
   top: 56px;

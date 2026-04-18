@@ -138,35 +138,119 @@
         </nav>
       </aside>
 
-      <main class="main-feed">
-        <section
-          class="dashboard-empty-card"
-          aria-label="Community feed empty state"
-        >
-          <div class="dashboard-empty-icon">Feed</div>
-          <h1 class="dashboard-empty-title">Community feed is empty for now</h1>
-          <p class="dashboard-empty-sub">
-            Posts, reactions, and live community activity will appear here once
-            the dashboard is connected to real database records instead of
-            sample content.
-          </p>
-          <div class="dashboard-empty-actions">
-            <a href="./tournaments.html" class="dashboard-empty-link">
-              Browse tournaments
-            </a>
-            <a
-              href="./livestream.html"
-              class="dashboard-empty-link dashboard-empty-link-secondary"
-            >
-              Explore livestreams
-            </a>
+      <main class="main-feed dashboard-main-feed">
+        <section class="create-post-card" aria-label="Create post">
+          <div class="create-post-top">
+            <div class="cp-avatar">
+              <img
+                src="../assets/icons/player-dashboard-icons/user-profile.png"
+                alt="Your avatar"
+                onerror="this.style.background='rgba(124,58,237,0.4)'"
+              />
+            </div>
+            <textarea
+              id="createPostInput"
+              class="cp-input-area"
+              rows="1"
+              placeholder="Create a post"
+            ></textarea>
           </div>
+
+          <div class="create-post-actions">
+            <button
+              type="button"
+              class="cp-action-btn"
+              id="attachPhotoBtn"
+              data-media-type="image"
+            >
+              <img
+                src="../assets/icons/player-dashboard-icons/upload-photo-icon.png"
+                alt=""
+              />
+              <span>Photo</span>
+            </button>
+            <div class="cp-divider"></div>
+            <button
+              type="button"
+              class="cp-action-btn"
+              id="attachVideoBtn"
+              data-media-type="video"
+            >
+              <img
+                src="../assets/icons/player-dashboard-icons/upload-video-icon.png"
+                alt=""
+              />
+              <span>Video</span>
+            </button>
+            <button
+              type="button"
+              class="cp-submit-btn hidden"
+              id="createPostBtn"
+            >
+              Post
+            </button>
+          </div>
+
+          <input
+            type="file"
+            id="photoFileInput"
+            class="cp-file-input"
+            accept="image/*"
+          />
+          <input
+            type="file"
+            id="videoFileInput"
+            class="cp-file-input"
+            accept="video/*"
+          />
+
+          <div class="cp-media-row hidden" id="mediaComposerRow">
+            <div class="cp-file-preview" id="mediaPreviewShell">
+              <div class="cp-file-preview-visual" id="mediaPreviewVisual" aria-hidden="true">
+                <span class="cp-file-preview-placeholder">+</span>
+              </div>
+              <div class="cp-file-preview-copy">
+                <span class="cp-file-preview-label" id="mediaPreviewLabel">Selected media</span>
+                <span class="cp-file-preview-name" id="mediaPreviewName">No file selected</span>
+              </div>
+              <button type="button" class="cp-file-clear-btn" id="clearMediaBtn">Remove</button>
+            </div>
+          </div>
+
+          <p class="cp-status" id="createPostStatus">
+            Player posts will appear here once someone starts posting.
+          </p>
         </section>
+
+        <section class="feed-stack" id="feedList" aria-live="polite"></section>
       </main>
 
-      <aside class="right-sidebar">
+      <aside class="right-sidebar dashboard-friends-sidebar">
         <h3 class="friends-title">Friends</h3>
-        <ul class="friends-list"></ul>
+
+        <div class="friends-search-shell">
+          <input
+            type="search"
+            class="friends-search-input"
+            id="friendSearchInput"
+            placeholder="Search players to add"
+            autocomplete="off"
+          />
+          <div class="friends-search-status" id="friendSearchStatus">
+            Search existing players by in-game name, first name, last name, or school.
+          </div>
+          <ul class="friend-search-results" id="friendSearchResults"></ul>
+        </div>
+
+        <section class="friends-group" id="incomingRequestsSection">
+          <h4 class="friends-group-title">Incoming Requests</h4>
+          <ul class="friend-requests-list" id="friendRequestsList"></ul>
+        </section>
+
+        <section class="friends-group">
+          <h4 class="friends-group-title">Your Friends</h4>
+          <ul class="friends-list" id="dashboardFriendsList" data-source="dashboard"></ul>
+        </section>
       </aside>
     </div>
 

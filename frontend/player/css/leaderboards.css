@@ -113,6 +113,52 @@
   padding: 24px;
 }
 
+.lb-row {
+  display: grid;
+  grid-template-columns: 120px minmax(220px, 1fr) 120px 120px;
+  gap: 16px;
+  align-items: center;
+  padding: 18px 20px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(139, 92, 246, 0.08);
+}
+
+.lb-row + .lb-row {
+  margin-top: 12px;
+}
+
+.lb-rank {
+  color: #f8f7ff;
+  font-family: "Syne", sans-serif;
+  font-size: 1rem;
+  font-weight: 800;
+}
+
+.lb-team-cell {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.lb-team-name {
+  color: #f5f3ff;
+  font-family: "Syne", sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.lb-team-meta {
+  color: rgba(208, 213, 235, 0.58);
+  font-size: 12px;
+}
+
+.lb-stat {
+  color: #ddd6fe;
+  font-size: 15px;
+  font-weight: 700;
+}
+
 .lb-empty-state {
   display: grid;
   place-items: center;
@@ -168,6 +214,10 @@
   .lb-table-head {
     grid-template-columns: 90px minmax(180px, 1fr) 90px 90px;
   }
+
+  .lb-row {
+    grid-template-columns: 90px minmax(180px, 1fr) 90px 90px;
+  }
 }
 
 @media (max-width: 768px) {
@@ -191,5 +241,15 @@
   .lb-table-body {
     padding: 18px;
     min-height: 260px;
+  }
+
+  .lb-row {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .lb-rank,
+  .lb-stat {
+    font-size: 14px;
   }
 }

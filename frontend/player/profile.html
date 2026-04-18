@@ -144,7 +144,12 @@
 
       <main class="profile-main" id="profileMain">
         <div class="profile-page-header">
-          <h1 class="profile-page-title">Profile</h1>
+          <div class="profile-page-heading">
+            <h1 class="profile-page-title" id="profilePageTitle">Profile</h1>
+            <p class="profile-page-subtitle hidden" id="profilePageSubtitle">
+              View and update your GamersHub player profile.
+            </p>
+          </div>
           <button class="profile-edit-toggle" id="editToggleBtn" type="button">
             <svg
               width="14"
@@ -162,6 +167,13 @@
             <span id="editToggleLabel">Edit Profile</span>
           </button>
         </div>
+
+        <section class="profile-public-banner hidden" id="profilePublicBanner">
+          <span class="profile-public-badge">Read Only</span>
+          <p class="profile-public-copy">
+            You are viewing another player's public profile.
+          </p>
+        </section>
 
         <section class="profile-card" id="profileCard">
           <div class="profile-left">
@@ -374,7 +386,7 @@
           </div>
         </section>
 
-        <section class="profile-social-card">
+        <section class="profile-social-card" id="profileSocialCard">
           <h3 class="profile-section-label">Social Media</h3>
           <div class="profile-socials-row">
             <button

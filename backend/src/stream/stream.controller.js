@@ -1,20 +1,64 @@
-const streamService = require('./stream.service');
+const streamService = require("./stream.service");
 
-/**
- * POST /api/streams/send-gift
- */
+const getStreams = async (req, res) => {
+  try {
+    const data = await streamService.listStreams({
+      limit: req.query.limit ? Number(req.query.limit) : undefined,
+      liveOnly: req.query.liveOnly === "true",
+    });
+
+    return res.status(200).json(data);
+  } catch (err) {
+    return res.status(500).json({ message: err.message || "Failed to load streams." });
+  }
+};
+
+const getStreamById = async (req, res) => {
+  try {
+    const stream = await streamService.getStreamById(req.params.streamId);
+    return res.status(200).json(stream);
+  } catch (err) {
+    return res.status(err.statusCode || 500).json({
+      message: err.message || "Failed to load stream.",
+    });
+  }
+};
+
+const getComments = async (req, res) => {
+  try {
+    const comments = await streamService.listComments(req.params.streamId, {
+      limit: req.query.limit ? Number(req.query.limit) : undefined,
+    });
+    return res.status(200).json(comments);
+  } catch (err) {
+    return res.status(err.statusCode || 500).json({
+      message: err.message || "Failed to load stream comments.",
+    });
+  }
+};
+
+const createComment = async (req, res) => {
+  try {
+    const comment = await streamService.createComment(req.params.streamId, req.body);
+    return res.status(201).json(comment);
+  } catch (err) {
+    return res.status(err.statusCode || 500).json({
+      message: err.message || "Failed to create stream comment.",
+    });
+  }
+};
+
 const sendGift = async (req, res) => {
   try {
     const { streamId, userId, giftType, giftValue, quantity, totalValue } = req.body;
     const giftValues = { Star: 5, Heart: 10, Rocket: 25 };
 
-    /* Basic validation */
     if (streamId == null || userId == null || !giftType || quantity == null) {
-      return res.status(400).json({ message: 'Missing required gift fields.' });
+      return res.status(400).json({ message: "Missing required gift fields." });
     }
 
     if (!Object.prototype.hasOwnProperty.call(giftValues, giftType)) {
-      return res.status(400).json({ message: 'Invalid gift type.' });
+      return res.status(400).json({ message: "Invalid gift type." });
     }
 
     const parsedStreamId = parseInt(streamId, 10);
@@ -29,35 +73,40 @@ const sendGift = async (req, res) => {
       !Number.isInteger(parsedUserId) ||
       parsedUserId < 1
     ) {
-      return res.status(400).json({ message: 'streamId and userId must be positive integers.' });
+      return res.status(400).json({ message: "streamId and userId must be positive integers." });
     }
 
     if (!Number.isInteger(parsedQuantity) || parsedQuantity < 1) {
-      return res.status(400).json({ message: 'Quantity and total value must be positive.' });
+      return res.status(400).json({ message: "Quantity and total value must be positive." });
     }
 
     if (
-      giftValue != null && Number(giftValue) !== computedGiftValue
-      || totalValue != null && Number(totalValue) !== computedTotalValue
+      (giftValue != null && Number(giftValue) !== computedGiftValue) ||
+      (totalValue != null && Number(totalValue) !== computedTotalValue)
     ) {
-      return res.status(400).json({ message: 'Gift values do not match gift type or quantity.' });
+      return res.status(400).json({ message: "Gift values do not match gift type or quantity." });
     }
 
     const giftId = await streamService.sendGift({
-      streamId  : parsedStreamId,
-      userId    : parsedUserId,
+      streamId: parsedStreamId,
+      userId: parsedUserId,
       giftType,
-      giftValue : computedGiftValue,
-      quantity  : parsedQuantity,
+      giftValue: computedGiftValue,
+      quantity: parsedQuantity,
       totalValue: computedTotalValue,
     });
 
     return res.status(201).json({ success: true, giftId });
-
   } catch (err) {
     console.error(err);
-    return res.status(500).json({ message: 'Internal server error.' });
+    return res.status(500).json({ message: "Internal server error." });
   }
 };
 
-module.exports = { sendGift };
+module.exports = {
+  getStreams,
+  getStreamById,
+  getComments,
+  createComment,
+  sendGift,
+};
