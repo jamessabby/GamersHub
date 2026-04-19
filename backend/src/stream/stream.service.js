@@ -114,6 +114,7 @@ function mapStream(stream, authors) {
     title: stream.title || "Untitled stream",
     viewerCount: Number(stream.viewerCount) || 0,
     isLive: Boolean(stream.isLive),
+    isVisible: stream.isVisible == null ? true : Boolean(stream.isVisible),
     playbackUrl: stream.playbackUrl || "",
     thumbnailUrl: stream.thumbnailUrl || "",
     gameName: stream.gameName || "",

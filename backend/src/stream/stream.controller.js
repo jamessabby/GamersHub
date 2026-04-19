@@ -39,7 +39,10 @@ const getComments = async (req, res) => {
 
 const createComment = async (req, res) => {
   try {
-    const comment = await streamService.createComment(req.params.streamId, req.body);
+    const comment = await streamService.createComment(req.params.streamId, {
+      ...req.body,
+      userId: req.auth.user.userId,
+    });
     return res.status(201).json(comment);
   } catch (err) {
     return res.status(err.statusCode || 500).json({
@@ -50,10 +53,10 @@ const createComment = async (req, res) => {
 
 const sendGift = async (req, res) => {
   try {
-    const { streamId, userId, giftType, giftValue, quantity, totalValue } = req.body;
+    const { streamId, giftType, giftValue, quantity, totalValue } = req.body;
     const giftValues = { Star: 5, Heart: 10, Rocket: 25 };
 
-    if (streamId == null || userId == null || !giftType || quantity == null) {
+    if (streamId == null || !giftType || quantity == null) {
       return res.status(400).json({ message: "Missing required gift fields." });
     }
 
@@ -62,7 +65,7 @@ const sendGift = async (req, res) => {
     }
 
     const parsedStreamId = parseInt(streamId, 10);
-    const parsedUserId = parseInt(userId, 10);
+    const parsedUserId = req.auth.user.userId;
     const parsedQuantity = parseInt(quantity, 10);
     const computedGiftValue = giftValues[giftType];
     const computedTotalValue = computedGiftValue * parsedQuantity;

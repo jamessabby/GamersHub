@@ -86,6 +86,7 @@ async function updateProfileByUserId(userId, payload) {
     email: authUser.email,
     phoneNumber: normalizeText(payload.phoneNumber ?? currentProfile.phoneNumber),
     school: normalizeText(payload.school ?? currentProfile.school),
+    courseYear: normalizeText(payload.courseYear ?? currentProfile.courseYear),
     primaryGame: normalizePrimaryGames(
       payload.primaryGames ?? currentProfile.primaryGame,
     ),
@@ -347,6 +348,7 @@ function mapProfileResponse(authUser, profile) {
     displayName: profile?.displayName || authUser.username,
     phoneNumber: profile?.phoneNumber || "",
     school: profile?.school || "",
+    courseYear: profile?.courseYear || "",
     primaryGames,
     primaryGame: primaryGames[0] || "",
     schoolTag: buildSchoolTag(profile?.school),

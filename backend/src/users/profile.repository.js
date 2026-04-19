@@ -14,6 +14,7 @@ async function findByUserId(userId) {
       EMAIL AS email,
       PHONE_NUMBER AS phoneNumber,
       SCHOOL AS school,
+      COURSE_YEAR AS courseYear,
       PRIMARY_GAME AS primaryGame
     FROM dbo.USER_PROFILE
     WHERE USERID = @userId
@@ -42,6 +43,7 @@ async function searchProfiles({ query, excludeUserId, limit = 8 }) {
         EMAIL AS email,
         PHONE_NUMBER AS phoneNumber,
         SCHOOL AS school,
+        COURSE_YEAR AS courseYear,
         PRIMARY_GAME AS primaryGame
       FROM dbo.USER_PROFILE
       WHERE USERID <> @excludeUserId
@@ -90,6 +92,7 @@ async function createProfile({ userId, username, email, studentId }) {
         INSERTED.EMAIL AS email,
         INSERTED.PHONE_NUMBER AS phoneNumber,
         INSERTED.SCHOOL AS school,
+        INSERTED.COURSE_YEAR AS courseYear,
         INSERTED.PRIMARY_GAME AS primaryGame
       VALUES (
         @userId,
@@ -113,6 +116,7 @@ async function updateProfile(
     email,
     phoneNumber,
     school,
+    courseYear,
     primaryGame,
   },
 ) {
@@ -129,6 +133,7 @@ async function updateProfile(
     .input("email", sql.NVarChar(255), email || null)
     .input("phoneNumber", sql.NVarChar(50), phoneNumber || null)
     .input("school", sql.NVarChar(255), school || null)
+    .input("courseYear", sql.NVarChar(100), courseYear || null)
     .input("primaryGame", sql.NVarChar(255), primaryGame || null).query(`
       UPDATE dbo.USER_PROFILE
       SET
@@ -140,6 +145,7 @@ async function updateProfile(
         EMAIL = @email,
         PHONE_NUMBER = @phoneNumber,
         SCHOOL = @school,
+        COURSE_YEAR = @courseYear,
         PRIMARY_GAME = @primaryGame
       OUTPUT
         INSERTED.USERID AS userId,
@@ -151,6 +157,7 @@ async function updateProfile(
         INSERTED.EMAIL AS email,
         INSERTED.PHONE_NUMBER AS phoneNumber,
         INSERTED.SCHOOL AS school,
+        INSERTED.COURSE_YEAR AS courseYear,
         INSERTED.PRIMARY_GAME AS primaryGame
       WHERE USERID = @userId
     `);

@@ -16,7 +16,10 @@ async function getPostSummary(req, res) {
 
 async function setPostReaction(req, res) {
   try {
-    const summary = await reactionService.setPostReaction(req.params.postId, req.body);
+    const summary = await reactionService.setPostReaction(req.params.postId, {
+      ...req.body,
+      userId: req.auth.user.userId,
+    });
     res.status(200).json(summary);
   } catch (error) {
     res
@@ -29,7 +32,7 @@ async function removePostReaction(req, res) {
   try {
     const summary = await reactionService.removePostReaction(
       req.params.postId,
-      req.query.userId,
+      req.auth.user.userId,
     );
     res.status(200).json(summary);
   } catch (error) {
@@ -54,7 +57,10 @@ async function getPostComments(req, res) {
 
 async function createPostComment(req, res) {
   try {
-    const payload = await reactionService.createPostComment(req.params.postId, req.body);
+    const payload = await reactionService.createPostComment(req.params.postId, {
+      ...req.body,
+      userId: req.auth.user.userId,
+    });
     res.status(201).json(payload);
   } catch (error) {
     res

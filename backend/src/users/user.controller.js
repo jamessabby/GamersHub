@@ -28,7 +28,7 @@ async function updateProfile(req, res) {
 async function searchPlayers(req, res) {
   try {
     const data = await userService.searchPlayers({
-      viewerUserId: req.query.viewerUserId,
+      viewerUserId: req.auth.user.userId,
       query: req.query.q,
       limit: req.query.limit ? Number(req.query.limit) : undefined,
     });

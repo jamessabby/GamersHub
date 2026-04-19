@@ -1,8 +1,9 @@
 (() => {
-  const CORRECT_CODE = "123456";
+  const auth = window.GamersHubAuth;
+  const API_BASE = auth?.apiBase || `http://${window.location.hostname || "localhost"}:3000`;
   const MAX_ATTEMPTS = 5;
   const LOCK_SECS = 30;
-  const RESEND_SECS = 30;
+  const RESET_SECS = 30;
 
   const otpBoxes = Array.from(document.querySelectorAll(".otp-box"));
   const codeError = document.getElementById("codeError");
@@ -12,25 +13,30 @@
   const lockoutBanner = document.getElementById("lockoutBanner");
   const lockCountdown = document.getElementById("lockCountdown");
   const resendBtn = document.getElementById("resendBtn");
-  const resendCd = document.getElementById("resendCountdown");
+  const resendCountdown = document.getElementById("resendCountdown");
+  const setupPanel = document.getElementById("mfaSetupPanel");
+  const setupSecret = document.getElementById("mfaSecret");
+  const setupAccount = document.getElementById("mfaAccount");
+  const setupCopy = document.getElementById("mfaSetupCopy");
+
+  const pendingMfa = auth?.getPendingMfa?.();
 
   let submitting = false;
   let failedAttempts = 0;
   let lockTimer = null;
   let resendTimer = null;
   let lockRemaining = 0;
-  let resendRemaining = 0;
+  let resetRemaining = 0;
 
-  /* ── STARS ── */
   function buildStars() {
     const container = document.getElementById("stars");
     if (!container) return;
     const frag = document.createDocumentFragment();
-    for (let i = 0; i < 80; i++) {
-      const s = document.createElement("div");
-      s.className = "star";
+    for (let index = 0; index < 80; index += 1) {
+      const star = document.createElement("div");
+      star.className = "star";
       const size = Math.random() * 1.8 + 0.4;
-      s.style.cssText = `
+      star.style.cssText = `
         left:${Math.random() * 100}%;
         top:${Math.random() * 100}%;
         width:${size}px; height:${size}px;
@@ -39,189 +45,55 @@
         --min-o:${(Math.random() * 0.1 + 0.05).toFixed(2)};
         --max-o:${(Math.random() * 0.5 + 0.3).toFixed(2)};
       `;
-      frag.appendChild(s);
+      frag.appendChild(star);
     }
     container.appendChild(frag);
   }
 
-  /* ── CAROUSEL ── */
-  function initCarousel() {
-    const slides = document.querySelectorAll(".carousel-slide");
-    const dots = document.querySelectorAll(".dot");
-    const bar = document.getElementById("progressBar");
-    const prevBtn = document.getElementById("arrowPrev");
-    const nextBtn = document.getElementById("arrowNext");
-    const tagEl = document.getElementById("gameTag");
-    const descEl = document.getElementById("gameDesc");
-    const label = document.getElementById("slideLabel");
-
-    if (!slides.length) return;
-
-    const SLIDE_DATA = [
-      { tag: "VALORANT", desc: "Tactical 5v5 character-based shooter" },
-      { tag: "MOBILE LEGENDS", desc: "5v5 MOBA battle arena" },
-      { tag: "CS2", desc: "The world's premier FPS esport" },
-      { tag: "LEAGUE OF LEGENDS", desc: "Strategic team-based MOBA" },
-    ];
-
-    const INTERVAL = 5000;
-    const TICK = 50;
-    let current = 0;
-    let elapsed = 0;
-    let paused = false;
-
-    function updateLabel(index) {
-      if (!tagEl || !descEl) return;
-      tagEl.textContent = SLIDE_DATA[index]?.tag || "";
-      descEl.textContent = SLIDE_DATA[index]?.desc || "";
-      if (label) {
-        label.classList.remove("animating");
-        void label.offsetWidth;
-        label.classList.add("animating");
-      }
-    }
-
-    function goTo(index) {
-      slides[current].classList.remove("active");
-      dots[current]?.classList.remove("active");
-      current = (index + slides.length) % slides.length;
-      slides[current].classList.add("active");
-      dots[current]?.classList.add("active");
-      updateLabel(current);
-      elapsed = 0;
-      if (bar) bar.style.width = "0%";
-    }
-
-    function tick() {
-      if (paused) return;
-      elapsed += TICK;
-      if (bar)
-        bar.style.width = Math.min((elapsed / INTERVAL) * 100, 100) + "%";
-      if (elapsed >= INTERVAL) goTo(current + 1);
-    }
-
-    prevBtn?.addEventListener("click", () => goTo(current - 1));
-    nextBtn?.addEventListener("click", () => goTo(current + 1));
-    dots.forEach((d) =>
-      d.addEventListener("click", () => goTo(Number(d.dataset.index))),
-    );
-
-    const wrapper = document.querySelector(".image-wrapper");
-    wrapper?.addEventListener("mouseenter", () => {
-      paused = true;
+  function showError(message) {
+    otpBoxes.forEach((box) => {
+      box.classList.remove("input-error");
+      void box.offsetWidth;
+      box.classList.add("input-error");
     });
-    wrapper?.addEventListener("mouseleave", () => {
-      paused = false;
-    });
-
-    updateLabel(0);
-    setInterval(tick, TICK);
-  }
-
-  /* ── ERROR HELPERS ── */
-  function showError(msg) {
-    otpBoxes.forEach((b) => {
-      b.classList.remove("input-error");
-      void b.offsetWidth;
-      b.classList.add("input-error");
-    });
-    codeError.textContent = msg;
+    codeError.textContent = message;
     codeError.classList.add("visible");
   }
 
   function clearError() {
-    otpBoxes.forEach((b) => b.classList.remove("input-error"));
+    otpBoxes.forEach((box) => box.classList.remove("input-error"));
     codeError.textContent = "";
     codeError.classList.remove("visible");
   }
 
-  /* ── OTP HELPERS ── */
   function getCode() {
-    return otpBoxes.map((b) => b.value).join("");
+    return otpBoxes.map((box) => box.value).join("");
   }
 
   function clearBoxes() {
-    otpBoxes.forEach((b) => {
-      b.value = "";
-      b.classList.remove("filled");
+    otpBoxes.forEach((box) => {
+      box.value = "";
+      box.classList.remove("filled");
     });
     otpBoxes[0]?.focus();
   }
 
-  /* ── OTP KEYBOARD NAV ── */
-  otpBoxes.forEach((box, i) => {
-    box.addEventListener("keydown", (e) => {
-      if (e.key === "Backspace") {
-        e.preventDefault();
-        if (box.value) {
-          box.value = "";
-          box.classList.remove("filled");
-        } else if (i > 0) {
-          otpBoxes[i - 1].focus();
-          otpBoxes[i - 1].value = "";
-          otpBoxes[i - 1].classList.remove("filled");
-        }
-      } else if (e.key === "ArrowLeft" && i > 0) {
-        e.preventDefault();
-        otpBoxes[i - 1].focus();
-      } else if (e.key === "ArrowRight" && i < otpBoxes.length - 1) {
-        e.preventDefault();
-        otpBoxes[i + 1].focus();
-      } else if (e.key === "Enter") {
-        handleVerify();
-      }
+  function setLocked(locked) {
+    otpBoxes.forEach((box) => {
+      box.disabled = locked;
     });
-
-    box.addEventListener("input", (e) => {
-      const val = e.target.value.replace(/[^0-9]/g, "");
-      box.value = val ? val[val.length - 1] : "";
-      box.classList.toggle("filled", !!box.value);
-      clearError();
-      if (box.value && i < otpBoxes.length - 1) otpBoxes[i + 1].focus();
-    });
-
-    box.addEventListener("paste", (e) => {
-      e.preventDefault();
-      const pasted = (e.clipboardData || window.clipboardData)
-        .getData("text")
-        .replace(/[^0-9]/g, "")
-        .slice(0, 6);
-      pasted.split("").forEach((char, idx) => {
-        if (otpBoxes[idx]) {
-          otpBoxes[idx].value = char;
-          otpBoxes[idx].classList.add("filled");
-        }
-      });
-      const nextEmpty = otpBoxes.findIndex((b) => !b.value);
-      (nextEmpty >= 0
-        ? otpBoxes[nextEmpty]
-        : otpBoxes[otpBoxes.length - 1]
-      ).focus();
-      clearError();
-    });
-
-    box.addEventListener("focus", () => {
-      box.select();
-    });
-  });
-
-  /* ── LOCKDOWN ── */
-  function setLocked(v) {
-    otpBoxes.forEach((b) => {
-      b.disabled = v;
-    });
-    verifyBtn.disabled = v;
+    verifyBtn.disabled = locked;
   }
 
   function startLockdown() {
     lockRemaining = LOCK_SECS;
     setLocked(true);
     lockoutBanner.classList.remove("d-none");
-    lockCountdown.textContent = lockRemaining + "s";
+    lockCountdown.textContent = `${lockRemaining}s`;
     clearInterval(lockTimer);
-    lockTimer = setInterval(() => {
-      lockRemaining--;
-      lockCountdown.textContent = lockRemaining + "s";
+    lockTimer = window.setInterval(() => {
+      lockRemaining -= 1;
+      lockCountdown.textContent = `${lockRemaining}s`;
       if (lockRemaining <= 0) {
         clearInterval(lockTimer);
         failedAttempts = 0;
@@ -233,104 +105,217 @@
     }, 1000);
   }
 
-  /* ── RESEND ── */
-  function startResendCountdown() {
-    resendRemaining = RESEND_SECS;
+  function startResetCountdown() {
+    resetRemaining = RESET_SECS;
     resendBtn.disabled = true;
-    resendCd.textContent = resendRemaining + "s";
+    resendCountdown.textContent = `${resetRemaining}s`;
     clearInterval(resendTimer);
-    resendTimer = setInterval(() => {
-      resendRemaining--;
-      resendCd.textContent = resendRemaining + "s";
-      if (resendRemaining <= 0) {
+    resendTimer = window.setInterval(() => {
+      resetRemaining -= 1;
+      resendCountdown.textContent = `${resetRemaining}s`;
+      if (resetRemaining <= 0) {
         clearInterval(resendTimer);
         resendBtn.disabled = false;
-        resendBtn.innerHTML = "Resend code";
+        resendBtn.textContent = pendingMfa?.mfaSetupRequired ? "Refresh setup" : "Clear code";
       }
     }, 1000);
   }
 
-  resendBtn?.addEventListener("click", () => {
-    if (resendBtn.disabled) return;
-    startResendCountdown();
-    clearBoxes();
-    clearError();
-  });
-
-  /* ── LOADING ── */
-  function setLoading(v) {
-    submitting = v;
-    btnText.textContent = v ? "Verifying…" : "Verify Code";
-    v
-      ? btnLoader.classList.remove("d-none")
-      : btnLoader.classList.add("d-none");
-    verifyBtn.disabled = v;
-    setLocked(v);
+  function setLoading(loading) {
+    submitting = loading;
+    btnText.textContent = loading ? "Verifying..." : "Verify Code";
+    btnLoader.classList.toggle("d-none", !loading);
+    verifyBtn.disabled = loading;
+    otpBoxes.forEach((box) => {
+      box.disabled = loading;
+    });
   }
 
-  /* ── SIMULATE BACKEND ── */
-  function simulateVerify(code) {
-    return new Promise((res, rej) =>
-      setTimeout(
-        () => (code === CORRECT_CODE ? res() : rej()),
-        1000 + Math.random() * 200,
-      ),
-    );
-  }
-
-  /* ── VERIFY HANDLER ── */
-  async function handleVerify() {
-    if (submitting || lockRemaining > 0) return;
-
-    const code = getCode();
-
-    if (!code) {
-      showError("Please enter your verification code.");
-      otpBoxes[0]?.focus();
+  async function fetchSetup() {
+    if (!pendingMfa?.mfaSetupRequired) {
       return;
     }
-    if (code.length < 6) {
-      showError("Code must be exactly 6 digits.");
-      const firstEmpty = otpBoxes.findIndex((b) => !b.value);
-      if (firstEmpty >= 0) otpBoxes[firstEmpty].focus();
+
+    const response = await fetch(`${API_BASE}/api/auth/mfa/setup`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ mfaTicket: pendingMfa.mfaTicket }),
+    });
+
+    let payload = {};
+    try {
+      payload = await response.json();
+    } catch {
+      payload = {};
+    }
+
+    if (!response.ok) {
+      throw new Error(payload.message || "Failed to load MFA setup details.");
+    }
+
+    setupPanel.style.display = "block";
+    setupSecret.textContent = payload.secret || "";
+    setupAccount.textContent = payload.accountName
+      ? `Account: ${payload.accountName}`
+      : "Add this secret to your authenticator app.";
+    setupCopy.textContent = "Scan or manually enter the secret below, then type the current 6-digit code to finish setup.";
+  }
+
+  async function handleVerify() {
+    if (submitting || lockRemaining > 0) {
+      return;
+    }
+
+    const code = getCode();
+    if (!/^\d{6}$/.test(code)) {
+      showError("Enter the 6-digit code from your authenticator app.");
       return;
     }
 
     setLoading(true);
-
     try {
-      await simulateVerify(code);
-      verifyBtn.classList.add("success");
-      btnText.textContent = "✓ Verified!";
-      btnLoader.classList.add("d-none");
-      otpBoxes.forEach((b) => {
-        b.disabled = true;
+      const response = await fetch(`${API_BASE}/api/auth/mfa/verify`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          mfaTicket: pendingMfa.mfaTicket,
+          code,
+        }),
       });
-      setTimeout(() => {
-        window.location.href = "../player/dashboard.html";
-      }, 900);
-    } catch {
+
+      let payload = {};
+      try {
+        payload = await response.json();
+      } catch {
+        payload = {};
+      }
+
+      if (!response.ok) {
+        throw new Error(payload.message || "Failed to verify MFA.");
+      }
+
+      const session = auth.setSession({
+        token: payload.token,
+        userId: payload.user.userId,
+        username: payload.user.username,
+        role: payload.user.role,
+        email: payload.user.email,
+        authProvider: payload.user.authProvider || payload.authProvider || "local",
+        redirectPath: payload.redirectPath,
+        needsSchoolVerification: payload.needsSchoolVerification,
+      });
+      auth.clearPendingMfa();
+
+      verifyBtn.classList.add("success");
+      btnText.textContent = "Verified!";
+      btnLoader.classList.add("d-none");
+      const fallback = session.redirectPath
+        ? auth.buildAppUrl(session.redirectPath)
+        : auth.getRoleHomePath(session.role, session.needsSchoolVerification);
+
+      window.setTimeout(() => {
+        if (pendingMfa?.redirect && !session.needsSchoolVerification) {
+          window.location.replace(auth.resolveRedirect(pendingMfa.redirect, fallback));
+          return;
+        }
+        window.location.replace(fallback);
+      }, 700);
+    } catch (error) {
       setLoading(false);
-      failedAttempts++;
+      failedAttempts += 1;
 
       if (failedAttempts >= MAX_ATTEMPTS) {
         startLockdown();
         return;
       }
 
-      const left = MAX_ATTEMPTS - failedAttempts;
-      showError(
-        `Invalid code. ${left} attempt${left !== 1 ? "s" : ""} remaining.`,
-      );
+      const remaining = MAX_ATTEMPTS - failedAttempts;
+      showError(`${error.message || "Invalid verification code."} ${remaining} attempt${remaining !== 1 ? "s" : ""} remaining.`);
       clearBoxes();
     }
   }
 
-  verifyBtn.addEventListener("click", handleVerify);
+  otpBoxes.forEach((box, index) => {
+    box.addEventListener("keydown", (event) => {
+      if (event.key === "Backspace") {
+        event.preventDefault();
+        if (box.value) {
+          box.value = "";
+          box.classList.remove("filled");
+        } else if (index > 0) {
+          otpBoxes[index - 1].focus();
+          otpBoxes[index - 1].value = "";
+          otpBoxes[index - 1].classList.remove("filled");
+        }
+      } else if (event.key === "ArrowLeft" && index > 0) {
+        event.preventDefault();
+        otpBoxes[index - 1].focus();
+      } else if (event.key === "ArrowRight" && index < otpBoxes.length - 1) {
+        event.preventDefault();
+        otpBoxes[index + 1].focus();
+      } else if (event.key === "Enter") {
+        void handleVerify();
+      }
+    });
 
-  /* ── INIT ── */
-  buildStars();
-  initCarousel();
-  startResendCountdown();
-  otpBoxes[0]?.focus();
+    box.addEventListener("input", (event) => {
+      const value = event.target.value.replace(/[^0-9]/g, "");
+      box.value = value ? value[value.length - 1] : "";
+      box.classList.toggle("filled", Boolean(box.value));
+      clearError();
+      if (box.value && index < otpBoxes.length - 1) {
+        otpBoxes[index + 1].focus();
+      }
+    });
+
+    box.addEventListener("paste", (event) => {
+      event.preventDefault();
+      const pasted = (event.clipboardData || window.clipboardData)
+        .getData("text")
+        .replace(/[^0-9]/g, "")
+        .slice(0, 6);
+      pasted.split("").forEach((character, pastedIndex) => {
+        if (otpBoxes[pastedIndex]) {
+          otpBoxes[pastedIndex].value = character;
+          otpBoxes[pastedIndex].classList.add("filled");
+        }
+      });
+      const nextEmpty = otpBoxes.findIndex((input) => !input.value);
+      (nextEmpty >= 0 ? otpBoxes[nextEmpty] : otpBoxes[otpBoxes.length - 1]).focus();
+      clearError();
+    });
+  });
+
+  resendBtn?.addEventListener("click", async () => {
+    if (resendBtn.disabled) return;
+    clearBoxes();
+    clearError();
+    if (pendingMfa?.mfaSetupRequired) {
+      try {
+        await fetchSetup();
+      } catch (error) {
+        showError(error.message || "Failed to refresh MFA setup.");
+      }
+    }
+    startResetCountdown();
+  });
+
+  verifyBtn.addEventListener("click", () => void handleVerify());
+
+  (async () => {
+    if (!pendingMfa?.mfaTicket) {
+      window.location.replace(auth.buildAppUrl("auth/login.html"));
+      return;
+    }
+
+    buildStars();
+    startResetCountdown();
+    otpBoxes[0]?.focus();
+
+    try {
+      await fetchSetup();
+    } catch (error) {
+      showError(error.message || "Failed to load MFA setup.");
+    }
+  })();
 })();

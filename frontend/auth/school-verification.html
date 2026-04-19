@@ -23,7 +23,7 @@
     <nav class="navbar-custom d-flex align-items-center justify-content-between px-4">
       <a href="#" class="navbar-brand-custom">
         <img
-          src="../assets/img/logo.png"
+          src="../assets/icons/gamershub-logo.png"
           alt="GamersHub"
           class="nav-logo"
           onerror="this.style.display='none'"
@@ -44,16 +44,16 @@
           <div class="image-wrapper">
             <div class="carousel-track" id="carouselTrack">
               <div class="carousel-slide active">
-                <img src="../assets/img/valo-cover.jpg" alt="Valorant" class="cover-img" />
+                <img src="../assets/img/login/valo-cover.jpg" alt="Valorant" class="cover-img" />
               </div>
               <div class="carousel-slide">
-                <img src="../assets/img/ml-cover.jpg" alt="Mobile Legends" class="cover-img" />
+                <img src="../assets/img/login/ml-cover.jpg" alt="Mobile Legends" class="cover-img" />
               </div>
               <div class="carousel-slide">
-                <img src="../assets/img/cs-cover.jpg" alt="CS2" class="cover-img" />
+                <img src="../assets/img/login/codm-cover.jpg" alt="CS2" class="cover-img" />
               </div>
               <div class="carousel-slide">
-                <img src="../assets/img/lol-cover.jpg" alt="League of Legends" class="cover-img" />
+                <img src="../assets/img/login/pubg-cover.jpg" alt="League of Legends" class="cover-img" />
               </div>
             </div>
 
@@ -124,14 +124,14 @@
               <span>Too many attempts. Try again in <strong id="lockCountdown">30s</strong></span>
             </div>
 
-            <!-- school email -->
+            <!-- contact email -->
             <div class="form-group-custom">
-              <label class="field-label">SCHOOL EMAIL</label>
+              <label class="field-label">EMAIL</label>
               <div class="input-wrap">
                 <input
                   type="email"
                   class="input-field"
-                  placeholder="yourname@dlsud.edu.ph"
+                  placeholder="yourname@example.com"
                   id="schoolEmail"
                   autocomplete="email"
                 />
@@ -206,6 +206,7 @@
       </div>
     </div>
 
+    <script src="../shared/js/auth-state.js"></script>
     <script src="./js/school-veriification.js"></script>
   </body>
 </html>

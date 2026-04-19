@@ -1,5 +1,7 @@
-const express = require("express");
 const path = require("path");
+require("dotenv").config({ path: path.resolve(__dirname, "..", ".env") });
+
+const express = require("express");
 const app = express();
 const port = 3000;
 
@@ -21,6 +23,8 @@ app.use("/api/users", require("./users/user.routes"));
 app.use("/api/feed", require("./feed/feed.routes"));
 app.use("/api/tournaments", require("./tournaments/tournament.routes"));
 app.use("/api/reactions", require("./reactions/reaction.routes"));
+app.use("/api/admin", require("./admin/admin.routes"));
+app.use("/api/superadmin", require("./admin/superadmin.routes"));
 
 const streamRoutes = require("./stream/stream.routes");
 app.use("/api/streams", streamRoutes);

@@ -1,19 +1,21 @@
 const { sql, pool, poolConnect } = require("../config/db.feed");
 
-async function listStreams({ limit = 12, liveOnly = false } = {}) {
+async function listStreams({ limit = 12, liveOnly = false, includeHidden = false } = {}) {
   await poolConnect;
 
   const safeLimit = Number.isInteger(limit) && limit > 0 ? Math.min(limit, 24) : 12;
   const result = await pool
     .request()
     .input("limit", sql.Int, safeLimit)
-    .input("liveOnly", sql.Bit, liveOnly ? 1 : 0).query(`
+    .input("liveOnly", sql.Bit, liveOnly ? 1 : 0)
+    .input("includeHidden", sql.Bit, includeHidden ? 1 : 0).query(`
       SELECT TOP (@limit)
         STREAM_ID AS streamId,
         USER_ID AS userId,
         STREAM_TITLE AS title,
         VIEW_COUNT AS viewerCount,
         IS_LIVE AS isLive,
+        CAST(IS_VISIBLE AS bit) AS isVisible,
         PLAYBACK_URL AS playbackUrl,
         THUMBNAIL_URL AS thumbnailUrl,
         GAME_NAME AS gameName,
@@ -22,6 +24,7 @@ async function listStreams({ limit = 12, liveOnly = false } = {}) {
         ENDED_AT AS endedAt
       FROM dbo.STREAM
       WHERE (@liveOnly = 0 OR IS_LIVE = 1)
+        AND (@includeHidden = 1 OR IS_VISIBLE = 1)
       ORDER BY
         IS_LIVE DESC,
         STARTED_AT DESC,
@@ -31,16 +34,20 @@ async function listStreams({ limit = 12, liveOnly = false } = {}) {
   return result.recordset;
 }
 
-async function findStreamById(streamId) {
+async function findStreamById(streamId, { includeHidden = false } = {}) {
   await poolConnect;
 
-  const result = await pool.request().input("streamId", sql.Int, streamId).query(`
+  const result = await pool
+    .request()
+    .input("streamId", sql.Int, streamId)
+    .input("includeHidden", sql.Bit, includeHidden ? 1 : 0).query(`
     SELECT
       STREAM_ID AS streamId,
       USER_ID AS userId,
       STREAM_TITLE AS title,
       VIEW_COUNT AS viewerCount,
       IS_LIVE AS isLive,
+      CAST(IS_VISIBLE AS bit) AS isVisible,
       PLAYBACK_URL AS playbackUrl,
       THUMBNAIL_URL AS thumbnailUrl,
       GAME_NAME AS gameName,
@@ -49,6 +56,7 @@ async function findStreamById(streamId) {
       ENDED_AT AS endedAt
     FROM dbo.STREAM
     WHERE STREAM_ID = @streamId
+      AND (@includeHidden = 1 OR IS_VISIBLE = 1)
   `);
 
   return result.recordset[0] || null;

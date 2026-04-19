@@ -61,6 +61,7 @@
   document.addEventListener("visibilitychange", handleSharedVisibilityChange);
 
   function applySharedNavigation() {
+    const role = String(session.role || "").toLowerCase();
     const pageRoutes = {
       home: "../player/dashboard.html",
       livestreams: "../player/livestream.html",
@@ -102,6 +103,40 @@
     document.querySelector(".nav-account")?.addEventListener("click", () => {
       window.location.href = "../player/profile.html";
     });
+
+    if (role === "admin" || role === "superadmin") {
+      injectRoleShortcut(role);
+    }
+  }
+
+  function injectRoleShortcut(role) {
+    const sidebarNav = document.querySelector(".sidebar-nav");
+    const navLinks = document.querySelector(".nav-right");
+    const shortcutHref = role === "superadmin"
+      ? "../superadmin/dashboard.html"
+      : "../admin/dashboard.html";
+    const shortcutLabel = role === "superadmin" ? "Control Center" : "Admin Console";
+
+    if (sidebarNav && !sidebarNav.querySelector("[data-gh-role-shortcut]")) {
+      const link = document.createElement("a");
+      link.href = shortcutHref;
+      link.className = "sidebar-link";
+      link.dataset.ghRoleShortcut = "true";
+      link.innerHTML = `
+        <span class="sidebar-icon">+</span>
+        <span>${shortcutLabel}</span>
+      `;
+      sidebarNav.appendChild(link);
+    }
+
+    if (navLinks && !navLinks.querySelector("[data-gh-role-shortcut-nav]")) {
+      const link = document.createElement("a");
+      link.href = shortcutHref;
+      link.className = "nav-link-item";
+      link.dataset.ghRoleShortcutNav = "true";
+      link.textContent = role === "superadmin" ? "Superadmin" : "Admin";
+      navLinks.insertBefore(link, navLinks.querySelector(".nav-account"));
+    }
   }
 
   async function loadAcceptedFriends() {

@@ -25,7 +25,7 @@
     >
       <a href="#" class="navbar-brand-custom">
         <img
-          src="../assets/img/logo.png"
+          src="../assets/icons/gamershub-logo.png"
           alt="GamersHub"
           class="nav-logo"
           onerror="this.style.display='none'"
@@ -46,28 +46,28 @@
             <div class="carousel-track" id="carouselTrack">
               <div class="carousel-slide active">
                 <img
-                  src="../assets/img/valo-cover.jpg"
+                  src="../assets/img/login/valo-cover.jpg"
                   alt="Valorant"
                   class="cover-img"
                 />
               </div>
               <div class="carousel-slide">
                 <img
-                  src="../assets/img/ml-cover.jpg"
+                  src="../assets/img/login/ml-cover.jpg"
                   alt="Mobile Legends"
                   class="cover-img"
                 />
               </div>
               <div class="carousel-slide">
                 <img
-                  src="../assets/img/cs-cover.jpg"
+                  src="../assets/img/login/codm-cover.jpg"
                   alt="CS2"
                   class="cover-img"
                 />
               </div>
               <div class="carousel-slide">
                 <img
-                  src="../assets/img/lol-cover.jpg"
+                  src="../assets/img/login/pubg-cover.jpg"
                   alt="League of Legends"
                   class="cover-img"
                 />
@@ -162,8 +162,21 @@
                 Two-Factor <span class="title-accent">Verification</span>
               </h2>
               <p class="card-subtitle">
-                Enter the 6-digit code sent to your email or authenticator app
+                Enter the 6-digit code from your authenticator app
               </p>
+            </div>
+
+            <div class="mfa-setup-copy" id="mfaSetupCopy" style="margin-bottom:16px; font-size:13px; color:#cbd5f5;">
+              Sign in with your local account, then verify using your authenticator app.
+            </div>
+
+            <div id="mfaSetupPanel" style="display:none; margin-bottom:16px; padding:14px; border:1px solid rgba(167,139,250,0.25); border-radius:16px; background:rgba(15,23,42,0.42);">
+              <div style="font-weight:600; margin-bottom:8px;">Authenticator Setup</div>
+              <div style="font-size:13px; line-height:1.5; color:#cbd5f5;">
+                Add a new TOTP account in Google Authenticator, Microsoft Authenticator, or Authy using this secret:
+              </div>
+              <div id="mfaSecret" style="margin-top:10px; font-family:monospace; letter-spacing:1px; word-break:break-all; color:#f8fafc;"></div>
+              <div id="mfaAccount" style="margin-top:6px; font-size:12px; color:#94a3b8;"></div>
             </div>
 
             <!-- lockout banner -->
@@ -230,9 +243,9 @@
             </button>
 
             <div class="resend-row">
-              <span class="resend-label">Didn't receive a code?</span>
+              <span class="resend-label">Need to reset the form?</span>
               <button class="btn-resend" id="resendBtn" disabled>
-                Resend in <span id="resendCountdown">30s</span>
+                Ready in <span id="resendCountdown">30s</span>
               </button>
             </div>
 
@@ -256,6 +269,7 @@
       </div>
     </div>
 
+    <script src="../shared/js/auth-state.js"></script>
     <script src="./js/mfa.js"></script>
   </body>
 </html>

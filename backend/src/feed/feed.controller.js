@@ -15,14 +15,14 @@ async function getFeed(req, res) {
 
 async function createPost(req, res) {
   try {
-    const { userId, content } = req.body;
+    const { content } = req.body;
     const mediaUrl = req.file ? `/uploads/posts/${req.file.filename}` : null;
     const mediaType = req.file
       ? (req.file.mimetype.startsWith("video/") ? "video" : "image")
       : req.body.mediaType || null;
 
     const post = await feedService.createPost({
-      userId,
+      userId: req.auth.user.userId,
       content,
       mediaUrl,
       mediaType,

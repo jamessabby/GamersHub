@@ -1,4 +1,11 @@
 (() => {
+  const auth = window.GamersHubAuth;
+  const session = auth?.requireAuth?.({ redirectTo: "auth/login.html" });
+  if (!session) {
+    return;
+  }
+
+  const API_BASE = auth?.apiBase || `http://${window.location.hostname || "localhost"}:3000`;
   const MAX_ATTEMPTS = 5;
   const LOCK_SECS = 30;
 
@@ -21,18 +28,15 @@
   let lockTimer = null;
   let lockRemaining = 0;
 
-  const inputs = [emailInput, studentInput, deptInput, courseInput];
-
-  /* ── STARS ── */
   function buildStars() {
     const container = document.getElementById("stars");
     if (!container) return;
     const frag = document.createDocumentFragment();
-    for (let i = 0; i < 80; i++) {
-      const s = document.createElement("div");
-      s.className = "star";
+    for (let index = 0; index < 80; index += 1) {
+      const star = document.createElement("div");
+      star.className = "star";
       const size = Math.random() * 1.8 + 0.4;
-      s.style.cssText = `
+      star.style.cssText = `
         left:${Math.random() * 100}%;
         top:${Math.random() * 100}%;
         width:${size}px; height:${size}px;
@@ -41,324 +45,205 @@
         --min-o:${(Math.random() * 0.1 + 0.05).toFixed(2)};
         --max-o:${(Math.random() * 0.5 + 0.3).toFixed(2)};
       `;
-      frag.appendChild(s);
+      frag.appendChild(star);
     }
     container.appendChild(frag);
   }
 
-  /* ── CAROUSEL ── */
-  function initCarousel() {
-    const slides = document.querySelectorAll(".carousel-slide");
-    const dots = document.querySelectorAll(".dot");
-    const bar = document.getElementById("progressBar");
-    const prevBtn = document.getElementById("arrowPrev");
-    const nextBtn = document.getElementById("arrowNext");
-    const tagEl = document.getElementById("gameTag");
-    const descEl = document.getElementById("gameDesc");
-    const label = document.getElementById("slideLabel");
-
-    if (!slides.length) return;
-
-    const SLIDE_DATA = [
-      { tag: "VALORANT", desc: "Tactical 5v5 character-based shooter" },
-      { tag: "MOBILE LEGENDS", desc: "5v5 MOBA battle arena" },
-      { tag: "CS2", desc: "The world's premier FPS esport" },
-      { tag: "LEAGUE OF LEGENDS", desc: "Strategic team-based MOBA" },
-    ];
-
-    const INTERVAL = 5000,
-      TICK = 50;
-    let current = 0,
-      elapsed = 0,
-      paused = false;
-
-    function updateLabel(i) {
-      if (!tagEl || !descEl) return;
-      tagEl.textContent = SLIDE_DATA[i]?.tag || "";
-      descEl.textContent = SLIDE_DATA[i]?.desc || "";
-      if (label) {
-        label.classList.remove("animating");
-        void label.offsetWidth;
-        label.classList.add("animating");
-      }
-    }
-
-    function goTo(index) {
-      slides[current].classList.remove("active");
-      dots[current]?.classList.remove("active");
-      current = (index + slides.length) % slides.length;
-      slides[current].classList.add("active");
-      dots[current]?.classList.add("active");
-      updateLabel(current);
-      elapsed = 0;
-      if (bar) bar.style.width = "0%";
-    }
-
-    function tick() {
-      if (paused) return;
-      elapsed += TICK;
-      if (bar)
-        bar.style.width = Math.min((elapsed / INTERVAL) * 100, 100) + "%";
-      if (elapsed >= INTERVAL) goTo(current + 1);
-    }
-
-    prevBtn?.addEventListener("click", () => goTo(current - 1));
-    nextBtn?.addEventListener("click", () => goTo(current + 1));
-    dots.forEach((d) =>
-      d.addEventListener("click", () => goTo(Number(d.dataset.index))),
-    );
-
-    const wrapper = document.querySelector(".image-wrapper");
-    wrapper?.addEventListener("mouseenter", () => {
-      paused = true;
-    });
-    wrapper?.addEventListener("mouseleave", () => {
-      paused = false;
-    });
-
-    updateLabel(0);
-    setInterval(tick, TICK);
-  }
-
-  /* ── ERROR HELPERS ── */
-  function showError(input, el, msg) {
+  function showError(input, element, message) {
     input.classList.remove("input-error");
     void input.offsetWidth;
     input.classList.add("input-error");
-    el.textContent = msg;
-    el.classList.add("visible");
+    element.textContent = message;
+    element.classList.add("visible");
   }
 
-  function clearError(input, el) {
+  function clearError(input, element) {
     input.classList.remove("input-error");
-    el.textContent = "";
-    el.classList.remove("visible");
+    element.textContent = "";
+    element.classList.remove("visible");
   }
 
-  /* ── VALIDATION ── */
-  const PUBLIC_DOMAINS = [
-    "gmail.com",
-    "yahoo.com",
-    "outlook.com",
-    "hotmail.com",
-    "icloud.com",
-    "live.com",
-  ];
-
-  function validateEmail(v) {
-    if (!v) return "School email is required.";
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v))
-      return "Invalid email format.";
-    const domain = v.split("@")[1];
-    if (PUBLIC_DOMAINS.includes(domain))
-      return "School email must use @dlsud.edu.ph domain.";
-    if (domain !== "dlsud.edu.ph")
-      return "School email must use @dlsud.edu.ph domain.";
+  function validateEmail(value) {
+    if (!value) return "Email is required.";
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(value)) return "Invalid email format.";
     return null;
   }
 
-  function validateStudent(v) {
-    if (!v) return "Student number is required.";
-    if (!/^\d+$/.test(v)) return "Student number must contain numbers only.";
-    if (v.length !== 8) return "Student number must be exactly 8 digits.";
-    if (/^(.)\1{7}$/.test(v)) return "Invalid student number.";
+  function validateStudent(value) {
+    if (!value) return "Student number is required.";
+    if (!/^\d{8}$/.test(value)) return "Student number must be exactly 8 digits.";
     return null;
   }
 
-  function validateDept(v) {
-    if (!v) return "Please enter your college department.";
-    if (v.length < 2) return "Please enter your college department.";
-    if (/[^a-zA-Z0-9 ]/.test(v)) return "No special characters allowed.";
+  function validateDepartment(value) {
+    if (!value) return "Department is required.";
+    if (value.length < 3) return "Department is too short.";
     return null;
   }
 
-  function validateCourse(v) {
-    if (!v) return "Course and year level is required.";
-    if (/[^a-zA-Z0-9]/.test(v)) return "No special characters allowed.";
-    if (!/[a-zA-Z]/.test(v))
-      return "Course must contain letters and year level.";
-    if (!/[0-9]/.test(v)) return "Course must contain letters and year level.";
+  function validateCourse(value) {
+    if (!value) return "Course & year level is required.";
+    if (value.length < 3) return "Course & year level is too short.";
     return null;
   }
 
   function validate() {
     const email = emailInput.value.trim().toLowerCase();
     const student = studentInput.value.trim();
-    const dept = deptInput.value.trim();
-    const course = courseInput.value.trim().toUpperCase();
+    const department = deptInput.value.trim();
+    const courseYear = courseInput.value.trim().toUpperCase();
 
-    const eErr = validateEmail(email);
-    const sErr = validateStudent(student);
-    const dErr = validateDept(dept);
-    const cErr = validateCourse(course);
+    const emailValidation = validateEmail(email);
+    const studentValidation = validateStudent(student);
+    const departmentValidation = validateDepartment(department);
+    const courseValidation = validateCourse(courseYear);
 
-    if (eErr) showError(emailInput, emailError, eErr);
+    if (emailValidation) showError(emailInput, emailError, emailValidation);
     else clearError(emailInput, emailError);
-    if (sErr) showError(studentInput, studentError, sErr);
+
+    if (studentValidation) showError(studentInput, studentError, studentValidation);
     else clearError(studentInput, studentError);
-    if (dErr) showError(deptInput, deptError, dErr);
+
+    if (departmentValidation) showError(deptInput, deptError, departmentValidation);
     else clearError(deptInput, deptError);
-    if (cErr) showError(courseInput, courseError, cErr);
+
+    if (courseValidation) showError(courseInput, courseError, courseValidation);
     else clearError(courseInput, courseError);
 
-    // auto-uppercase course on valid
-    if (!cErr) courseInput.value = course;
+    if (!courseValidation) {
+      courseInput.value = courseYear;
+    }
 
-    return !eErr && !sErr && !dErr && !cErr;
+    return !(emailValidation || studentValidation || departmentValidation || courseValidation);
   }
 
-  /* ── SIMULATED BACKEND ── */
-  const REGISTERED_EMAILS = [
-    "jdelacruz@dlsud.edu.ph",
-    "mreyes@dlsud.edu.ph",
-    "agarcia@dlsud.edu.ph",
-  ];
-  const VALID_STUDENT_NUMS = ["20230001", "20230002", "20230003"];
-  const VERIFIED_EMAILS = ["agarcia@dlsud.edu.ph"];
-
-  function simulateBackend(email, studentNum) {
-    return new Promise((resolve, reject) => {
-      setTimeout(
-        () => {
-          if (VERIFIED_EMAILS.includes(email))
-            return reject({
-              field: "email",
-              message: "This account is already verified.",
-            });
-          if (!REGISTERED_EMAILS.includes(email))
-            return reject({
-              field: "email",
-              message: "School email not found in records.",
-            });
-          if (!VALID_STUDENT_NUMS.includes(studentNum))
-            return reject({
-              field: "student",
-              message: "Student record not found.",
-            });
-          if (
-            REGISTERED_EMAILS.indexOf(email) !==
-            VALID_STUDENT_NUMS.indexOf(studentNum)
-          )
-            return reject({
-              field: "student",
-              message: "Student number does not match email.",
-            });
-          if (Math.random() < 0.05)
-            return reject({
-              field: "server",
-              message: "Server error. Please try again.",
-            });
-          resolve();
-        },
-        1000 + Math.random() * 200,
-      );
+  function setLoading(loading) {
+    submitting = loading;
+    btnText.textContent = loading ? "Saving..." : "Verify Student Identity";
+    btnLoader.classList.toggle("d-none", !loading);
+    submitBtn.disabled = loading;
+    [emailInput, studentInput, deptInput, courseInput].forEach((input) => {
+      input.disabled = loading;
     });
   }
 
-  /* ── LOCKDOWN ── */
-  function setFormDisabled(v) {
-    inputs.forEach((el) => {
-      el.disabled = v;
+  function setLocked(locked) {
+    [emailInput, studentInput, deptInput, courseInput].forEach((input) => {
+      input.disabled = locked;
     });
-    submitBtn.disabled = v;
+    submitBtn.disabled = locked;
   }
 
   function startLockdown() {
     lockRemaining = LOCK_SECS;
-    setFormDisabled(true);
+    setLocked(true);
     lockoutBanner.classList.remove("d-none");
-    lockCountdown.textContent = lockRemaining + "s";
+    lockCountdown.textContent = `${lockRemaining}s`;
     clearInterval(lockTimer);
-    lockTimer = setInterval(() => {
-      lockRemaining--;
-      lockCountdown.textContent = lockRemaining + "s";
+    lockTimer = window.setInterval(() => {
+      lockRemaining -= 1;
+      lockCountdown.textContent = `${lockRemaining}s`;
       if (lockRemaining <= 0) {
         clearInterval(lockTimer);
         failedAttempts = 0;
-        setFormDisabled(false);
+        setLocked(false);
         lockoutBanner.classList.add("d-none");
       }
     }, 1000);
   }
 
-  /* ── LOADING ── */
-  function setLoading(v) {
-    submitting = v;
-    btnText.textContent = v ? "Verifying…" : "Verify Student Identity";
-    v
-      ? btnLoader.classList.remove("d-none")
-      : btnLoader.classList.add("d-none");
-    submitBtn.disabled = v;
-    inputs.forEach((el) => {
-      el.disabled = v;
-    });
+  async function loadExistingProfile() {
+    const response = await fetch(`${API_BASE}/api/users/profile/${session.userId}`);
+    let payload = {};
+    try {
+      payload = await response.json();
+    } catch {
+      payload = {};
+    }
+
+    if (!response.ok) {
+      throw new Error(payload.message || "Failed to load profile.");
+    }
+
+    emailInput.value = payload.email || session.email || "";
+    studentInput.value = payload.studentId && !String(payload.studentId).startsWith("TEMP-") ? payload.studentId : "";
+    deptInput.value = payload.school || "";
+    courseInput.value = payload.courseYear || "";
   }
 
-  /* ── SUBMIT HANDLER ── */
-  async function handleSubmit() {
+  async function submitVerification() {
     if (submitting || lockRemaining > 0) return;
     if (!validate()) return;
 
-    const email = emailInput.value.trim().toLowerCase();
-    const student = studentInput.value.trim();
-
     setLoading(true);
-
     try {
-      await simulateBackend(email, student);
-      submitBtn.classList.add("success");
-      btnText.textContent = "✓ Verified!";
-      btnLoader.classList.add("d-none");
-      inputs.forEach((el) => {
-        el.disabled = true;
+      const response = await fetch(`${API_BASE}/api/users/profile/${session.userId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          studentId: studentInput.value.trim(),
+          school: deptInput.value.trim(),
+          courseYear: courseInput.value.trim().toUpperCase(),
+        }),
       });
-      setTimeout(() => {
-        window.location.href = "../player/dashboard.html";
-      }, 900);
-    } catch (err) {
-      setLoading(false);
-      failedAttempts++;
 
+      let payload = {};
+      try {
+        payload = await response.json();
+      } catch {
+        payload = {};
+      }
+
+      if (!response.ok) {
+        throw new Error(payload.message || "Failed to save verification details.");
+      }
+
+      const nextSession = auth.setSession({
+        ...session,
+        needsSchoolVerification: false,
+      });
+
+      btnText.textContent = "Verified!";
+      btnLoader.classList.add("d-none");
+      window.setTimeout(() => {
+        window.location.replace(auth.getRoleHomePath(nextSession.role));
+      }, 700);
+    } catch (error) {
+      setLoading(false);
+      failedAttempts += 1;
       if (failedAttempts >= MAX_ATTEMPTS) {
         startLockdown();
         return;
       }
 
-      if (err.field === "email") showError(emailInput, emailError, err.message);
-      else if (err.field === "student")
-        showError(studentInput, studentError, err.message);
-      else
-        showError(
-          emailInput,
-          emailError,
-          err.message || "Something went wrong. Please try again.",
-        );
+      showError(emailInput, emailError, error.message || "Verification failed.");
     }
   }
 
-  /* ── CLEAR ON INPUT ── */
-  emailInput.addEventListener("input", () =>
-    clearError(emailInput, emailError),
-  );
+  emailInput.addEventListener("input", () => clearError(emailInput, emailError));
   studentInput.addEventListener("input", () => {
     studentInput.value = studentInput.value.replace(/[^0-9]/g, "");
     clearError(studentInput, studentError);
   });
   deptInput.addEventListener("input", () => clearError(deptInput, deptError));
-  courseInput.addEventListener("input", () =>
-    clearError(courseInput, courseError),
-  );
+  courseInput.addEventListener("input", () => clearError(courseInput, courseError));
+  [emailInput, studentInput, deptInput, courseInput].forEach((input) => {
+    input.addEventListener("keydown", (event) => {
+      if (event.key === "Enter") {
+        void submitVerification();
+      }
+    });
+  });
 
-  /* ── ENTER KEY ── */
-  inputs.forEach((el) =>
-    el.addEventListener("keydown", (e) => {
-      if (e.key === "Enter") handleSubmit();
-    }),
-  );
+  submitBtn.addEventListener("click", () => void submitVerification());
 
-  submitBtn.addEventListener("click", handleSubmit);
-
-  /* ── INIT ── */
-  buildStars();
-  initCarousel();
+  (async () => {
+    buildStars();
+    try {
+      await loadExistingProfile();
+    } catch (error) {
+      showError(emailInput, emailError, error.message || "Failed to load your profile.");
+    }
+  })();
 })();
