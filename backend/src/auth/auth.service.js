@@ -11,18 +11,18 @@ const {
   createSignedToken,
   verifySignedToken,
 } = require("./token.util");
-const {
-  generateBase32Secret,
-  buildOtpAuthUri,
-  verifyTotp,
-} = require("./totp.util");
+const { generateBase32Secret } = require("./totp.util");
+const { sendMfaCodeEmail } = require("./mail.util");
 
-const APPROVED_EMAIL_DOMAIN = String(process.env.APPROVED_EMAIL_DOMAIN || "").trim().toLowerCase();
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || "";
 const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET || "";
 const GOOGLE_CALLBACK_URL = process.env.GOOGLE_CALLBACK_URL || "http://localhost:3000/api/auth/google/callback";
+const MICROSOFT_CLIENT_ID = process.env.MICROSOFT_CLIENT_ID || "";
+const MICROSOFT_CLIENT_SECRET = process.env.MICROSOFT_CLIENT_SECRET || "";
+const MICROSOFT_CALLBACK_URL = process.env.MICROSOFT_CALLBACK_URL || "http://localhost:3000/api/auth/microsoft/callback";
+const MICROSOFT_TENANT_ID = process.env.MICROSOFT_TENANT_ID || "common";
 const FALLBACK_APP_BASE_URL = (process.env.APP_BASE_URL || "http://127.0.0.1:5500/frontend").replace(/\/+$/, "");
-const MFA_ISSUER = process.env.MFA_ISSUER || "GamersHub";
+const MFA_CODE_TTL_MINUTES = Math.max(1, Number(process.env.MFA_CODE_TTL_MINUTES) || 10);
 const SESSION_DURATION_MS = 7 * 24 * 60 * 60 * 1000;
 
 async function registerUser(data) {
@@ -33,22 +33,14 @@ async function registerUser(data) {
 
   const normalizedUsername = String(username).trim();
   const normalizedEmail = normalizeEmail(email);
-  validateApprovedEmail(normalizedEmail);
-
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
   if (!emailRegex.test(normalizedEmail)) {
     throw badRequest("Please enter a valid email address.");
   }
 
-  const [existingUser, existingEmail] = await Promise.all([
-    userRepo.findByUsername(normalizedUsername),
-    userRepo.findByEmail(normalizedEmail),
-  ]);
+  const existingUser = await userRepo.findByUsername(normalizedUsername);
   if (existingUser) {
     throw conflict("User already exists");
-  }
-  if (existingEmail) {
-    throw conflict("Email already exists");
   }
 
   const hashedPassword = await bcrypt.hash(password, 10);
@@ -126,7 +118,7 @@ async function loginUser(data) {
   return {
     message: "Password verified. MFA required.",
     mfaRequired: true,
-    mfaSetupRequired: !Boolean(user.mfaEnrolled),
+    mfaSetupRequired: false,
     mfaTicket,
     user: mapUser(user),
   };
@@ -134,7 +126,7 @@ async function loginUser(data) {
 
 async function setupMfa(payload) {
   const ticket = verifySignedToken(payload.mfaTicket);
-  if (!ticket || ticket.type !== "mfa_ticket") {
+  if (!ticket || !["mfa_ticket", "mfa_email_challenge"].includes(ticket.type)) {
     throw unauthorized("MFA session expired. Please log in again.");
   }
 
@@ -143,28 +135,47 @@ async function setupMfa(payload) {
     throw unauthorized("User not found.");
   }
 
-  let secret = user.mfaSecret || "";
-  if (!isBase32Secret(secret)) {
-    secret = generateBase32Secret();
-    await userRepo.updateMfaSecret(user.userId, secret);
-  }
+  const code = generateEmailCode();
+  await sendMfaCodeEmail({
+    to: user.email,
+    username: user.username,
+    code,
+    expiresInMinutes: MFA_CODE_TTL_MINUTES,
+  });
+
+  const mfaTicket = createSignedToken(
+    {
+      type: "mfa_email_challenge",
+      userId: user.userId,
+      provider: "local",
+      email: user.email,
+      codeHash: hashEmailVerificationCode(user.userId, code),
+    },
+    { expiresInSeconds: MFA_CODE_TTL_MINUTES * 60 },
+  );
+
+  await auditService.logAuditEvent({
+    actorUserId: user.userId,
+    actorRole: user.userRole,
+    actionType: "auth.mfa_code_sent",
+    entityType: "user",
+    entityId: user.userId,
+    details: { authProvider: "local", delivery: "email" },
+  });
 
   return {
-    secret,
-    issuer: MFA_ISSUER,
-    accountName: user.email || user.username,
-    otpauthUri: buildOtpAuthUri({
-      secret,
-      accountName: user.email || user.username,
-      issuer: MFA_ISSUER,
-    }),
+    message: "Verification code sent.",
+    mfaTicket,
+    delivery: "email",
+    maskedEmail: maskEmail(user.email),
+    expiresInSeconds: MFA_CODE_TTL_MINUTES * 60,
   };
 }
 
 async function verifyMfa(payload) {
   const ticket = verifySignedToken(payload.mfaTicket);
-  if (!ticket || ticket.type !== "mfa_ticket") {
-    throw unauthorized("MFA session expired. Please log in again.");
+  if (!ticket || ticket.type !== "mfa_email_challenge") {
+    throw unauthorized("Verification code expired. Request a new code and try again.");
   }
 
   const user = await userRepo.findById(ticket.userId);
@@ -172,15 +183,15 @@ async function verifyMfa(payload) {
     throw unauthorized("User not found.");
   }
 
-  const secret = user.mfaSecret;
-  if (!secret || !verifyTotp(secret, payload.code)) {
+  const submittedCode = String(payload.code || "").trim();
+  if (!/^\d{6}$/.test(submittedCode) || !matchesVerificationCode(ticket.codeHash, hashEmailVerificationCode(user.userId, submittedCode))) {
     await auditService.logAuditEvent({
       actorUserId: user.userId,
       actorRole: user.userRole,
       actionType: "auth.mfa_failed",
       entityType: "user",
       entityId: user.userId,
-      details: { authProvider: "local" },
+      details: { authProvider: "local", delivery: "email" },
     });
     throw unauthorized("Invalid verification code.");
   }
@@ -198,7 +209,7 @@ async function verifyMfa(payload) {
     actionType: "auth.login_success",
     entityType: "user",
     entityId: user.userId,
-    details: { authProvider: "local", mfaVerified: true },
+    details: { authProvider: "local", delivery: "email", mfaVerified: true },
   });
 
   return buildAuthResponse(user, session.token, needsSchoolVerification);
@@ -237,85 +248,68 @@ async function logoutUser(authContext) {
 
 function buildGoogleStartUrl({ redirectBase } = {}) {
   ensureGoogleConfigured();
-  const frontendBase = resolveFrontendBase(redirectBase);
-  const state = createSignedToken(
-    {
-      type: "google_oauth_state",
-      redirectBase: frontendBase,
-    },
-    { expiresInSeconds: 10 * 60 },
-  );
+  return buildOAuthStartUrl({
+    provider: "google",
+    redirectBase,
+    clientId: GOOGLE_CLIENT_ID,
+    authorizationUrl: "https://accounts.google.com/o/oauth2/v2/auth",
+    callbackUrl: GOOGLE_CALLBACK_URL,
+    scopes: ["openid", "email", "profile"],
+  });
+}
 
-  const url = new URL("https://accounts.google.com/o/oauth2/v2/auth");
-  url.searchParams.set("client_id", GOOGLE_CLIENT_ID);
-  url.searchParams.set("redirect_uri", GOOGLE_CALLBACK_URL);
-  url.searchParams.set("response_type", "code");
-  url.searchParams.set("scope", "openid email profile");
-  url.searchParams.set("prompt", "select_account");
-  url.searchParams.set("state", state);
-  return url.toString();
+function buildMicrosoftStartUrl({ redirectBase } = {}) {
+  ensureMicrosoftConfigured();
+  return buildOAuthStartUrl({
+    provider: "microsoft",
+    redirectBase,
+    clientId: MICROSOFT_CLIENT_ID,
+    authorizationUrl: getMicrosoftAuthorizationUrl(),
+    callbackUrl: MICROSOFT_CALLBACK_URL,
+    scopes: ["openid", "email", "profile", "User.Read"],
+  });
 }
 
 async function handleGoogleCallback({ code, state }) {
   ensureGoogleConfigured();
-
-  const verifiedState = verifySignedToken(state);
-  if (!verifiedState || verifiedState.type !== "google_oauth_state") {
-    throw badRequest("OAuth state is invalid or expired.");
-  }
-
-  if (!code) {
-    throw badRequest("Google did not return an authorization code.");
-  }
-
-  const tokenResponse = await fetch("https://oauth2.googleapis.com/token", {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: new URLSearchParams({
-      code,
-      client_id: GOOGLE_CLIENT_ID,
-      client_secret: GOOGLE_CLIENT_SECRET,
-      redirect_uri: GOOGLE_CALLBACK_URL,
-      grant_type: "authorization_code",
-    }),
+  const verifiedState = verifyOAuthState(state, "google");
+  const tokenPayload = await exchangeOAuthCode({
+    providerLabel: "Google",
+    tokenUrl: "https://oauth2.googleapis.com/token",
+    clientId: GOOGLE_CLIENT_ID,
+    clientSecret: GOOGLE_CLIENT_SECRET,
+    callbackUrl: GOOGLE_CALLBACK_URL,
+    code,
   });
 
-  if (!tokenResponse.ok) {
-    const errorText = await tokenResponse.text();
-    throw badRequest(`Google token exchange failed: ${errorText}`);
-  }
-
-  const tokenPayload = await tokenResponse.json();
-  const userInfoResponse = await fetch("https://openidconnect.googleapis.com/v1/userinfo", {
-    headers: {
-      Authorization: `Bearer ${tokenPayload.access_token}`,
-    },
-  });
-
-  if (!userInfoResponse.ok) {
-    const errorText = await userInfoResponse.text();
-    throw badRequest(`Google user info lookup failed: ${errorText}`);
-  }
-
-  const googleProfile = await userInfoResponse.json();
+  const googleProfile = await fetchGoogleProfile(tokenPayload.access_token);
   const user = await upsertGoogleUser(googleProfile);
-  const session = await createUserSession(user);
-  const needsSchoolVerification = await getNeedsSchoolVerification(user.userId);
+  return finalizeOAuthSignIn({
+    user,
+    redirectBase: verifiedState.redirectBase,
+    auditActionType: "auth.google_login_success",
+  });
+}
 
-  await auditService.logAuditEvent({
-    actorUserId: user.userId,
-    actorRole: user.userRole,
-    actionType: "auth.google_login_success",
-    entityType: "user",
-    entityId: user.userId,
-    details: { email: user.email },
+async function handleMicrosoftCallback({ code, state }) {
+  ensureMicrosoftConfigured();
+  const verifiedState = verifyOAuthState(state, "microsoft");
+  const tokenPayload = await exchangeOAuthCode({
+    providerLabel: "Microsoft",
+    tokenUrl: getMicrosoftTokenUrl(),
+    clientId: MICROSOFT_CLIENT_ID,
+    clientSecret: MICROSOFT_CLIENT_SECRET,
+    callbackUrl: MICROSOFT_CALLBACK_URL,
+    code,
   });
 
-  return {
+  const microsoftProfile = await fetchMicrosoftProfile(tokenPayload);
+  const user = await upsertMicrosoftUser(microsoftProfile);
+  return finalizeOAuthSignIn({
+    user,
     redirectBase: verifiedState.redirectBase,
-    token: session.token,
-    redirectPath: resolveRedirectPath(user.userRole, needsSchoolVerification),
-  };
+    auditActionType: "auth.microsoft_login_success",
+  });
 }
 
 async function createUserSession(user) {
@@ -333,24 +327,19 @@ async function createUserSession(user) {
 }
 
 async function upsertGoogleUser(googleProfile) {
-  const googleSub = String(googleProfile.sub || "").trim();
-  const email = normalizeEmail(googleProfile.email);
-
-  if (!googleSub || !email || googleProfile.email_verified !== true) {
+  if (!googleProfile.sub || !googleProfile.email || googleProfile.emailVerified !== true) {
     throw badRequest("Google account did not return a verified email address.");
   }
 
-  validateApprovedEmail(email);
-
-  const existingByGoogleSub = await userRepo.findByGoogleSub(googleSub);
+  const existingByGoogleSub = await userRepo.findByGoogleSub(googleProfile.sub);
   if (existingByGoogleSub) {
     return existingByGoogleSub;
   }
 
-  const existingByEmail = await userRepo.findByEmail(email);
+  const existingByEmail = await userRepo.findByEmail(googleProfile.email);
   if (existingByEmail) {
     return userRepo.updateGoogleLink(existingByEmail.userId, {
-      googleSub,
+      googleSub: googleProfile.sub,
       avatarUrl: googleProfile.picture || null,
       authProvider: "google",
     });
@@ -360,12 +349,12 @@ async function upsertGoogleUser(googleProfile) {
   const passwordHash = await bcrypt.hash(crypto.randomBytes(24).toString("hex"), 10);
   const createdUser = await userRepo.createUser({
     username,
-    email,
+    email: googleProfile.email,
     passwordHash,
     mfaSecret: generateBase32Secret(),
     role: "user",
     authProvider: "google",
-    googleSub,
+    googleSub: googleProfile.sub,
     avatarUrl: googleProfile.picture || null,
     mfaEnrolled: false,
   });
@@ -379,12 +368,54 @@ async function upsertGoogleUser(googleProfile) {
   return createdUser;
 }
 
-async function generateUniqueUsername(googleProfile) {
+async function upsertMicrosoftUser(microsoftProfile) {
+  if (!microsoftProfile.sub || !microsoftProfile.email) {
+    throw badRequest("Microsoft account did not return a usable email address.");
+  }
+
+  const existingByMicrosoftSub = await userRepo.findByMicrosoftSub(microsoftProfile.sub);
+  if (existingByMicrosoftSub) {
+    return existingByMicrosoftSub;
+  }
+
+  const existingByEmail = await userRepo.findByEmail(microsoftProfile.email);
+  if (existingByEmail) {
+    return userRepo.updateMicrosoftLink(existingByEmail.userId, {
+      microsoftSub: microsoftProfile.sub,
+      avatarUrl: microsoftProfile.picture || null,
+      authProvider: "microsoft",
+    });
+  }
+
+  const username = await generateUniqueUsername(microsoftProfile);
+  const passwordHash = await bcrypt.hash(crypto.randomBytes(24).toString("hex"), 10);
+  const createdUser = await userRepo.createUser({
+    username,
+    email: microsoftProfile.email,
+    passwordHash,
+    mfaSecret: generateBase32Secret(),
+    role: "user",
+    authProvider: "microsoft",
+    microsoftSub: microsoftProfile.sub,
+    avatarUrl: microsoftProfile.picture || null,
+    mfaEnrolled: false,
+  });
+
+  await profileService.ensureProfileForUser({
+    userId: createdUser.userId,
+    username: createdUser.username,
+    email: createdUser.email,
+  });
+
+  return createdUser;
+}
+
+async function generateUniqueUsername(profile) {
   const preferred = String(
-    googleProfile.preferred_username
-      || googleProfile.given_name
-      || googleProfile.name
-      || normalizeEmail(googleProfile.email).split("@")[0],
+    profile.preferredUsername
+      || profile.givenName
+      || profile.name
+      || normalizeEmail(profile.email).split("@")[0],
   )
     .toLowerCase()
     .replace(/[^a-z0-9_]+/g, "_")
@@ -409,6 +440,26 @@ async function getNeedsSchoolVerification(userId) {
   const studentId = String(profile.studentId || "").trim();
   const school = String(profile.school || "").trim();
   return !studentId || studentId.startsWith("TEMP-") || !school;
+}
+
+async function finalizeOAuthSignIn({ user, redirectBase, auditActionType }) {
+  const session = await createUserSession(user);
+  const needsSchoolVerification = await getNeedsSchoolVerification(user.userId);
+
+  await auditService.logAuditEvent({
+    actorUserId: user.userId,
+    actorRole: user.userRole,
+    actionType: auditActionType,
+    entityType: "user",
+    entityId: user.userId,
+    details: { email: user.email },
+  });
+
+  return {
+    redirectBase,
+    token: session.token,
+    redirectPath: resolveRedirectPath(user.userRole, needsSchoolVerification),
+  };
 }
 
 function buildAuthResponse(user, token, needsSchoolVerification) {
@@ -448,6 +499,124 @@ function resolveRedirectPath(role, needsSchoolVerification) {
   }
 }
 
+function buildOAuthStartUrl({ provider, redirectBase, clientId, authorizationUrl, callbackUrl, scopes }) {
+  const frontendBase = resolveFrontendBase(redirectBase);
+  const state = createSignedToken(
+    {
+      type: `${provider}_oauth_state`,
+      redirectBase: frontendBase,
+    },
+    { expiresInSeconds: 10 * 60 },
+  );
+
+  const url = new URL(authorizationUrl);
+  url.searchParams.set("client_id", clientId);
+  url.searchParams.set("redirect_uri", callbackUrl);
+  url.searchParams.set("response_type", "code");
+  url.searchParams.set("response_mode", "query");
+  url.searchParams.set("scope", scopes.join(" "));
+  url.searchParams.set("prompt", "select_account");
+  url.searchParams.set("state", state);
+  return url.toString();
+}
+
+async function exchangeOAuthCode({ providerLabel, tokenUrl, clientId, clientSecret, callbackUrl, code }) {
+  if (!code) {
+    throw badRequest(`${providerLabel} did not return an authorization code.`);
+  }
+
+  const tokenResponse = await fetch(tokenUrl, {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({
+      code,
+      client_id: clientId,
+      client_secret: clientSecret,
+      redirect_uri: callbackUrl,
+      grant_type: "authorization_code",
+    }),
+  });
+
+  if (!tokenResponse.ok) {
+    const errorText = await tokenResponse.text();
+    throw badRequest(`${providerLabel} token exchange failed: ${errorText}`);
+  }
+
+  return tokenResponse.json();
+}
+
+async function fetchGoogleProfile(accessToken) {
+  const userInfoResponse = await fetch("https://openidconnect.googleapis.com/v1/userinfo", {
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+    },
+  });
+
+  if (!userInfoResponse.ok) {
+    const errorText = await userInfoResponse.text();
+    throw badRequest(`Google user info lookup failed: ${errorText}`);
+  }
+
+  const payload = await userInfoResponse.json();
+  return {
+    sub: String(payload.sub || "").trim(),
+    email: normalizeEmail(payload.email),
+    emailVerified: payload.email_verified === true,
+    picture: payload.picture || null,
+    givenName: payload.given_name || "",
+    name: payload.name || "",
+    preferredUsername: payload.preferred_username || "",
+  };
+}
+
+async function fetchMicrosoftProfile(tokenPayload) {
+  const graphResponse = await fetch("https://graph.microsoft.com/v1.0/me?$select=id,displayName,givenName,surname,userPrincipalName,mail", {
+    headers: {
+      Authorization: `Bearer ${tokenPayload.access_token}`,
+    },
+  });
+
+  let graphPayload = {};
+  if (graphResponse.ok) {
+    graphPayload = await graphResponse.json();
+  } else {
+    graphPayload = {};
+  }
+
+  const idTokenClaims = decodeJwtPayload(tokenPayload.id_token);
+  const email = normalizeEmail(
+    graphPayload.mail
+      || graphPayload.userPrincipalName
+      || idTokenClaims.email
+      || idTokenClaims.preferred_username,
+  );
+  const sub = String(
+    idTokenClaims.oid
+      || idTokenClaims.sub
+      || graphPayload.id
+      || "",
+  ).trim();
+
+  return {
+    sub,
+    email,
+    emailVerified: Boolean(email),
+    picture: null,
+    givenName: graphPayload.givenName || idTokenClaims.given_name || "",
+    name: graphPayload.displayName || idTokenClaims.name || "",
+    preferredUsername: graphPayload.userPrincipalName || idTokenClaims.preferred_username || "",
+  };
+}
+
+function verifyOAuthState(state, provider) {
+  const verifiedState = verifySignedToken(state);
+  if (!verifiedState || verifiedState.type !== `${provider}_oauth_state`) {
+    throw badRequest("OAuth state is invalid or expired.");
+  }
+
+  return verifiedState;
+}
+
 function resolveFrontendBase(candidate) {
   try {
     if (candidate) {
@@ -465,25 +634,72 @@ function normalizeEmail(value) {
   return String(value || "").trim().toLowerCase();
 }
 
-function validateApprovedEmail(email) {
-  if (!APPROVED_EMAIL_DOMAIN) {
-    return;
-  }
-
-  const domain = email.split("@")[1];
-  if (!domain || domain !== APPROVED_EMAIL_DOMAIN) {
-    throw badRequest(`Only @${APPROVED_EMAIL_DOMAIN} email addresses are allowed.`);
-  }
-}
-
 function ensureGoogleConfigured() {
   if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET) {
     throw badRequest("Google OAuth is not configured on the backend.");
   }
 }
 
-function isBase32Secret(secret) {
-  return /^[A-Z2-7]{16,50}$/.test(String(secret || ""));
+function ensureMicrosoftConfigured() {
+  if (!MICROSOFT_CLIENT_ID || !MICROSOFT_CLIENT_SECRET) {
+    throw badRequest("Microsoft OAuth is not configured on the backend.");
+  }
+}
+
+function getMicrosoftAuthorizationUrl() {
+  return `https://login.microsoftonline.com/${encodeURIComponent(MICROSOFT_TENANT_ID)}/oauth2/v2.0/authorize`;
+}
+
+function getMicrosoftTokenUrl() {
+  return `https://login.microsoftonline.com/${encodeURIComponent(MICROSOFT_TENANT_ID)}/oauth2/v2.0/token`;
+}
+
+function decodeJwtPayload(token) {
+  try {
+    const parts = String(token || "").split(".");
+    if (parts.length < 2) {
+      return {};
+    }
+
+    const normalized = parts[1].replace(/-/g, "+").replace(/_/g, "/");
+    const padded = normalized.padEnd(Math.ceil(normalized.length / 4) * 4, "=");
+    return JSON.parse(Buffer.from(padded, "base64").toString("utf8"));
+  } catch {
+    return {};
+  }
+}
+
+function generateEmailCode() {
+  return String(crypto.randomInt(0, 1000000)).padStart(6, "0");
+}
+
+function hashEmailVerificationCode(userId, code) {
+  return crypto.createHash("sha256").update(`${userId}:${String(code || "").trim()}`).digest("hex");
+}
+
+function matchesVerificationCode(expectedHash, candidateHash) {
+  const expected = Buffer.from(String(expectedHash || ""), "hex");
+  const candidate = Buffer.from(String(candidateHash || ""), "hex");
+
+  if (!expected.length || expected.length !== candidate.length) {
+    return false;
+  }
+
+  return crypto.timingSafeEqual(expected, candidate);
+}
+
+function maskEmail(email) {
+  const normalized = normalizeEmail(email);
+  const [localPart, domain] = normalized.split("@");
+  if (!localPart || !domain) {
+    return "your email";
+  }
+
+  if (localPart.length <= 2) {
+    return `${localPart[0] || "*"}*@${domain}`;
+  }
+
+  return `${localPart.slice(0, 2)}${"*".repeat(Math.max(2, localPart.length - 2))}@${domain}`;
 }
 
 function badRequest(message) {
@@ -512,5 +728,7 @@ module.exports = {
   getCurrentUser,
   logoutUser,
   buildGoogleStartUrl,
+  buildMicrosoftStartUrl,
   handleGoogleCallback,
+  handleMicrosoftCallback,
 };

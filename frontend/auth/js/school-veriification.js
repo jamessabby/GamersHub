@@ -72,7 +72,7 @@
 
   function validateStudent(value) {
     if (!value) return "Student number is required.";
-    if (!/^\d{8}$/.test(value)) return "Student number must be exactly 8 digits.";
+    if (!/^\d{9}$/.test(value)) return "Student number must be exactly 9 digits.";
     return null;
   }
 

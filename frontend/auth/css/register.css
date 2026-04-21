@@ -345,7 +345,7 @@ body::after {
 /* ── SOCIAL BUTTONS ── */
 .social-buttons {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr;
   gap: 10px;
 }
 
@@ -373,18 +373,6 @@ body::after {
 .btn-google-s:hover {
   background: rgba(255,255,255,0.1);
   box-shadow: 0 4px 16px rgba(0,0,0,0.25);
-  transform: translateY(-1px);
-}
-
-.btn-facebook-s {
-  background: rgba(24,119,242,0.12);
-  border-color: rgba(24,119,242,0.25);
-  color: #93c5fd;
-}
-
-.btn-facebook-s:hover {
-  background: rgba(24,119,242,0.2);
-  box-shadow: 0 4px 16px rgba(24,119,242,0.2);
   transform: translateY(-1px);
 }
 

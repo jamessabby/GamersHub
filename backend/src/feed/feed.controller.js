@@ -38,7 +38,23 @@ async function createPost(req, res) {
   }
 }
 
+async function deletePost(req, res) {
+  try {
+    const result = await feedService.deletePost(
+      req.params.postId,
+      req.auth.user.userId,
+      req.auth.user.userRole,
+    );
+    res.status(200).json(result);
+  } catch (error) {
+    res
+      .status(error.statusCode || 500)
+      .json({ message: error.message || "Failed to delete post." });
+  }
+}
+
 module.exports = {
   getFeed,
   createPost,
+  deletePost,
 };

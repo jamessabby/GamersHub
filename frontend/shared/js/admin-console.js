@@ -173,8 +173,11 @@
       `)
       .join("");
 
+    const totalUsers = analytics.roleCounts.reduce((sum, row) => sum + row.total, 0);
+
     content.innerHTML = `
       <div class="console-grid cards">
+        <div class="console-card"><span>Total users</span><strong>${totalUsers}</strong></div>
         <div class="console-card"><span>Total posts</span><strong>${analytics.totals.posts}</strong></div>
         <div class="console-card"><span>Total streams</span><strong>${analytics.totals.streams}</strong></div>
         <div class="console-card"><span>Total reactions</span><strong>${analytics.totals.reactions}</strong></div>
@@ -301,13 +304,12 @@
     });
   }
 
-  async function renderAnalyticsPage() {
-    const analytics = await fetchJson(`${auth.apiBase}/api/admin/analytics/overview?range=30d`);
-    const registrationRows = analytics.registrations
-      .map((row) => `<tr><td>${escapeHtml(row.date)}</td><td>${row.total}</td></tr>`)
-      .join("");
+  async function renderAnalyticsPage(range = "30d") {
+    const analytics = await fetchJson(`${auth.apiBase}/api/admin/analytics/overview?range=${encodeURIComponent(range)}`);
 
+    const totalUsers = analytics.roleCounts.reduce((sum, row) => sum + row.total, 0);
     const totals = [
+      ["Total users", totalUsers],
       ["Posts", analytics.totals.posts],
       ["Streams", analytics.totals.streams],
       ["Reactions", analytics.totals.reactions],
@@ -321,7 +323,31 @@
       .map((row) => `<tr><td>${escapeHtml(row.role)}</td><td>${row.total}</td></tr>`)
       .join("");
 
+    const maxReg = Math.max(1, ...analytics.registrations.map((row) => row.total));
+    const barRows = analytics.registrations
+      .map((row) => `
+        <div class="analytics-bar-row">
+          <span class="analytics-bar-date">${escapeHtml(row.date)}</span>
+          <div class="analytics-bar-track">
+            <div class="analytics-bar-fill" style="width:${Math.max(2, Math.round((row.total / maxReg) * 100))}%"></div>
+          </div>
+          <span class="analytics-bar-value">${row.total}</span>
+        </div>
+      `)
+      .join("");
+
+    const rangeTabs = [
+      ["7d", "Last 7 days"],
+      ["30d", "Last 30 days"],
+      ["90d", "Last 90 days"],
+    ]
+      .map(([value, label]) => `
+        <button class="console-btn${value === range ? " primary" : ""}" data-analytics-range="${value}">${label}</button>
+      `)
+      .join("");
+
     content.innerHTML = `
+      <div class="console-actions" style="margin-bottom:20px;">${rangeTabs}</div>
       <div class="console-grid cards">${totals}</div>
       <div class="console-row">
         <section class="console-panel">
@@ -334,16 +360,19 @@
           </div>
         </section>
         <section class="console-panel">
-          <h2>Registrations over time</h2>
-          <div class="console-table-wrap">
-            <table class="console-table">
-              <thead><tr><th>Date</th><th>Registrations</th></tr></thead>
-              <tbody>${registrationRows || '<tr><td colspan="2">No registrations recorded yet.</td></tr>'}</tbody>
-            </table>
-          </div>
+          <h2>New registrations — last ${analytics.rangeDays} days</h2>
+          ${
+            analytics.registrations.length
+              ? `<div class="analytics-bar-chart">${barRows}</div>`
+              : '<div class="console-empty">No registrations in this period.</div>'
+          }
         </section>
       </div>
     `;
+
+    content.querySelectorAll("[data-analytics-range]").forEach((button) => {
+      button.addEventListener("click", () => void renderAnalyticsPage(button.dataset.analyticsRange));
+    });
   }
 
   async function renderTournamentsPage() {

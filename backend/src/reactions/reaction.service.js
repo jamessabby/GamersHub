@@ -2,6 +2,7 @@ const reactionRepo = require("./reaction.repository");
 const feedRepo = require("../feed/feed.repository");
 const authUserRepo = require("../users/user.repository");
 const profileRepo = require("../users/profile.repository");
+const auditService = require("../audit/audit.service");
 
 const ALLOWED_REACTIONS = new Set(["like", "love", "wow"]);
 
@@ -42,6 +43,15 @@ async function setPostReaction(postId, payload) {
     reactionType,
   });
 
+  await auditService.logAuditEvent({
+    actorUserId: parsedUserId,
+    actorRole: "user",
+    actionType: "reaction.post_reacted",
+    entityType: "post",
+    entityId: parsedPostId,
+    details: { reactionType },
+  });
+
   return buildPostSummary(parsedPostId, parsedUserId);
 }
 
@@ -55,6 +65,16 @@ async function removePostReaction(postId, userId) {
   ]);
 
   await reactionRepo.deleteReactionByPostAndUser(parsedPostId, parsedUserId);
+
+  await auditService.logAuditEvent({
+    actorUserId: parsedUserId,
+    actorRole: "user",
+    actionType: "reaction.post_unreacted",
+    entityType: "post",
+    entityId: parsedPostId,
+    details: {},
+  });
+
   return buildPostSummary(parsedPostId, parsedUserId);
 }
 
@@ -95,6 +115,16 @@ async function createPostComment(postId, payload) {
     userId: parsedUserId,
     message,
   });
+
+  await auditService.logAuditEvent({
+    actorUserId: parsedUserId,
+    actorRole: "user",
+    actionType: "reaction.comment_created",
+    entityType: "comment",
+    entityId: comment.commentId,
+    details: { postId: parsedPostId },
+  });
+
   const authors = await loadAuthors([parsedUserId]);
   const summary = await buildPostSummary(parsedPostId, parsedUserId);
 
@@ -102,6 +132,40 @@ async function createPostComment(postId, payload) {
     comment: mapComment(comment, authors),
     summary,
   };
+}
+
+async function deletePostComment(commentId, postId, requestingUserId, requestingUserRole) {
+  const parsedCommentId = parsePositiveInt(commentId, "A valid commentId is required.");
+  const parsedPostId = parsePositiveInt(postId, "A valid postId is required.");
+
+  const comment = await reactionRepo.findCommentById(parsedCommentId);
+  if (!comment || comment.postId !== parsedPostId) {
+    const error = new Error("Comment not found.");
+    error.statusCode = 404;
+    throw error;
+  }
+
+  const role = String(requestingUserRole || "").toLowerCase();
+  const isOwner = comment.userId === Number(requestingUserId);
+  if (!isOwner && role !== "admin" && role !== "superadmin") {
+    const error = new Error("You do not have permission to delete this comment.");
+    error.statusCode = 403;
+    throw error;
+  }
+
+  await reactionRepo.deleteCommentById(parsedCommentId);
+
+  await auditService.logAuditEvent({
+    actorUserId: Number(requestingUserId),
+    actorRole: role || "user",
+    actionType: "reaction.comment_deleted",
+    entityType: "comment",
+    entityId: parsedCommentId,
+    details: { postId: parsedPostId, ownerId: comment.userId, deletedByOwner: isOwner },
+  });
+
+  const summary = await buildPostSummary(parsedPostId, Number(requestingUserId));
+  return { message: "Comment deleted.", summary };
 }
 
 async function buildPostSummary(postId, viewerUserId) {
@@ -170,8 +234,8 @@ async function loadAuthors(userIds) {
         userId,
         {
           userId,
-          username: authUser?.username || `user-${userId}`,
-          displayName: profile?.displayName || authUser?.username || `User ${userId}`,
+          username: authUser?.username || "deleted_user",
+          displayName: profile?.displayName || authUser?.username || "Deleted User",
           schoolTag: buildSchoolTag(profile?.school),
         },
       ];
@@ -281,4 +345,5 @@ module.exports = {
   removePostReaction,
   listPostComments,
   createPostComment,
+  deletePostComment,
 };

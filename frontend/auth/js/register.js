@@ -14,7 +14,6 @@
   const btnText = registerBtn?.querySelector(".btn-text");
   const btnLoader = document.getElementById("btnLoader");
   const googleBtn = document.getElementById("googleBtn");
-  const facebookBtn = document.getElementById("facebookBtn");
   const togglePwd = document.getElementById("togglePassword");
   const eyeIcon = document.getElementById("eyeIcon");
 
@@ -201,7 +200,6 @@
     btnLoader.classList.toggle("d-none", !loading);
     registerBtn.disabled = loading;
     googleBtn.disabled = loading;
-    facebookBtn.disabled = loading;
   }
 
   async function registerUser({ username, email, password }) {
@@ -305,9 +303,6 @@
 
   registerBtn?.addEventListener("click", () => void handleRegister());
   googleBtn?.addEventListener("click", startGoogleLogin);
-  facebookBtn?.addEventListener("click", () => {
-    showError(usernameInput, usernameError, "Facebook sign-up is not part of the MVP build.");
-  });
 
   buildStars();
   initCarousel();

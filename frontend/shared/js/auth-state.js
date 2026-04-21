@@ -53,6 +53,10 @@
   function requireAuth({ redirectTo = "auth/login.html" } = {}) {
     const session = getSession();
     if (session?.token && session?.username) {
+      if (session.needsSchoolVerification && !isSchoolVerificationPath()) {
+        window.location.replace(buildAppUrl("auth/school-verification.html"));
+        return null;
+      }
       return session;
     }
 
@@ -145,6 +149,10 @@
     }
 
     return "";
+  }
+
+  function isSchoolVerificationPath() {
+    return /\/auth\/school-verification\.html$/i.test(window.location.pathname);
   }
 
   function normalizeSession(session) {

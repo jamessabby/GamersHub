@@ -1424,6 +1424,15 @@ body::before {
   color: #a78bfa;
 }
 
+.post-action-delete {
+  color: rgba(252, 165, 165, 0.7);
+}
+
+.post-action-delete:hover {
+  background: rgba(239, 68, 68, 0.1) !important;
+  color: #fca5a5 !important;
+}
+
 .post-react-btn {
   width: 100%;
 }
@@ -1574,6 +1583,23 @@ body::before {
 .post-comment-time {
   font-size: 10.5px;
   color: rgba(208, 213, 235, 0.44);
+}
+
+.post-comment-delete {
+  margin-left: auto;
+  padding: 0 6px;
+  background: none;
+  border: none;
+  font-size: 10.5px;
+  color: rgba(252, 165, 165, 0.5);
+  cursor: pointer;
+  border-radius: 4px;
+  transition: color 0.15s, background 0.15s;
+}
+
+.post-comment-delete:hover {
+  color: #fca5a5;
+  background: rgba(239, 68, 68, 0.1);
 }
 
 .post-comment-message {

@@ -155,6 +155,35 @@ async function createComment({ postId, userId, message }) {
   return result.recordset[0] || null;
 }
 
+async function findCommentById(commentId) {
+  await poolConnect;
+
+  const result = await pool.request().input("commentId", sql.Int, commentId).query(`
+    SELECT
+      COMMENT_ID AS commentId,
+      POST_ID AS postId,
+      USER_ID AS userId,
+      MESSAGE AS message,
+      CREATED_AT AS createdAt
+    FROM dbo.POST_COMMENT
+    WHERE COMMENT_ID = @commentId
+  `);
+
+  return result.recordset[0] || null;
+}
+
+async function deleteCommentById(commentId) {
+  await poolConnect;
+
+  const result = await pool.request().input("commentId", sql.Int, commentId).query(`
+    DELETE FROM dbo.POST_COMMENT
+    OUTPUT DELETED.COMMENT_ID AS commentId, DELETED.POST_ID AS postId, DELETED.USER_ID AS userId
+    WHERE COMMENT_ID = @commentId
+  `);
+
+  return result.recordset[0] || null;
+}
+
 module.exports = {
   getReactionCountsByPostId,
   findReactionByPostAndUser,
@@ -163,4 +192,6 @@ module.exports = {
   countCommentsByPostId,
   listCommentsByPostId,
   createComment,
+  findCommentById,
+  deleteCommentById,
 };

@@ -69,10 +69,27 @@ async function createPostComment(req, res) {
   }
 }
 
+async function deletePostComment(req, res) {
+  try {
+    const result = await reactionService.deletePostComment(
+      req.params.commentId,
+      req.params.postId,
+      req.auth.user.userId,
+      req.auth.user.userRole,
+    );
+    res.status(200).json(result);
+  } catch (error) {
+    res
+      .status(error.statusCode || 500)
+      .json({ message: error.message || "Failed to delete comment." });
+  }
+}
+
 module.exports = {
   getPostSummary,
   setPostReaction,
   removePostReaction,
   getPostComments,
   createPostComment,
+  deletePostComment,
 };

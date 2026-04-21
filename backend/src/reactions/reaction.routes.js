@@ -9,5 +9,6 @@ router.put("/posts/:postId", requireAuth, reactionController.setPostReaction);
 router.delete("/posts/:postId", requireAuth, reactionController.removePostReaction);
 router.get("/posts/:postId/comments", reactionController.getPostComments);
 router.post("/posts/:postId/comments", requireAuth, reactionController.createPostComment);
+router.delete("/posts/:postId/comments/:commentId", requireAuth, reactionController.deletePostComment);
 
 module.exports = router;

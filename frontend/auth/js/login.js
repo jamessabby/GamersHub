@@ -14,7 +14,6 @@
   const btnText = loginBtn.querySelector(".btn-text");
   const btnLoader = document.getElementById("btnLoader");
   const googleBtn = document.getElementById("googleBtn");
-  const facebookBtn = document.getElementById("facebookBtn");
   const lockoutBanner = document.getElementById("lockoutBanner");
   const countdownEl = document.getElementById("countdownTimer");
   const togglePwd = document.getElementById("togglePassword");
@@ -222,7 +221,6 @@
     passwordInput.disabled = locked;
     loginBtn.disabled = locked;
     googleBtn.disabled = locked;
-    facebookBtn.disabled = locked;
   }
 
   function setLoading(loading) {
@@ -230,7 +228,6 @@
     btnLoader.classList.toggle("d-none", !loading);
     loginBtn.disabled = loading;
     googleBtn.disabled = loading;
-    facebookBtn.disabled = loading;
   }
 
   async function loginUser({ username, password }) {
@@ -340,7 +337,7 @@
     }
 
     if (oauthStatus === "error") {
-      const message = hashParams.get("message") || "Google sign-in failed.";
+      const message = hashParams.get("message") || "External sign-in failed.";
       showError(usernameInput, usernameError, message);
       showError(passwordInput, passwordError, message);
       history.replaceState(null, "", `${window.location.pathname}${window.location.search}`);
@@ -349,7 +346,7 @@
 
     const token = hashParams.get("token");
     if (!token) {
-      showError(usernameInput, usernameError, "Google sign-in returned an invalid session.");
+      showError(usernameInput, usernameError, "External sign-in returned an invalid session.");
       history.replaceState(null, "", `${window.location.pathname}${window.location.search}`);
       return true;
     }
@@ -363,7 +360,7 @@
         username: payload.user.username,
         role: payload.user.role,
         email: payload.user.email,
-        authProvider: payload.user.authProvider || "google",
+        authProvider: payload.user.authProvider || "local",
         redirectPath: payload.redirectPath,
         needsSchoolVerification: payload.needsSchoolVerification,
       });
@@ -372,7 +369,7 @@
       return true;
     } catch (error) {
       setLoading(false);
-      const message = error.message || "Google sign-in failed.";
+      const message = error.message || "External sign-in failed.";
       showError(usernameInput, usernameError, message);
       showError(passwordInput, passwordError, message);
       history.replaceState(null, "", `${window.location.pathname}${window.location.search}`);
@@ -418,9 +415,6 @@
 
   loginBtn.addEventListener("click", () => void handleLogin());
   googleBtn.addEventListener("click", startGoogleLogin);
-  facebookBtn.addEventListener("click", () => {
-    showError(usernameInput, usernameError, "Facebook login is not part of the MVP build.");
-  });
 
   (async () => {
     buildStars();

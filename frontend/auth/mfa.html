@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>GamersHub – Verify Identity</title>
+    <title>GamersHub - Verify Identity</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -40,7 +40,6 @@
 
     <div class="mfa-layout container-fluid p-0">
       <div class="row g-0 h-100">
-        <!-- LEFT: IMAGE (static, same wrapper class as login) -->
         <div class="col-6 left-col d-flex align-items-start">
           <div class="image-wrapper">
             <div class="carousel-track" id="carouselTrack">
@@ -121,7 +120,6 @@
           </div>
         </div>
 
-        <!-- RIGHT: MFA CARD -->
         <div
           class="col-6 right-col d-flex align-items-center justify-content-center"
         >
@@ -159,36 +157,48 @@
                 </svg>
               </div>
               <h2 class="card-title">
-                Two-Factor <span class="title-accent">Verification</span>
+                Email <span class="title-accent">Verification</span>
               </h2>
               <p class="card-subtitle">
-                Enter the 6-digit code from your authenticator app
+                Enter the 6-digit code we send to your email
               </p>
             </div>
 
-            <div class="mfa-setup-copy" id="mfaSetupCopy" style="margin-bottom:16px; font-size:13px; color:#cbd5f5;">
-              Sign in with your local account, then verify using your authenticator app.
+            <div
+              class="mfa-setup-copy"
+              id="mfaSetupCopy"
+              style="margin-bottom:16px; font-size:13px; color:#cbd5f5;"
+            >
+              Sign in with your local account, then confirm the code from your inbox.
             </div>
 
-            <div id="mfaSetupPanel" style="display:none; margin-bottom:16px; padding:14px; border:1px solid rgba(167,139,250,0.25); border-radius:16px; background:rgba(15,23,42,0.42);">
-              <div style="font-weight:600; margin-bottom:8px;">Authenticator Setup</div>
-              <div style="font-size:13px; line-height:1.5; color:#cbd5f5;">
-                Add a new TOTP account in Google Authenticator, Microsoft Authenticator, or Authy using this secret:
+            <div
+              id="mfaSetupPanel"
+              style="display:none; margin-bottom:16px; padding:14px; border:1px solid rgba(167,139,250,0.25); border-radius:16px; background:rgba(15,23,42,0.42);"
+            >
+              <div id="mfaDeliveryHeading" style="font-weight:600; margin-bottom:8px;">
+                Verification Email Sent
               </div>
-              <div id="mfaSecret" style="margin-top:10px; font-family:monospace; letter-spacing:1px; word-break:break-all; color:#f8fafc;"></div>
-              <div id="mfaAccount" style="margin-top:6px; font-size:12px; color:#94a3b8;"></div>
+              <div
+                id="mfaDeliveryMessage"
+                style="font-size:13px; line-height:1.5; color:#cbd5f5;"
+              >
+                We sent a 6-digit code to your email address.
+              </div>
+              <div
+                id="mfaAccount"
+                style="margin-top:6px; font-size:12px; color:#94a3b8;"
+              ></div>
             </div>
 
-            <!-- lockout banner -->
             <div class="lockout-banner d-none" id="lockoutBanner">
-              <span class="lockout-icon">🔒</span>
+              <span class="lockout-icon">Locked</span>
               <span
                 >Too many attempts. Try again in
                 <strong id="lockCountdown">30s</strong></span
               >
             </div>
 
-            <!-- OTP boxes -->
             <div class="otp-row" id="otpRow">
               <input
                 class="otp-box"
@@ -243,7 +253,7 @@
             </button>
 
             <div class="resend-row">
-              <span class="resend-label">Need to reset the form?</span>
+              <span class="resend-label">Didn't get the email?</span>
               <button class="btn-resend" id="resendBtn" disabled>
                 Ready in <span id="resendCountdown">30s</span>
               </button>
@@ -273,5 +283,3 @@
     <script src="./js/mfa.js"></script>
   </body>
 </html>
-
-

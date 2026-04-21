@@ -8,6 +8,7 @@ async function createUser({
   role = "user",
   authProvider = "local",
   googleSub = null,
+  microsoftSub = null,
   avatarUrl = null,
   mfaEnrolled = false,
 }) {
@@ -22,6 +23,7 @@ async function createUser({
     .input("role", sql.NVarChar(50), role)
     .input("authProvider", sql.NVarChar(30), authProvider)
     .input("googleSub", sql.NVarChar(255), googleSub)
+    .input("microsoftSub", sql.NVarChar(255), microsoftSub)
     .input("avatarUrl", sql.NVarChar(1000), avatarUrl)
     .input("mfaEnrolled", sql.Bit, mfaEnrolled ? 1 : 0).query(`
         INSERT INTO dbo.USERS (
@@ -32,6 +34,7 @@ async function createUser({
           USER_ROLE,
           AUTH_PROVIDER,
           GOOGLE_SUB,
+          MICROSOFT_SUB,
           AVATAR_URL,
           MFA_ENROLLED,
           CREATED_AT
@@ -45,6 +48,7 @@ async function createUser({
           INSERTED.USER_ROLE AS userRole,
           INSERTED.AUTH_PROVIDER AS authProvider,
           INSERTED.GOOGLE_SUB AS googleSub,
+          INSERTED.MICROSOFT_SUB AS microsoftSub,
           INSERTED.AVATAR_URL AS avatarUrl,
           INSERTED.MFA_ENROLLED AS mfaEnrolled,
           INSERTED.IS_ACTIVE AS isActive,
@@ -57,6 +61,7 @@ async function createUser({
           @role,
           @authProvider,
           @googleSub,
+          @microsoftSub,
           @avatarUrl,
           @mfaEnrolled,
           SYSDATETIME()
@@ -80,6 +85,7 @@ async function findByUsername(username) {
         USER_ROLE AS userRole,
         AUTH_PROVIDER AS authProvider,
         GOOGLE_SUB AS googleSub,
+        MICROSOFT_SUB AS microsoftSub,
         AVATAR_URL AS avatarUrl,
         MFA_ENROLLED AS mfaEnrolled,
         IS_ACTIVE AS isActive,
@@ -105,6 +111,7 @@ async function findByEmail(email) {
         USER_ROLE AS userRole,
         AUTH_PROVIDER AS authProvider,
         GOOGLE_SUB AS googleSub,
+        MICROSOFT_SUB AS microsoftSub,
         AVATAR_URL AS avatarUrl,
         MFA_ENROLLED AS mfaEnrolled,
         IS_ACTIVE AS isActive,
@@ -130,12 +137,40 @@ async function findByGoogleSub(googleSub) {
         USER_ROLE AS userRole,
         AUTH_PROVIDER AS authProvider,
         GOOGLE_SUB AS googleSub,
+        MICROSOFT_SUB AS microsoftSub,
         AVATAR_URL AS avatarUrl,
         MFA_ENROLLED AS mfaEnrolled,
         IS_ACTIVE AS isActive,
         CREATED_AT AS createdAt
       FROM dbo.USERS
       WHERE GOOGLE_SUB = @googleSub
+    `);
+
+  return result.recordset[0] || null;
+}
+
+async function findByMicrosoftSub(microsoftSub) {
+  await poolConnect;
+
+  const result = await pool
+    .request()
+    .input("microsoftSub", sql.NVarChar(255), microsoftSub).query(`
+      SELECT
+        USERID AS userId,
+        USERNAME AS username,
+        EMAIL AS email,
+        PASSWORD_HASH AS passwordHash,
+        MFA_SECRET AS mfaSecret,
+        USER_ROLE AS userRole,
+        AUTH_PROVIDER AS authProvider,
+        GOOGLE_SUB AS googleSub,
+        MICROSOFT_SUB AS microsoftSub,
+        AVATAR_URL AS avatarUrl,
+        MFA_ENROLLED AS mfaEnrolled,
+        IS_ACTIVE AS isActive,
+        CREATED_AT AS createdAt
+      FROM dbo.USERS
+      WHERE MICROSOFT_SUB = @microsoftSub
     `);
 
   return result.recordset[0] || null;
@@ -154,6 +189,7 @@ async function findById(userId) {
         USER_ROLE AS userRole,
         AUTH_PROVIDER AS authProvider,
         GOOGLE_SUB AS googleSub,
+        MICROSOFT_SUB AS microsoftSub,
         AVATAR_URL AS avatarUrl,
         MFA_ENROLLED AS mfaEnrolled,
         IS_ACTIVE AS isActive,
@@ -216,8 +252,8 @@ async function updateGoogleLink(userId, { googleSub, avatarUrl, authProvider = "
         GOOGLE_SUB = @googleSub,
         AVATAR_URL = COALESCE(@avatarUrl, AVATAR_URL),
         AUTH_PROVIDER = CASE
-          WHEN AUTH_PROVIDER = 'local' THEN 'hybrid'
-          ELSE @authProvider
+          WHEN AUTH_PROVIDER = @authProvider THEN AUTH_PROVIDER
+          ELSE 'hybrid'
         END
       OUTPUT
         INSERTED.USERID AS userId,
@@ -228,6 +264,44 @@ async function updateGoogleLink(userId, { googleSub, avatarUrl, authProvider = "
         INSERTED.USER_ROLE AS userRole,
         INSERTED.AUTH_PROVIDER AS authProvider,
         INSERTED.GOOGLE_SUB AS googleSub,
+        INSERTED.MICROSOFT_SUB AS microsoftSub,
+        INSERTED.AVATAR_URL AS avatarUrl,
+        INSERTED.MFA_ENROLLED AS mfaEnrolled,
+        INSERTED.IS_ACTIVE AS isActive,
+        INSERTED.CREATED_AT AS createdAt
+      WHERE USERID = @userId
+    `);
+
+  return result.recordset[0] || null;
+}
+
+async function updateMicrosoftLink(userId, { microsoftSub, avatarUrl, authProvider = "microsoft" }) {
+  await poolConnect;
+
+  const result = await pool
+    .request()
+    .input("userId", sql.Int, userId)
+    .input("microsoftSub", sql.NVarChar(255), microsoftSub)
+    .input("avatarUrl", sql.NVarChar(1000), avatarUrl || null)
+    .input("authProvider", sql.NVarChar(30), authProvider).query(`
+      UPDATE dbo.USERS
+      SET
+        MICROSOFT_SUB = @microsoftSub,
+        AVATAR_URL = COALESCE(@avatarUrl, AVATAR_URL),
+        AUTH_PROVIDER = CASE
+          WHEN AUTH_PROVIDER = @authProvider THEN AUTH_PROVIDER
+          ELSE 'hybrid'
+        END
+      OUTPUT
+        INSERTED.USERID AS userId,
+        INSERTED.USERNAME AS username,
+        INSERTED.EMAIL AS email,
+        INSERTED.PASSWORD_HASH AS passwordHash,
+        INSERTED.MFA_SECRET AS mfaSecret,
+        INSERTED.USER_ROLE AS userRole,
+        INSERTED.AUTH_PROVIDER AS authProvider,
+        INSERTED.GOOGLE_SUB AS googleSub,
+        INSERTED.MICROSOFT_SUB AS microsoftSub,
         INSERTED.AVATAR_URL AS avatarUrl,
         INSERTED.MFA_ENROLLED AS mfaEnrolled,
         INSERTED.IS_ACTIVE AS isActive,
@@ -351,10 +425,12 @@ module.exports = {
   findByUsername,
   findByEmail,
   findByGoogleSub,
+  findByMicrosoftSub,
   findById,
   updateMfaSecret,
   updateMfaEnrollment,
   updateGoogleLink,
+  updateMicrosoftLink,
   updateUserRole,
   listUsers,
   countUsersByRole,

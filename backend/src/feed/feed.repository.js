@@ -80,8 +80,21 @@ async function findPostById(postId) {
   return result.recordset[0] || null;
 }
 
+async function deletePostById(postId) {
+  await poolConnect;
+
+  const result = await pool.request().input("postId", sql.Int, postId).query(`
+    DELETE FROM dbo.POST
+    OUTPUT DELETED.POST_ID AS postId, DELETED.USER_ID AS userId
+    WHERE POST_ID = @postId
+  `);
+
+  return result.recordset[0] || null;
+}
+
 module.exports = {
   listPosts,
   createPost,
   findPostById,
+  deletePostById,
 };

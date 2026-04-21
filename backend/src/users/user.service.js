@@ -2,6 +2,7 @@ const authUserRepo = require("./user.repository");
 const profileRepo = require("./profile.repository");
 const friendRepo = require("./friend.repository");
 const notificationRepo = require("./notification.repository");
+const auditService = require("../audit/audit.service");
 
 async function ensureProfileForUser({ userId, username, email }) {
   let profile = await profileRepo.findByUserId(userId);
@@ -93,6 +94,26 @@ async function updateProfileByUserId(userId, payload) {
   };
 
   const updatedProfile = await profileRepo.updateProfile(parsedUserId, mergedProfile);
+
+  const wasUnverified =
+    !hasText(currentProfile.studentId) ||
+    String(currentProfile.studentId || "").startsWith("TEMP-") ||
+    !hasText(currentProfile.school);
+  const isNowVerified =
+    hasText(mergedProfile.studentId) &&
+    !String(mergedProfile.studentId || "").startsWith("TEMP-") &&
+    hasText(mergedProfile.school);
+
+  if (wasUnverified && isNowVerified) {
+    await auditService.logAuditEvent({
+      actorUserId: parsedUserId,
+      actorRole: authUser.userRole,
+      actionType: "user.school_verified",
+      entityType: "user_profile",
+      entityId: parsedUserId,
+      details: { school: mergedProfile.school, courseYear: mergedProfile.courseYear },
+    });
+  }
 
   return mapProfileResponse(authUser, updatedProfile);
 }

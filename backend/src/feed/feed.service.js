@@ -1,14 +1,16 @@
 const feedRepo = require("./feed.repository");
 const authUserRepo = require("../users/user.repository");
 const profileRepo = require("../users/profile.repository");
+const auditService = require("../audit/audit.service");
 
 async function listFeed({ limit } = {}) {
   const posts = await feedRepo.listPosts({ limit });
   const authors = await loadAuthors(posts.map((post) => post.userId));
+  const validPosts = posts.filter((post) => authors.has(post.userId));
 
   return {
-    items: posts.map((post) => mapFeedItem(post, authors)),
-    total: posts.length,
+    items: validPosts.map((post) => mapFeedItem(post, authors)),
+    total: validPosts.length,
   };
 }
 
@@ -56,8 +58,54 @@ async function createPost(payload) {
     throw error;
   }
 
+  await auditService.logAuditEvent({
+    actorUserId: userId,
+    actorRole: author.userRole || "user",
+    actionType: "feed.post_created",
+    entityType: "post",
+    entityId: post.postId,
+    details: { hasMedia: !!mediaUrl },
+  });
+
   const authors = await loadAuthors([userId]);
   return mapFeedItem(post, authors);
+}
+
+async function deletePost(postId, requestingUserId, requestingUserRole) {
+  const parsedPostId = Number(postId);
+  if (!Number.isInteger(parsedPostId) || parsedPostId < 1) {
+    const error = new Error("A valid postId is required.");
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const post = await feedRepo.findPostById(parsedPostId);
+  if (!post) {
+    const error = new Error("Post not found.");
+    error.statusCode = 404;
+    throw error;
+  }
+
+  const role = String(requestingUserRole || "").toLowerCase();
+  const isOwner = post.userId === Number(requestingUserId);
+  if (!isOwner && role !== "admin" && role !== "superadmin") {
+    const error = new Error("You do not have permission to delete this post.");
+    error.statusCode = 403;
+    throw error;
+  }
+
+  await feedRepo.deletePostById(parsedPostId);
+
+  await auditService.logAuditEvent({
+    actorUserId: Number(requestingUserId),
+    actorRole: String(requestingUserRole || "user").toLowerCase(),
+    actionType: "feed.post_deleted",
+    entityType: "post",
+    entityId: parsedPostId,
+    details: { ownerId: post.userId, deletedByOwner: isOwner },
+  });
+
+  return { message: "Post deleted." };
 }
 
 async function loadAuthors(userIds) {
@@ -69,12 +117,14 @@ async function loadAuthors(userIds) {
         profileRepo.findByUserId(userId).catch(() => null),
       ]);
 
-      const displayName = profile?.displayName || authUser?.username || `User ${userId}`;
+      if (!authUser) return null;
+
+      const displayName = profile?.displayName || authUser.username;
       return [
         userId,
         {
           userId,
-          username: authUser?.username || `user-${userId}`,
+          username: authUser.username,
           displayName,
           school: profile?.school || "",
           schoolTag: buildSchoolTag(profile?.school),
@@ -83,7 +133,7 @@ async function loadAuthors(userIds) {
     }),
   );
 
-  return new Map(authorEntries);
+  return new Map(authorEntries.filter(Boolean));
 }
 
 function mapFeedItem(post, authors) {
@@ -230,4 +280,5 @@ function formatRelativeTime(value) {
 module.exports = {
   listFeed,
   createPost,
+  deletePost,
 };

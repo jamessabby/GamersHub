@@ -10,6 +10,8 @@ router.post("/mfa/setup", authController.setupMfa);
 router.post("/mfa/verify", authController.verifyMfa);
 router.get("/google/start", authController.googleStart);
 router.get("/google/callback", authController.googleCallback);
+router.get("/microsoft/start", authController.microsoftStart);
+router.get("/microsoft/callback", authController.microsoftCallback);
 router.get("/me", requireAuth, authController.me);
 router.post("/logout", requireAuth, authController.logout);
 router.get("/test", (_req, res) => {

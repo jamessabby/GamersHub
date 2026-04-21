@@ -14,12 +14,13 @@
   const lockCountdown = document.getElementById("lockCountdown");
   const resendBtn = document.getElementById("resendBtn");
   const resendCountdown = document.getElementById("resendCountdown");
-  const setupPanel = document.getElementById("mfaSetupPanel");
-  const setupSecret = document.getElementById("mfaSecret");
-  const setupAccount = document.getElementById("mfaAccount");
+  const deliveryPanel = document.getElementById("mfaSetupPanel");
+  const deliveryHeading = document.getElementById("mfaDeliveryHeading");
+  const deliveryMessage = document.getElementById("mfaDeliveryMessage");
+  const deliveryHint = document.getElementById("mfaAccount");
   const setupCopy = document.getElementById("mfaSetupCopy");
 
-  const pendingMfa = auth?.getPendingMfa?.();
+  let pendingMfa = auth?.getPendingMfa?.();
 
   let submitting = false;
   let failedAttempts = 0;
@@ -116,7 +117,7 @@
       if (resetRemaining <= 0) {
         clearInterval(resendTimer);
         resendBtn.disabled = false;
-        resendBtn.textContent = pendingMfa?.mfaSetupRequired ? "Refresh setup" : "Clear code";
+        resendBtn.textContent = "Resend code";
       }
     }, 1000);
   }
@@ -132,10 +133,6 @@
   }
 
   async function fetchSetup() {
-    if (!pendingMfa?.mfaSetupRequired) {
-      return;
-    }
-
     const response = await fetch(`${API_BASE}/api/auth/mfa/setup`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -150,15 +147,24 @@
     }
 
     if (!response.ok) {
-      throw new Error(payload.message || "Failed to load MFA setup details.");
+      throw new Error(payload.message || "Failed to send verification email.");
     }
 
-    setupPanel.style.display = "block";
-    setupSecret.textContent = payload.secret || "";
-    setupAccount.textContent = payload.accountName
-      ? `Account: ${payload.accountName}`
-      : "Add this secret to your authenticator app.";
-    setupCopy.textContent = "Scan or manually enter the secret below, then type the current 6-digit code to finish setup.";
+    pendingMfa = {
+      ...pendingMfa,
+      mfaTicket: payload.mfaTicket,
+    };
+    auth?.setPendingMfa?.(pendingMfa);
+
+    deliveryPanel.style.display = "block";
+    deliveryHeading.textContent = "Verification Email Sent";
+    deliveryMessage.textContent = payload.maskedEmail
+      ? `We sent a 6-digit code to ${payload.maskedEmail}.`
+      : "We sent a 6-digit code to your email address.";
+    deliveryHint.textContent = payload.expiresInSeconds
+      ? `Code expires in about ${Math.max(1, Math.round(payload.expiresInSeconds / 60))} minute(s).`
+      : "Open your inbox and enter the latest code.";
+    setupCopy.textContent = "Check your inbox, then enter the latest 6-digit code to finish signing in.";
   }
 
   async function handleVerify() {
@@ -168,7 +174,7 @@
 
     const code = getCode();
     if (!/^\d{6}$/.test(code)) {
-      showError("Enter the 6-digit code from your authenticator app.");
+      showError("Enter the 6-digit code we sent to your email.");
       return;
     }
 
@@ -290,14 +296,12 @@
     if (resendBtn.disabled) return;
     clearBoxes();
     clearError();
-    if (pendingMfa?.mfaSetupRequired) {
-      try {
-        await fetchSetup();
-      } catch (error) {
-        showError(error.message || "Failed to refresh MFA setup.");
-      }
+    try {
+      await fetchSetup();
+      startResetCountdown();
+    } catch (error) {
+      showError(error.message || "Failed to resend verification code.");
     }
-    startResetCountdown();
   });
 
   verifyBtn.addEventListener("click", () => void handleVerify());
@@ -315,7 +319,7 @@
     try {
       await fetchSetup();
     } catch (error) {
-      showError(error.message || "Failed to load MFA setup.");
+      showError(error.message || "Failed to send verification email.");
     }
   })();
 })();

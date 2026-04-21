@@ -117,6 +117,16 @@
   });
 
   feedList?.addEventListener("click", (event) => {
+    const commentDeleteBtn = event.target.closest("[data-comment-action='delete']");
+    if (commentDeleteBtn) {
+      const commentId = Number(commentDeleteBtn.dataset.commentId);
+      const postId = Number(commentDeleteBtn.dataset.postId);
+      if (Number.isInteger(commentId) && commentId > 0 && Number.isInteger(postId) && postId > 0) {
+        void deleteComment(commentId, postId);
+      }
+      return;
+    }
+
     const actionButton = event.target.closest("[data-post-action]");
     if (!actionButton) {
       return;
@@ -139,6 +149,10 @@
     }
     if (action === "comment-toggle") {
       void toggleComments(postCard, postId);
+      return;
+    }
+    if (action === "delete-post") {
+      void deletePost(postId);
       return;
     }
     if (action === "share") {
@@ -245,7 +259,7 @@
   async function refreshRenderedEngagement() {
     const postIds = Array.from(feedList?.querySelectorAll("[data-post-id]") || [])
       .map((node) => Number(node.dataset.postId))
-      .filter((postId) => Number.isInteger(postId) && postId > 0);
+      .filter ((postId) => Number.isInteger(postId) && postId > 0);
 
     await Promise.all(postIds.map(async (postId) => {
       try {
@@ -683,6 +697,10 @@
             <img class="action-icon" src="../assets/icons/player-dashboard-icons/share.svg" alt="" />
             <span>Share</span>
           </button>
+          ${Number(post.userId) === Number(session.userId) ? `
+          <button type="button" class="post-action-btn post-action-delete" data-post-action="delete-post">
+            <span>Delete</span>
+          </button>` : ""}
         </div>
 
         <section class="post-comments hidden" data-post-comments-section>
@@ -922,6 +940,7 @@
             <span class="post-comment-author">${escapeHtml(comment.author?.displayName || "Player")}</span>
             ${schoolTag}
             <span class="post-comment-time">${escapeHtml(comment.createdLabel || "Just now")}</span>
+            ${Number(comment.userId) === Number(session.userId) ? `<button type="button" class="post-comment-delete" data-comment-action="delete" data-comment-id="${escapeAttribute(String(comment.commentId))}" data-post-id="${escapeAttribute(String(comment.postId))}">Delete</button>` : ""}
           </div>
           <p class="post-comment-message">${escapeHtml(comment.message || "")}</p>
         </div>
@@ -944,6 +963,51 @@
     const shareUrl = `${window.location.origin}${window.location.pathname}#post-${postId}`;
     navigator.clipboard?.writeText?.(shareUrl).catch(() => {});
     setComposerStatus("Post link copied for sharing.", false);
+  }
+
+  async function deletePost(postId) {
+    if (!session.userId) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`${API_BASE}/api/feed/${postId}`, { method: "DELETE" });
+      const payload = await response.json();
+      if (!response.ok) {
+        throw new Error(payload.message || "Failed to delete post.");
+      }
+
+      await refreshLiveDashboard({ forceFeed: true });
+    } catch (error) {
+      console.error("Post deletion failed:", error);
+      setComposerStatus(error.message || "Failed to delete post.", true);
+    }
+  }
+
+  async function deleteComment(commentId, postId) {
+    if (!session.userId) {
+      return;
+    }
+
+    try {
+      const response = await fetch(
+        `${API_BASE}/api/reactions/posts/${postId}/comments/${commentId}`,
+        { method: "DELETE" },
+      );
+      const payload = await response.json();
+      if (!response.ok) {
+        throw new Error(payload.message || "Failed to delete comment.");
+      }
+
+      commentsLoadedPosts.delete(postId);
+      await loadComments(postId);
+      if (payload.summary) {
+        applyReactionSummary(postId, payload.summary);
+      }
+    } catch (error) {
+      console.error("Comment deletion failed:", error);
+      updateCommentStatus(postId, error.message || "Failed to delete comment.", true);
+    }
   }
 
   function renderSearchIdleState() {
