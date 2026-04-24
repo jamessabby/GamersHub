@@ -24,6 +24,43 @@ const getStreamById = async (req, res) => {
   }
 };
 
+const trackView = async (req, res) => {
+  try {
+    await streamService.trackView(req.params.streamId);
+    return res.status(200).json({ ok: true });
+  } catch (err) {
+    return res.status(err.statusCode || 500).json({ message: err.message || "Failed to track view." });
+  }
+};
+
+const getLikeStatus = async (req, res) => {
+  try {
+    const userId = req.auth?.user?.userId;
+    const data = await streamService.getLikeStatus(req.params.streamId, userId);
+    return res.status(200).json(data);
+  } catch (err) {
+    return res.status(err.statusCode || 500).json({ message: err.message || "Failed to load like status." });
+  }
+};
+
+const toggleLike = async (req, res) => {
+  try {
+    const data = await streamService.toggleLike(req.params.streamId, req.auth.user.userId);
+    return res.status(200).json(data);
+  } catch (err) {
+    return res.status(err.statusCode || 500).json({ message: err.message || "Failed to like stream." });
+  }
+};
+
+const removeLike = async (req, res) => {
+  try {
+    const data = await streamService.removeLike(req.params.streamId, req.auth.user.userId);
+    return res.status(200).json(data);
+  } catch (err) {
+    return res.status(err.statusCode || 500).json({ message: err.message || "Failed to unlike stream." });
+  }
+};
+
 const getComments = async (req, res) => {
   try {
     const comments = await streamService.listComments(req.params.streamId, {
@@ -109,6 +146,10 @@ const sendGift = async (req, res) => {
 module.exports = {
   getStreams,
   getStreamById,
+  trackView,
+  getLikeStatus,
+  toggleLike,
+  removeLike,
   getComments,
   createComment,
   sendGift,

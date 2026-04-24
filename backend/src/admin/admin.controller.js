@@ -37,6 +37,17 @@ async function analyticsOverview(req, res) {
   }
 }
 
+async function listActivity(req, res) {
+  try {
+    const payload = await adminService.listRecentActivity({
+      limit: req.query.limit ? Number(req.query.limit) : undefined,
+    });
+    res.status(200).json(payload);
+  } catch (error) {
+    res.status(error.statusCode || 500).json({ message: error.message || "Failed to load activity." });
+  }
+}
+
 async function listStreams(req, res) {
   try {
     const payload = await adminService.listStreamsModeration();
@@ -56,6 +67,37 @@ async function moderateStream(req, res) {
     res.status(200).json(payload);
   } catch (error) {
     res.status(error.statusCode || 500).json({ message: error.message || "Failed to moderate stream." });
+  }
+}
+
+async function publishStream(req, res) {
+  try {
+    const payload = await adminService.publishStream({
+      actor: req.auth.user,
+      title: req.body.title,
+      gameName: req.body.gameName,
+      playbackUrl: req.body.playbackUrl,
+      thumbnailUrl: req.body.thumbnailUrl,
+      description: req.body.description,
+      isLive: req.body.isLive,
+      isVisible: req.body.isVisible,
+      startedAt: req.body.startedAt,
+      tournamentId: req.body.tournamentId || null,
+    });
+    res.status(201).json(payload);
+  } catch (error) {
+    res.status(error.statusCode || 500).json({ message: error.message || "Failed to publish stream." });
+  }
+}
+
+async function uploadThumbnail(req, res) {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ message: "No thumbnail file was provided." });
+    }
+    return res.status(200).json({ url: `/uploads/streams/${req.file.filename}` });
+  } catch (error) {
+    return res.status(500).json({ message: "Failed to upload thumbnail." });
   }
 }
 
@@ -105,12 +147,36 @@ async function exportReport(req, res) {
   }
 }
 
+async function updateStream(req, res) {
+  try {
+    const payload = await adminService.updateStream({
+      actor: req.auth.user,
+      streamId: req.params.streamId,
+      title: req.body.title,
+      gameName: req.body.gameName,
+      playbackUrl: req.body.playbackUrl,
+      thumbnailUrl: req.body.thumbnailUrl || "",
+      description: req.body.description,
+      isLive: req.body.isLive,
+      isVisible: req.body.isVisible,
+      tournamentId: req.body.tournamentId || null,
+    });
+    res.status(200).json(payload);
+  } catch (error) {
+    res.status(error.statusCode || 500).json({ message: error.message || "Failed to update stream." });
+  }
+}
+
 module.exports = {
   listUsers,
   updateUserRole,
   analyticsOverview,
+  listActivity,
   listStreams,
   moderateStream,
+  publishStream,
+  updateStream,
+  uploadThumbnail,
   listAudit,
   reportsSummary,
   exportReport,

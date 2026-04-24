@@ -43,7 +43,7 @@ async function createAuditLog({
         @entityType,
         @entityId,
         @detailsJson,
-        SYSDATETIME()
+        SYSUTCDATETIME()
       )
     `);
 

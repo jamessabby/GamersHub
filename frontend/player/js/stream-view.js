@@ -10,7 +10,9 @@
   const streamPlayerWrap = document.getElementById("streamPlayerWrap");
   const streamActions = document.getElementById("streamActions");
   const streamInfoBlock = document.getElementById("streamInfoBlock");
-  const commentsLiveIndicator = document.getElementById("commentsLiveIndicator");
+  const commentsLiveIndicator = document.getElementById(
+    "commentsLiveIndicator",
+  );
   const commentsEmptyState = document.getElementById("commentsEmptyState");
   const commentsList = document.getElementById("commentsList");
   const commentInput = document.getElementById("commentInput");
@@ -53,7 +55,9 @@
     try {
       const [streamResponse, commentsResponse] = await Promise.all([
         fetch(`${API_BASE}/api/streams/${encodeURIComponent(streamId)}`),
-        fetch(`${API_BASE}/api/streams/${encodeURIComponent(streamId)}/comments?limit=50`),
+        fetch(
+          `${API_BASE}/api/streams/${encodeURIComponent(streamId)}/comments?limit=50`,
+        ),
       ]);
 
       const streamPayload = await streamResponse.json();
@@ -69,6 +73,13 @@
 
       renderStream(streamPayload);
       renderComments(commentsPayload.items || [], streamPayload.isLive);
+
+      // Track view and load like status concurrently — non-blocking
+      void fetch(
+        `${API_BASE}/api/streams/${encodeURIComponent(streamId)}/view`,
+        { method: "POST" },
+      );
+      void loadLikeStatus();
     } catch (error) {
       console.error("Stream view loading failed:", error);
       renderMissingState(error.message || "Failed to load stream.");
@@ -208,7 +219,8 @@
 
     if (commentInput) {
       commentInput.disabled = true;
-      commentInput.placeholder = "Commenting will unlock during real live sessions";
+      commentInput.placeholder =
+        "Commenting will unlock during real live sessions";
     }
 
     if (sendCommentBtn) {
@@ -252,13 +264,17 @@
 
     streamPlayerWrap.className = "stream-player-wrap";
     streamPlayerWrap.innerHTML = `
-      ${stream.isLive ? `
+      ${
+        stream.isLive
+          ? `
         <div class="stream-live-badge">
           <span class="stream-live-dot"></span>
           LIVE
         </div>
-      ` : ""}
-      <div class="stream-viewer-count">${formatCount(stream.viewerCount)} viewers</div>
+      `
+          : ""
+      }
+      <div class="stream-viewer-count">${formatCount(stream.viewerCount)} views</div>
       ${renderPlaybackEmbed(stream)}
     `;
   }
@@ -278,6 +294,7 @@
       >
         Open Playback
       </a>
+      <button type="button" class="stream-action-btn" id="streamLikeBtn">&#9825; — Like</button>
       <button type="button" class="stream-action-btn" id="copyStreamLinkBtn">Share</button>
       <a href="./livestream.html" class="stream-action-btn stream-action-btn-ghost">
         Back To Livestreams
@@ -295,6 +312,62 @@
     });
   }
 
+  async function loadLikeStatus() {
+    try {
+      const response = await fetch(
+        `${API_BASE}/api/streams/${encodeURIComponent(streamId)}/likes`,
+      );
+      if (!response.ok) {
+        return;
+      }
+      const data = await response.json();
+      renderLikeButton(data.likeCount, data.liked);
+      bindLikeButton();
+    } catch {
+      // Non-critical — like button stays as placeholder
+    }
+  }
+
+  function renderLikeButton(count, liked) {
+    const btn = document.getElementById("streamLikeBtn");
+    if (!btn) {
+      return;
+    }
+    btn.textContent = liked ? `♥ ${count} Liked` : `♡ ${count} Like`;
+    btn.classList.toggle("stream-action-btn-liked", liked);
+    btn.dataset.liked = liked ? "true" : "false";
+    btn.dataset.likeCount = String(count);
+  }
+
+  function bindLikeButton() {
+    const btn = document.getElementById("streamLikeBtn");
+    if (!btn) {
+      return;
+    }
+    btn.addEventListener("click", async () => {
+      if (!session.userId) {
+        btn.textContent = "Log in to like";
+        return;
+      }
+      const isLiked = btn.dataset.liked === "true";
+      btn.disabled = true;
+      try {
+        const response = await fetch(
+          `${API_BASE}/api/streams/${encodeURIComponent(streamId)}/likes`,
+          { method: isLiked ? "DELETE" : "POST" },
+        );
+        if (response.ok) {
+          const data = await response.json();
+          renderLikeButton(data.likeCount, data.liked);
+        }
+      } catch {
+        // Non-critical
+      } finally {
+        btn.disabled = false;
+      }
+    });
+  }
+
   function renderInfo(stream) {
     if (!streamInfoBlock) {
       return;
@@ -305,6 +378,9 @@
       : "";
     const gameTag = stream.gameName
       ? `<span class="stream-tag">${escapeHtml(stream.gameName)}</span>`
+      : "";
+    const tournamentTag = stream.tournamentId
+      ? `<span class="stream-tag stream-tag-tournament">Tournament #${stream.tournamentId}</span>`
       : "";
 
     streamInfoBlock.className = "stream-info-block";
@@ -327,6 +403,7 @@
       </p>
       <div class="stream-tags">
         ${gameTag}
+        ${tournamentTag}
         ${schoolTag}
       </div>
     `;
@@ -338,7 +415,10 @@
     }
 
     commentsLiveIndicator.textContent = `${items.length} live comments`;
-    commentsLiveIndicator.classList.toggle("comments-live-indicator-muted", !isLive);
+    commentsLiveIndicator.classList.toggle(
+      "comments-live-indicator-muted",
+      !isLive,
+    );
 
     if (!items.length) {
       commentsEmptyState.classList.remove("hidden");

@@ -699,3 +699,42 @@ body::after {
     transform: translateY(0);
   }
 }
+
+/* ── RESPONSIVE ── */
+@media (max-width: 900px) {
+  .left-col {
+    display: none !important;
+  }
+
+  .right-col {
+    flex: 0 0 100% !important;
+    max-width: 100% !important;
+    width: 100% !important;
+    padding: 24px 20px 40px;
+    min-height: calc(100vh - 56px);
+  }
+
+  .login-card {
+    max-width: 440px;
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .navbar-custom .nav-links {
+    display: none !important;
+  }
+
+  .right-col {
+    padding: 16px 14px 32px;
+  }
+
+  .login-card {
+    padding: 24px 18px 28px;
+    border-radius: 18px;
+  }
+
+  .card-title {
+    font-size: 19px;
+  }
+}

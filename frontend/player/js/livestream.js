@@ -4,7 +4,6 @@
   const searchInput = document.getElementById("searchInput");
   const livestreamStatus = document.getElementById("livestreamStatus");
   const streamsSection = document.getElementById("streamsSection");
-  const streamsGrid = document.getElementById("streamsGrid");
 
   window.addEventListener(
     "scroll",
@@ -26,7 +25,7 @@
 
   async function loadStreams() {
     try {
-      const response = await fetch(`${API_BASE}/api/streams?limit=12`);
+      const response = await fetch(`${API_BASE}/api/streams?limit=24`);
       const payload = await response.json();
 
       if (!response.ok) {
@@ -41,26 +40,18 @@
   }
 
   function renderLoadingState() {
-    if (!livestreamStatus) {
-      return;
-    }
-
+    if (!livestreamStatus) return;
     livestreamStatus.innerHTML = `
       <div>
         <div class="gh-empty-icon">LIVE</div>
         <h2 class="gh-empty-title">Loading livestreams</h2>
-        <p class="gh-empty-subtitle">
-          We are checking the real stream records in your feed database.
-        </p>
+        <p class="gh-empty-subtitle">We are checking the real stream records in your feed database.</p>
       </div>
     `;
   }
 
   function renderErrorState(message) {
-    if (!livestreamStatus) {
-      return;
-    }
-
+    if (!livestreamStatus) return;
     livestreamStatus.classList.remove("hidden");
     livestreamStatus.innerHTML = `
       <div>
@@ -85,9 +76,7 @@
   }
 
   function renderStreams(items) {
-    if (!livestreamStatus || !streamsSection || !streamsGrid) {
-      return;
-    }
+    if (!livestreamStatus || !streamsSection) return;
 
     if (!items.length) {
       livestreamStatus.classList.remove("hidden");
@@ -96,8 +85,8 @@
           <div class="gh-empty-icon">LIVE</div>
           <h2 class="gh-empty-title">No livestreams are available yet</h2>
           <p class="gh-empty-subtitle">
-            The page is connected to your real stream records, so it stays empty
-            until an admin or moderator creates an actual stream.
+            The page is connected to your real stream records. It stays empty until
+            an admin creates an actual stream.
           </p>
           <div class="gh-empty-actions">
             <button
@@ -110,34 +99,62 @@
             >
               Notify Me When Streams Go Live
             </button>
-            <a href="../player/tournaments.html" class="gh-empty-button ghost">
-              Browse Tournaments
-            </a>
+            <a href="../player/tournaments.html" class="gh-empty-button ghost">Browse Tournaments</a>
           </div>
-          <p class="gh-empty-note">
-            This avoids showing fake broadcasts, fake viewer counts, or fake
-            schools before real streaming data exists.
-          </p>
         </div>
       `;
       streamsSection.classList.add("hidden");
       return;
     }
 
+    const liveItems = items.filter((s) => s.isLive);
+    const offlineItems = items.filter((s) => !s.isLive);
+
     livestreamStatus.classList.add("hidden");
     streamsSection.classList.remove("hidden");
-    streamsGrid.innerHTML = items.map(renderStreamCard).join("");
+
+    let html = "";
+
+    // ── Live Now section ──
+    html += `
+      <div class="channels-header">
+        <div class="channels-title">
+          <span class="title-live-dot${liveItems.length ? "" : " title-live-dot--off"}"></span>
+          <span>Live Now</span>
+        </div>
+        <span class="streams-count-badge">${liveItems.length} live</span>
+      </div>
+    `;
+    if (liveItems.length) {
+      html += `<div class="channels-grid">${liveItems.map(renderStreamCard).join("")}</div>`;
+    } else {
+      html += `<p class="streams-offline-note">No streams are currently live. Check back soon.</p>`;
+    }
+
+    // ── Past & Recorded section ──
+    if (offlineItems.length) {
+      html += `
+        <div class="channels-header streams-past-header">
+          <div class="channels-title channels-title--dim">
+            <span class="title-live-dot title-live-dot--off"></span>
+            <span>Past &amp; Recorded</span>
+          </div>
+          <span class="streams-count-badge streams-count-badge--dim">${offlineItems.length} offline</span>
+        </div>
+        <div class="channels-grid">${offlineItems.map(renderStreamCard).join("")}</div>
+      `;
+    }
+
+    streamsSection.innerHTML = html;
   }
 
   function renderStreamCard(stream) {
     const thumbnail = stream.thumbnailUrl || "../assets/img/livestreams/thumbnail.jpg";
     const liveBadge = stream.isLive
-      ? `
-        <span class="badge-live">
-          <span class="live-pulse"></span>
-          LIVE
-        </span>
-      `
+      ? `<span class="badge-live"><span class="live-pulse"></span>LIVE</span>`
+      : "";
+    const tournamentBadge = stream.tournamentId
+      ? `<span class="stream-tournament-chip">TRN</span>`
       : "";
 
     return `
@@ -145,7 +162,8 @@
         <div class="stream-thumb-wrap">
           <img class="stream-thumb" src="${escapeAttribute(thumbnail)}" alt="${escapeAttribute(stream.title)}" />
           ${liveBadge}
-          <span class="viewer-chip">${formatCount(stream.viewerCount)} viewers</span>
+          ${tournamentBadge}
+          <span class="viewer-chip">${formatCount(stream.viewerCount)} views</span>
         </div>
         <div class="stream-info">
           <div class="stream-title">${escapeHtml(stream.title || "Untitled stream")}</div>
@@ -167,7 +185,6 @@
     if (count >= 1000) {
       return `${(count / 1000).toFixed(1).replace(/\.0$/, "")}K`;
     }
-
     return String(count);
   }
 

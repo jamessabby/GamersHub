@@ -86,10 +86,11 @@ async function updateUserRole({ actor, targetUserId, role }) {
 
 async function getAnalyticsOverview({ range }) {
   const parsedRange = normalizeRange(range);
-  const [roleCounts, registrations, totals] = await Promise.all([
+  const [roleCounts, registrations, totals, topGames] = await Promise.all([
     userRepo.countUsersByRole(),
     userRepo.countRegistrationsByDay({ days: parsedRange }),
     adminRepo.getAnalyticsCounts(),
+    adminRepo.getTopGames().catch(() => []),
   ]);
 
   return {
@@ -103,7 +104,16 @@ async function getAnalyticsOverview({ range }) {
       total: Number(row.total) || 0,
     })),
     totals,
+    topGames: topGames.map((row) => ({
+      game: String(row.gameName || "").trim(),
+      total: Number(row.total) || 0,
+    })),
   };
+}
+
+async function listRecentActivity({ limit } = {}) {
+  const safeLimit = Number.isInteger(limit) && limit > 0 ? Math.min(limit, 50) : 15;
+  return auditService.listAuditLogs({ page: 1, pageSize: safeLimit });
 }
 
 async function listStreamsModeration() {
@@ -119,6 +129,8 @@ async function listStreamsModeration() {
       isLive: Boolean(stream.isLive),
       isVisible: Boolean(stream.isVisible),
       viewerCount: Number(stream.viewerCount) || 0,
+      likeCount: Number(stream.likeCount) || 0,
+      tournamentId: stream.tournamentId || null,
       startedAt: stream.startedAt || null,
       authorName: profiles.get(stream.userId)?.displayName || `User ${stream.userId}`,
     })),
@@ -151,6 +163,64 @@ async function moderateStream({ actor, streamId, isVisible }) {
   });
 
   return updated;
+}
+
+async function publishStream({ actor, title, gameName, playbackUrl, thumbnailUrl, description, isLive, isVisible, startedAt, tournamentId }) {
+  const trimmedTitle = String(title || "").trim();
+  if (!trimmedTitle) {
+    const error = new Error("Stream title is required.");
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const trimmedUrl = String(playbackUrl || "").trim();
+  if (!trimmedUrl || !/^https?:\/\//i.test(trimmedUrl)) {
+    const error = new Error("A valid playback URL (http or https) is required.");
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const isLiveBool = Boolean(isLive);
+
+  let resolvedStartedAt = startedAt ? new Date(startedAt) : null;
+  if (isLiveBool && !resolvedStartedAt) {
+    resolvedStartedAt = new Date();
+  }
+  if (resolvedStartedAt && Number.isNaN(resolvedStartedAt.getTime())) {
+    resolvedStartedAt = null;
+  }
+
+  const resolvedTournamentId = tournamentId ? Number(tournamentId) : null;
+
+  const stream = await adminRepo.createStream({
+    userId: actor.userId,
+    title: trimmedTitle,
+    gameName: String(gameName || "").trim() || null,
+    playbackUrl: trimmedUrl,
+    thumbnailUrl: String(thumbnailUrl || "").trim() || null,
+    description: String(description || "").trim() || null,
+    isLive: isLiveBool,
+    isVisible: isVisible !== false,
+    startedAt: resolvedStartedAt,
+    tournamentId: Number.isInteger(resolvedTournamentId) && resolvedTournamentId > 0 ? resolvedTournamentId : null,
+  });
+
+  if (!stream) {
+    const error = new Error("Stream was not created. The database did not return the new record.");
+    error.statusCode = 500;
+    throw error;
+  }
+
+  await auditService.logAuditEvent({
+    actorUserId: actor.userId,
+    actorRole: actor.userRole,
+    actionType: "admin.stream_published",
+    entityType: "stream",
+    entityId: stream.streamId,
+    details: { title: stream.title, isLive: stream.isLive },
+  });
+
+  return stream;
 }
 
 async function getReportsSummary({ range }) {
@@ -222,12 +292,60 @@ function normalizeRange(value) {
   }
 }
 
+async function updateStream({ actor, streamId, title, gameName, playbackUrl, thumbnailUrl, description, isLive, isVisible, tournamentId }) {
+  const trimmedTitle = String(title || "").trim();
+  if (!trimmedTitle) {
+    const error = new Error("Stream title is required.");
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const trimmedUrl = String(playbackUrl || "").trim();
+  if (!trimmedUrl || !/^https?:\/\//i.test(trimmedUrl)) {
+    const error = new Error("A valid playback URL (http or https) is required.");
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const updated = await adminRepo.updateStream({
+    streamId: Number(streamId),
+    title: trimmedTitle,
+    gameName: String(gameName || "").trim() || null,
+    playbackUrl: trimmedUrl,
+    thumbnailUrl: String(thumbnailUrl || "").trim() || null,
+    description: String(description || "").trim() || null,
+    isLive: Boolean(isLive),
+    isVisible: isVisible !== false,
+    tournamentId: tournamentId ? Number(tournamentId) : null,
+  });
+
+  if (!updated) {
+    const error = new Error("Stream not found.");
+    error.statusCode = 404;
+    throw error;
+  }
+
+  await auditService.logAuditEvent({
+    actorUserId: actor.userId,
+    actorRole: actor.userRole,
+    actionType: "admin.stream_updated",
+    entityType: "stream",
+    entityId: updated.streamId,
+    details: { title: updated.title, isLive: updated.isLive },
+  });
+
+  return updated;
+}
+
 module.exports = {
   listUsers,
   updateUserRole,
   getAnalyticsOverview,
+  listRecentActivity,
   listStreamsModeration,
   moderateStream,
+  publishStream,
+  updateStream,
   getReportsSummary,
   buildCsvReport,
 };

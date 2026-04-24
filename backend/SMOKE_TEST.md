@@ -4,7 +4,7 @@ This is the simple backend smoke pass for the current player-social slice.
 
 ## Before You Start
 - Make sure SQL Server is running on `LAPTOP-VO6I66G0\\SQLEXPRESS`.
-- Run the SQL scripts in `backend/sql/003` to `backend/sql/008`.
+- Run the SQL scripts in `backend/sql/003` to `backend/sql/012`.
 - Start the backend from `backend/` with `npm run dev` or `node src/app.js`.
 
 ## What To Verify
@@ -14,8 +14,9 @@ This is the simple backend smoke pass for the current player-social slice.
 - Friends: remove, send request, accept request
 - Notifications: list, mark one read, mark all read
 - Profile: update, reload, confirm `dateOfBirth` does not shift
-- Streams: empty state, seeded stream, stream comments
+- Streams: empty state, seeded stream, stream comments, view tracking, likes
 - Tournaments: empty state, seeded tournament, schedule, leaderboard
+- Admin publish stream: tournament dropdown, game dropdown, thumbnail upload, tournament linkage
 
 ## Feed Checks
 Create small temporary test files:
@@ -62,15 +63,67 @@ Invoke-RestMethod -Method Get -Uri 'http://localhost:3000/api/users/profile/6'
 Invoke-RestMethod -Method Get -Uri 'http://localhost:3000/api/users/profile/7'
 ```
 
-## Seeded Stream Check
-Insert one temporary stream and comment:
+## Admin Publish Stream Check
+Requires a valid admin or superadmin session token. Get one by logging in first:
 
 ```powershell
-$streamId = sqlcmd -S "LAPTOP-VO6I66G0\SQLEXPRESS" -E -d GAMERSHUB_FEED -h -1 -W -Q "SET NOCOUNT ON; INSERT INTO dbo.STREAM (USER_ID, STREAM_TITLE, VIEW_COUNT, IS_LIVE, PLAYBACK_URL, THUMBNAIL_URL, GAME_NAME, STREAM_DESCRIPTION, STARTED_AT, ENDED_AT) VALUES (6, 'Smoke Stream', 42, 1, 'https://youtu.be/dQw4w9WgXcQ', 'https://example.com/thumb.jpg', 'Valorant', 'Smoke stream for API validation', SYSDATETIME(), NULL); SELECT CAST(SCOPE_IDENTITY() AS int);" | Select-Object -Last 1
+$loginResponse = Invoke-RestMethod -Method Post -Uri 'http://localhost:3000/api/auth/login' -ContentType 'application/json' -Body (@{username='your_admin_username';password='your_password'} | ConvertTo-Json -Compress)
+$token = $loginResponse.token
+```
+
+Publish a stream via the admin endpoint:
+
+```powershell
+$publishResponse = Invoke-RestMethod -Method Post -Uri 'http://localhost:3000/api/admin/streams' -ContentType 'application/json' -Headers @{Authorization="Bearer $token"} -Body (@{title='Admin Published Stream';gameName='Valorant';playbackUrl='https://www.youtube.com/watch?v=dQw4w9WgXcQ';isLive=$true;isVisible=$true;viewerCount=25} | ConvertTo-Json -Compress)
+$publishedStreamId = $publishResponse.streamId
+Write-Host "Published stream ID: $publishedStreamId"
+```
+
+Verify it appears in the player-facing streams list:
+
+```powershell
+$streamsResponse = Invoke-RestMethod -Method Get -Uri 'http://localhost:3000/api/streams?limit=12'
+$streamsResponse.items | Select-Object streamId, title, isLive, isVisible, playbackUrl
+```
+
+Verify the individual stream loads:
+
+```powershell
+Invoke-RestMethod -Method Get -Uri ("http://localhost:3000/api/streams/{0}" -f $publishedStreamId)
+```
+
+Verify moderation toggle (hide then show):
+
+```powershell
+Invoke-RestMethod -Method Put -Uri ("http://localhost:3000/api/admin/streams/{0}/moderation" -f $publishedStreamId) -ContentType 'application/json' -Headers @{Authorization="Bearer $token"} -Body (@{isVisible=$false} | ConvertTo-Json -Compress)
+Invoke-RestMethod -Method Put -Uri ("http://localhost:3000/api/admin/streams/{0}/moderation" -f $publishedStreamId) -ContentType 'application/json' -Headers @{Authorization="Bearer $token"} -Body (@{isVisible=$true} | ConvertTo-Json -Compress)
+```
+
+## Seeded Stream Check
+Insert one temporary stream and comment, then test view tracking and likes:
+
+```powershell
+$streamId = sqlcmd -S "LAPTOP-VO6I66G0\SQLEXPRESS" -E -d GAMERSHUB_FEED -h -1 -W -Q "SET NOCOUNT ON; INSERT INTO dbo.STREAM (USER_ID, STREAM_TITLE, VIEW_COUNT, IS_LIVE, PLAYBACK_URL, THUMBNAIL_URL, GAME_NAME, STREAM_DESCRIPTION, STARTED_AT, ENDED_AT) VALUES (6, 'Smoke Stream', 0, 1, 'https://youtu.be/dQw4w9WgXcQ', 'https://example.com/thumb.jpg', 'Valorant', 'Smoke stream for API validation', SYSDATETIME(), NULL); SELECT CAST(SCOPE_IDENTITY() AS int);" | Select-Object -Last 1
 Invoke-RestMethod -Method Get -Uri 'http://localhost:3000/api/streams?limit=12'
 Invoke-RestMethod -Method Get -Uri ("http://localhost:3000/api/streams/{0}" -f $streamId)
 Invoke-RestMethod -Method Post -Uri ("http://localhost:3000/api/streams/{0}/comments" -f $streamId) -ContentType 'application/json' -Body (@{userId=6;message='smoke stream comment'} | ConvertTo-Json -Compress)
 Invoke-RestMethod -Method Get -Uri ("http://localhost:3000/api/streams/{0}/comments?limit=50" -f $streamId)
+# View tracking: VIEW_COUNT should increment each call
+Invoke-RestMethod -Method Post -Uri ("http://localhost:3000/api/streams/{0}/view" -f $streamId)
+Invoke-RestMethod -Method Post -Uri ("http://localhost:3000/api/streams/{0}/view" -f $streamId)
+Invoke-RestMethod -Method Get -Uri ("http://localhost:3000/api/streams/{0}" -f $streamId)
+```
+
+## Stream Like Check
+Requires a valid session token (see Admin Publish Stream Check for login steps):
+
+```powershell
+# Like the stream
+Invoke-RestMethod -Method Post -Uri ("http://localhost:3000/api/streams/{0}/likes" -f $streamId) -Headers @{Authorization="Bearer $token"}
+Invoke-RestMethod -Method Get -Uri ("http://localhost:3000/api/streams/{0}/likes" -f $streamId) -Headers @{Authorization="Bearer $token"}
+# Unlike
+Invoke-RestMethod -Method Delete -Uri ("http://localhost:3000/api/streams/{0}/likes" -f $streamId) -Headers @{Authorization="Bearer $token"}
+Invoke-RestMethod -Method Get -Uri ("http://localhost:3000/api/streams/{0}/likes" -f $streamId) -Headers @{Authorization="Bearer $token"}
 ```
 
 ## Seeded Tournament Check

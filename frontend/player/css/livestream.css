@@ -301,6 +301,23 @@
   animation: livePulse 1.2s ease-in-out infinite;
 }
 
+.stream-tournament-chip {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: inline-flex;
+  align-items: center;
+  background: rgba(251, 191, 36, 0.88);
+  backdrop-filter: blur(6px);
+  border-radius: 6px;
+  padding: 3px 7px;
+  font-size: 9px;
+  font-weight: 700;
+  font-family: "Syne", sans-serif;
+  color: #1e1000;
+  letter-spacing: 0.08em;
+}
+
 .viewer-chip {
   position: absolute;
   bottom: 8px;
@@ -359,6 +376,46 @@
   border: 1px solid rgba(139, 92, 246, 0.18);
   border-radius: 5px;
   padding: 2px 7px;
+}
+
+/* ── LIVE / PAST SECTION SPLIT ── */
+.streams-past-header {
+  margin-top: 36px;
+}
+
+.channels-title--dim {
+  opacity: 0.65;
+}
+
+.title-live-dot--off {
+  background: #475569 !important;
+  animation: none !important;
+  box-shadow: none !important;
+}
+
+.streams-count-badge {
+  font-size: 11px;
+  font-weight: 600;
+  font-family: "DM Sans", sans-serif;
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  border-radius: 20px;
+  padding: 2px 9px;
+}
+
+.streams-count-badge--dim {
+  color: #64748b;
+  background: rgba(100, 116, 139, 0.1);
+  border-color: rgba(100, 116, 139, 0.2);
+}
+
+.streams-offline-note {
+  color: #64748b;
+  font-size: 13px;
+  font-family: "DM Sans", sans-serif;
+  padding: 14px 4px;
+  margin: 0 0 4px;
 }
 
 /* ── KEYFRAMES ── */

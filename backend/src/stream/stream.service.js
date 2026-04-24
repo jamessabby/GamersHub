@@ -26,6 +26,44 @@ async function getStreamById(streamId) {
   return mapStream(stream, authors);
 }
 
+async function trackView(streamId) {
+  const parsedId = parsePositiveInt(streamId, "A valid streamId is required.");
+  const stream = await streamRepository.findStreamById(parsedId);
+  if (!stream) {
+    const error = new Error("Stream not found.");
+    error.statusCode = 404;
+    throw error;
+  }
+  await streamRepository.incrementViewCount(parsedId);
+}
+
+async function getLikeStatus(streamId, userId) {
+  const parsedId = parsePositiveInt(streamId, "A valid streamId is required.");
+  const parsedUserId = userId ? Number(userId) : null;
+  const [likeCount, reaction] = await Promise.all([
+    streamRepository.getStreamLikeCount(parsedId),
+    parsedUserId && Number.isInteger(parsedUserId) && parsedUserId > 0
+      ? streamRepository.findStreamReaction(parsedId, parsedUserId)
+      : Promise.resolve(null),
+  ]);
+
+  return { likeCount, liked: Boolean(reaction) };
+}
+
+async function toggleLike(streamId, userId) {
+  const parsedId = parsePositiveInt(streamId, "A valid streamId is required.");
+  const parsedUserId = parsePositiveInt(userId, "A valid userId is required.");
+  const likeCount = await streamRepository.upsertStreamReaction(parsedId, parsedUserId);
+  return { likeCount, liked: true };
+}
+
+async function removeLike(streamId, userId) {
+  const parsedId = parsePositiveInt(streamId, "A valid streamId is required.");
+  const parsedUserId = parsePositiveInt(userId, "A valid userId is required.");
+  const likeCount = await streamRepository.deleteStreamReaction(parsedId, parsedUserId);
+  return { likeCount, liked: false };
+}
+
 async function listComments(streamId, { limit } = {}) {
   const parsedStreamId = parsePositiveInt(streamId, "A valid streamId is required.");
   await getStreamById(parsedStreamId);
@@ -119,6 +157,7 @@ function mapStream(stream, authors) {
     thumbnailUrl: stream.thumbnailUrl || "",
     gameName: stream.gameName || "",
     description: stream.description || "",
+    tournamentId: stream.tournamentId || null,
     startedAt: stream.startedAt || null,
     endedAt: stream.endedAt || null,
     startedLabel: formatRelativeTime(stream.startedAt, "Not started yet"),
@@ -219,6 +258,10 @@ function formatRelativeTime(value, fallback) {
 module.exports = {
   listStreams,
   getStreamById,
+  trackView,
+  getLikeStatus,
+  toggleLike,
+  removeLike,
   listComments,
   createComment,
   sendGift,

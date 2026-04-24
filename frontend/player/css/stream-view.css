@@ -245,8 +245,11 @@
   color: #c4b5fd;
 }
 
-.stream-action-btn.liked {
+.stream-action-btn.liked,
+.stream-action-btn.stream-action-btn-liked {
   color: #a78bfa;
+  border-color: rgba(139, 92, 246, 0.4);
+  background: rgba(139, 92, 246, 0.1);
 }
 
 .action-count {
@@ -405,6 +408,12 @@
   border: 1px solid rgba(139, 92, 246, 0.2);
   border-radius: 6px;
   padding: 3px 9px;
+}
+
+.stream-tag-tournament {
+  color: rgba(251, 191, 36, 0.85);
+  background: rgba(251, 191, 36, 0.08);
+  border-color: rgba(251, 191, 36, 0.25);
 }
 
 /* ── COMMENTS PANEL (right sidebar override) ── */

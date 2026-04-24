@@ -1,0 +1,28 @@
+
+> backend@1.0.0 dev
+> nodemon src/app.js
+
+[33m[nodemon] 3.1.14[39m
+[33m[nodemon] to restart at any time, enter `rs`[39m
+[33m[nodemon] watching path(s): *.*[39m
+[33m[nodemon] watching extensions: js,mjs,cjs,json[39m
+[32m[nodemon] starting `node src/app.js`[39m
+◇ injected env (9) from .env // tip: ⌘ override existing { override: true }
+Service is running on http://localhost:3000
+FEED DB Connected
+TOURNAMENT DB Connected
+USER DB Connected
+AUTH DB Connected
+REACTION DB Connected
+Connected to SQL Server (AUTH + FEED + REACTION + TOURNAMENT + USER)
+[31m[nodemon] app crashed - waiting for file changes before starting...[39m
+[32m[nodemon] restarting child process[39m
+[32m[nodemon] starting `node src/app.js`[39m
+◇ injected env (9) from .env // tip: ⌘ multiple files { path: ['.env.local', '.env'] }
+Service is running on http://localhost:3000
+USER DB Connected
+AUTH DB Connected
+FEED DB Connected
+TOURNAMENT DB Connected
+REACTION DB Connected
+Connected to SQL Server (AUTH + FEED + REACTION + TOURNAMENT + USER)

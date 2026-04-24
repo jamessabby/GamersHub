@@ -20,6 +20,7 @@ async function listStreams({ limit = 12, liveOnly = false, includeHidden = false
         THUMBNAIL_URL AS thumbnailUrl,
         GAME_NAME AS gameName,
         STREAM_DESCRIPTION AS description,
+        TOURNAMENT_ID AS tournamentId,
         STARTED_AT AS startedAt,
         ENDED_AT AS endedAt
       FROM dbo.STREAM
@@ -52,6 +53,7 @@ async function findStreamById(streamId, { includeHidden = false } = {}) {
       THUMBNAIL_URL AS thumbnailUrl,
       GAME_NAME AS gameName,
       STREAM_DESCRIPTION AS description,
+      TOURNAMENT_ID AS tournamentId,
       STARTED_AT AS startedAt,
       ENDED_AT AS endedAt
     FROM dbo.STREAM
@@ -60,6 +62,83 @@ async function findStreamById(streamId, { includeHidden = false } = {}) {
   `);
 
   return result.recordset[0] || null;
+}
+
+async function incrementViewCount(streamId) {
+  await poolConnect;
+
+  await pool
+    .request()
+    .input("streamId", sql.Int, streamId)
+    .query(`
+      UPDATE dbo.STREAM
+      SET VIEW_COUNT = VIEW_COUNT + 1
+      WHERE STREAM_ID = @streamId
+    `);
+}
+
+async function getStreamLikeCount(streamId) {
+  await poolConnect;
+
+  const result = await pool
+    .request()
+    .input("streamId", sql.Int, streamId)
+    .query(`
+      SELECT COUNT(*) AS total
+      FROM dbo.STREAM_REACTION
+      WHERE STREAM_ID = @streamId
+    `);
+
+  return Number(result.recordset[0]?.total) || 0;
+}
+
+async function findStreamReaction(streamId, userId) {
+  await poolConnect;
+
+  const result = await pool
+    .request()
+    .input("streamId", sql.Int, streamId)
+    .input("userId", sql.Int, userId)
+    .query(`
+      SELECT REACTION_ID AS reactionId, STREAM_ID AS streamId, USER_ID AS userId, CREATED_AT AS createdAt
+      FROM dbo.STREAM_REACTION
+      WHERE STREAM_ID = @streamId AND USER_ID = @userId
+    `);
+
+  return result.recordset[0] || null;
+}
+
+async function upsertStreamReaction(streamId, userId) {
+  await poolConnect;
+
+  const result = await pool
+    .request()
+    .input("streamId", sql.Int, streamId)
+    .input("userId", sql.Int, userId)
+    .query(`
+      IF NOT EXISTS (
+        SELECT 1 FROM dbo.STREAM_REACTION WHERE STREAM_ID = @streamId AND USER_ID = @userId
+      )
+        INSERT INTO dbo.STREAM_REACTION (STREAM_ID, USER_ID) VALUES (@streamId, @userId);
+      SELECT COUNT(*) AS total FROM dbo.STREAM_REACTION WHERE STREAM_ID = @streamId;
+    `);
+
+  return Number(result.recordset[0]?.total) || 0;
+}
+
+async function deleteStreamReaction(streamId, userId) {
+  await poolConnect;
+
+  const result = await pool
+    .request()
+    .input("streamId", sql.Int, streamId)
+    .input("userId", sql.Int, userId)
+    .query(`
+      DELETE FROM dbo.STREAM_REACTION WHERE STREAM_ID = @streamId AND USER_ID = @userId;
+      SELECT COUNT(*) AS total FROM dbo.STREAM_REACTION WHERE STREAM_ID = @streamId;
+    `);
+
+  return Number(result.recordset[0]?.total) || 0;
 }
 
 async function listComments({ streamId, limit = 50 } = {}) {
@@ -149,6 +228,11 @@ async function insertGift({
 module.exports = {
   listStreams,
   findStreamById,
+  incrementViewCount,
+  getStreamLikeCount,
+  findStreamReaction,
+  upsertStreamReaction,
+  deleteStreamReaction,
   listComments,
   createComment,
   insertGift,
