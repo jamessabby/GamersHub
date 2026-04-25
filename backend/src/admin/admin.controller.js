@@ -167,6 +167,61 @@ async function updateStream(req, res) {
   }
 }
 
+async function listEvents(req, res) {
+  try {
+    const items = await adminService.listAllEvents();
+    res.status(200).json({ items });
+  } catch (error) {
+    res.status(error.statusCode || 500).json({ message: error.message || "Failed to load events." });
+  }
+}
+
+async function createEvent(req, res) {
+  try {
+    const event = await adminService.createEvent({
+      actor: req.auth.user,
+      title: req.body.title,
+      category: req.body.category,
+      description: req.body.description,
+      eventDate: req.body.eventDate,
+      eventTime: req.body.eventTime,
+      venue: req.body.venue,
+      isPublished: req.body.isPublished !== false,
+    });
+    res.status(201).json(event);
+  } catch (error) {
+    res.status(error.statusCode || 500).json({ message: error.message || "Failed to create event." });
+  }
+}
+
+async function updateEvent(req, res) {
+  try {
+    const event = await adminService.updateEvent({
+      actor: req.auth.user,
+      eventId: req.params.eventId,
+      title: req.body.title,
+      category: req.body.category,
+      description: req.body.description,
+      eventDate: req.body.eventDate,
+      eventTime: req.body.eventTime,
+      venue: req.body.venue,
+      isPublished: req.body.isPublished !== false,
+    });
+    res.status(200).json(event);
+  } catch (error) {
+    res.status(error.statusCode || 500).json({ message: error.message || "Failed to update event." });
+  }
+}
+
+async function deleteEvent(req, res) {
+  try {
+    const result = await adminService.deleteEvent({ eventId: req.params.eventId });
+    res.status(200).json(result);
+  } catch (error) {
+    res.status(error.statusCode || 500).json({ message: error.message || "Failed to delete event." });
+  }
+}
+
 module.exports = {
   listUsers,
   updateUserRole,
@@ -180,4 +235,8 @@ module.exports = {
   listAudit,
   reportsSummary,
   exportReport,
+  listEvents,
+  createEvent,
+  updateEvent,
+  deleteEvent,
 };

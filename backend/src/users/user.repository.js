@@ -389,6 +389,23 @@ async function listUsers({ query = null, role = null, limit = 50, offset = 0 } =
   };
 }
 
+async function updatePassword(userId, passwordHash) {
+  await poolConnect;
+
+  const result = await pool
+    .request()
+    .input("userId", sql.Int, userId)
+    .input("passwordHash", sql.NVarChar(sql.MAX), passwordHash)
+    .query(`
+      UPDATE dbo.USERS
+      SET PASSWORD_HASH = @passwordHash
+      OUTPUT INSERTED.USERID AS userId
+      WHERE USERID = @userId
+    `);
+
+  return result.recordset[0] || null;
+}
+
 async function countUsersByRole() {
   await poolConnect;
 
@@ -432,6 +449,7 @@ module.exports = {
   updateGoogleLink,
   updateMicrosoftLink,
   updateUserRole,
+  updatePassword,
   listUsers,
   countUsersByRole,
   countRegistrationsByDay,

@@ -337,6 +337,70 @@ async function updateStream({ actor, streamId, title, gameName, playbackUrl, thu
   return updated;
 }
 
+async function listAllEvents() {
+  return adminRepo.listAllEvents();
+}
+
+async function createEvent({ actor, title, category, description, eventDate, eventTime, venue, isPublished }) {
+  if (!String(title || "").trim()) {
+    const error = new Error("Event title is required.");
+    error.statusCode = 400;
+    throw error;
+  }
+  const event = await adminRepo.createEvent({
+    title: String(title).trim(),
+    category: category || null,
+    description: description || null,
+    eventDate: eventDate || null,
+    eventTime: eventTime || null,
+    venue: venue || null,
+    isPublished: isPublished !== false,
+  });
+  await auditService.logAuditEvent({
+    actorUserId: actor.userId,
+    actorRole: actor.userRole,
+    actionType: "admin.event_created",
+    entityType: "event",
+    entityId: event.eventId,
+    details: { title: event.title },
+  });
+  return event;
+}
+
+async function updateEvent({ actor, eventId, title, category, description, eventDate, eventTime, venue, isPublished }) {
+  if (!String(title || "").trim()) {
+    const error = new Error("Event title is required.");
+    error.statusCode = 400;
+    throw error;
+  }
+  const event = await adminRepo.updateEvent({
+    eventId: Number(eventId),
+    title: String(title).trim(),
+    category: category || null,
+    description: description || null,
+    eventDate: eventDate || null,
+    eventTime: eventTime || null,
+    venue: venue || null,
+    isPublished: isPublished !== false,
+  });
+  if (!event) {
+    const error = new Error("Event not found.");
+    error.statusCode = 404;
+    throw error;
+  }
+  return event;
+}
+
+async function deleteEvent({ eventId }) {
+  const deleted = await adminRepo.deleteEvent(Number(eventId));
+  if (!deleted) {
+    const error = new Error("Event not found.");
+    error.statusCode = 404;
+    throw error;
+  }
+  return { message: "Event deleted." };
+}
+
 module.exports = {
   listUsers,
   updateUserRole,
@@ -348,4 +412,8 @@ module.exports = {
   updateStream,
   getReportsSummary,
   buildCsvReport,
+  listAllEvents,
+  createEvent,
+  updateEvent,
+  deleteEvent,
 };

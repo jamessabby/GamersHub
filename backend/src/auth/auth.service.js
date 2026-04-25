@@ -12,7 +12,7 @@ const {
   verifySignedToken,
 } = require("./token.util");
 const { generateBase32Secret } = require("./totp.util");
-const { sendMfaCodeEmail } = require("./mail.util");
+const { sendMfaCodeEmail, sendPasswordResetEmail } = require("./mail.util");
 
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || "";
 const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET || "";
@@ -23,6 +23,7 @@ const MICROSOFT_CALLBACK_URL = process.env.MICROSOFT_CALLBACK_URL || "http://loc
 const MICROSOFT_TENANT_ID = process.env.MICROSOFT_TENANT_ID || "common";
 const FALLBACK_APP_BASE_URL = (process.env.APP_BASE_URL || "http://127.0.0.1:5500/frontend").replace(/\/+$/, "");
 const MFA_CODE_TTL_MINUTES = Math.max(1, Number(process.env.MFA_CODE_TTL_MINUTES) || 10);
+const RESET_CODE_TTL_MINUTES = 15;
 const SESSION_DURATION_MS = 7 * 24 * 60 * 60 * 1000;
 
 async function registerUser(data) {
@@ -310,6 +311,110 @@ async function handleMicrosoftCallback({ code, state }) {
     redirectBase: verifiedState.redirectBase,
     auditActionType: "auth.microsoft_login_success",
   });
+}
+
+async function requestPasswordReset({ username }) {
+  if (!username) {
+    throw badRequest("Username is required.");
+  }
+
+  const user = await userRepo.findByUsername(String(username).trim());
+
+  if (!user || !user.isActive) {
+    throw badRequest("No account found with that username.");
+  }
+
+  if ((user.authProvider || "local") !== "local") {
+    throw badRequest("This account uses Google or Microsoft sign-in. Please use that provider to access your account.");
+  }
+
+  const code = generateEmailCode();
+  await sendPasswordResetEmail({
+    to: user.email,
+    username: user.username,
+    code,
+    expiresInMinutes: RESET_CODE_TTL_MINUTES,
+  });
+
+  const resetTicket = createSignedToken(
+    {
+      type: "password_reset",
+      userId: user.userId,
+      codeHash: hashEmailVerificationCode(user.userId, code),
+    },
+    { expiresInSeconds: RESET_CODE_TTL_MINUTES * 60 },
+  );
+
+  await auditService.logAuditEvent({
+    actorUserId: user.userId,
+    actorRole: user.userRole,
+    actionType: "auth.password_reset_requested",
+    entityType: "user",
+    entityId: user.userId,
+    details: { delivery: "email" },
+  });
+
+  return {
+    message: "Reset code sent.",
+    resetTicket,
+    maskedEmail: maskEmail(user.email),
+    expiresInSeconds: RESET_CODE_TTL_MINUTES * 60,
+  };
+}
+
+async function resetPassword({ resetTicket, code, newPassword }) {
+  if (!resetTicket || !code || !newPassword) {
+    throw badRequest("Reset ticket, code, and new password are required.");
+  }
+
+  const ticket = verifySignedToken(resetTicket);
+  if (!ticket || ticket.type !== "password_reset") {
+    throw unauthorized("Reset session expired. Please start the process again.");
+  }
+
+  const user = await userRepo.findById(ticket.userId);
+  if (!user || !user.isActive) {
+    throw unauthorized("User not found.");
+  }
+
+  const submittedCode = String(code || "").trim();
+  if (
+    !/^\d{6}$/.test(submittedCode) ||
+    !matchesVerificationCode(ticket.codeHash, hashEmailVerificationCode(user.userId, submittedCode))
+  ) {
+    throw unauthorized("Invalid or expired reset code.");
+  }
+
+  if (!isStrongPassword(newPassword)) {
+    throw badRequest(
+      "Password must be at least 8 characters and include uppercase, lowercase, a number, and a special character.",
+    );
+  }
+
+  const passwordHash = await bcrypt.hash(newPassword, 10);
+  await userRepo.updatePassword(user.userId, passwordHash);
+
+  await auditService.logAuditEvent({
+    actorUserId: user.userId,
+    actorRole: user.userRole,
+    actionType: "auth.password_reset_completed",
+    entityType: "user",
+    entityId: user.userId,
+    details: {},
+  });
+
+  return { message: "Password has been reset. You can now log in with your new password." };
+}
+
+function isStrongPassword(password) {
+  const p = String(password || "");
+  return (
+    p.length >= 8 &&
+    /[a-z]/.test(p) &&
+    /[A-Z]/.test(p) &&
+    /[0-9]/.test(p) &&
+    /[!@#$%^&*()\-_=+[\]{};':"\\|,.<>/?]/.test(p)
+  );
 }
 
 async function createUserSession(user) {
@@ -731,4 +836,6 @@ module.exports = {
   buildMicrosoftStartUrl,
   handleGoogleCallback,
   handleMicrosoftCallback,
+  requestPasswordReset,
+  resetPassword,
 };

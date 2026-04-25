@@ -263,6 +263,126 @@ async function updateStream({ streamId, title, gameName, playbackUrl, thumbnailU
   return result.recordset[0] || null;
 }
 
+async function listAllEvents() {
+  await feedPoolConnect;
+  const result = await feedPool.request().query(`
+    SELECT
+      EVENT_ID   AS eventId,
+      TITLE      AS title,
+      CATEGORY   AS category,
+      DESCRIPTION AS description,
+      CONVERT(varchar(10), EVENT_DATE, 23)  AS eventDate,
+      CONVERT(varchar(8),  EVENT_TIME, 108) AS eventTime,
+      VENUE        AS venue,
+      IS_PUBLISHED AS isPublished,
+      CONVERT(varchar(23), CREATED_AT, 126) AS createdAt
+    FROM dbo.EVENT
+    ORDER BY EVENT_DATE ASC, CREATED_AT DESC
+  `);
+  return result.recordset.map((r) => ({ ...r, isPublished: Boolean(r.isPublished) }));
+}
+
+async function listPublishedEvents() {
+  await feedPoolConnect;
+  const result = await feedPool.request().query(`
+    SELECT
+      EVENT_ID   AS eventId,
+      TITLE      AS title,
+      CATEGORY   AS category,
+      DESCRIPTION AS description,
+      CONVERT(varchar(10), EVENT_DATE, 23)  AS eventDate,
+      CONVERT(varchar(8),  EVENT_TIME, 108) AS eventTime,
+      VENUE      AS venue,
+      CONVERT(varchar(23), CREATED_AT, 126) AS createdAt
+    FROM dbo.EVENT
+    WHERE IS_PUBLISHED = 1
+    ORDER BY EVENT_DATE ASC, CREATED_AT DESC
+  `);
+  return result.recordset;
+}
+
+async function createEvent({ title, category, description, eventDate, eventTime, venue, isPublished }) {
+  await feedPoolConnect;
+  const result = await feedPool
+    .request()
+    .input("title",       feedSql.NVarChar(255), title)
+    .input("category",    feedSql.NVarChar(100), category    || null)
+    .input("description", feedSql.NVarChar(feedSql.MAX), description || null)
+    .input("eventDate",   feedSql.NVarChar(10),  eventDate   || null)
+    .input("eventTime",   feedSql.NVarChar(8),   eventTime   || null)
+    .input("venue",       feedSql.NVarChar(255), venue       || null)
+    .input("isPublished", feedSql.Bit,           isPublished !== false ? 1 : 0)
+    .query(`
+      INSERT INTO dbo.EVENT (TITLE, CATEGORY, DESCRIPTION, EVENT_DATE, EVENT_TIME, VENUE, IS_PUBLISHED)
+      OUTPUT
+        INSERTED.EVENT_ID    AS eventId,
+        INSERTED.TITLE       AS title,
+        INSERTED.CATEGORY    AS category,
+        INSERTED.DESCRIPTION AS description,
+        CONVERT(varchar(10), INSERTED.EVENT_DATE, 23)  AS eventDate,
+        CONVERT(varchar(8),  INSERTED.EVENT_TIME, 108) AS eventTime,
+        INSERTED.VENUE       AS venue,
+        INSERTED.IS_PUBLISHED AS isPublished,
+        CONVERT(varchar(23), INSERTED.CREATED_AT, 126) AS createdAt
+      VALUES (
+        @title, @category, @description,
+        TRY_CAST(@eventDate AS date),
+        TRY_CAST(@eventTime AS time),
+        @venue, @isPublished
+      )
+    `);
+  const row = result.recordset[0];
+  return row ? { ...row, isPublished: Boolean(row.isPublished) } : null;
+}
+
+async function updateEvent({ eventId, title, category, description, eventDate, eventTime, venue, isPublished }) {
+  await feedPoolConnect;
+  const result = await feedPool
+    .request()
+    .input("eventId",     feedSql.Int,           eventId)
+    .input("title",       feedSql.NVarChar(255), title)
+    .input("category",    feedSql.NVarChar(100), category    || null)
+    .input("description", feedSql.NVarChar(feedSql.MAX), description || null)
+    .input("eventDate",   feedSql.NVarChar(10),  eventDate   || null)
+    .input("eventTime",   feedSql.NVarChar(8),   eventTime   || null)
+    .input("venue",       feedSql.NVarChar(255), venue       || null)
+    .input("isPublished", feedSql.Bit,           isPublished !== false ? 1 : 0)
+    .query(`
+      UPDATE dbo.EVENT
+      SET
+        TITLE       = @title,
+        CATEGORY    = @category,
+        DESCRIPTION = @description,
+        EVENT_DATE  = TRY_CAST(@eventDate AS date),
+        EVENT_TIME  = TRY_CAST(@eventTime AS time),
+        VENUE       = @venue,
+        IS_PUBLISHED = @isPublished,
+        UPDATED_AT  = SYSUTCDATETIME()
+      OUTPUT
+        INSERTED.EVENT_ID    AS eventId,
+        INSERTED.TITLE       AS title,
+        INSERTED.CATEGORY    AS category,
+        INSERTED.DESCRIPTION AS description,
+        CONVERT(varchar(10), INSERTED.EVENT_DATE, 23)  AS eventDate,
+        CONVERT(varchar(8),  INSERTED.EVENT_TIME, 108) AS eventTime,
+        INSERTED.VENUE       AS venue,
+        INSERTED.IS_PUBLISHED AS isPublished,
+        CONVERT(varchar(23), INSERTED.CREATED_AT, 126) AS createdAt
+      WHERE EVENT_ID = @eventId
+    `);
+  const row = result.recordset[0];
+  return row ? { ...row, isPublished: Boolean(row.isPublished) } : null;
+}
+
+async function deleteEvent(eventId) {
+  await feedPoolConnect;
+  const result = await feedPool
+    .request()
+    .input("eventId", feedSql.Int, eventId)
+    .query(`DELETE FROM dbo.EVENT WHERE EVENT_ID = @eventId`);
+  return result.rowsAffected[0] > 0;
+}
+
 module.exports = {
   listUserProfiles,
   getAnalyticsCounts,
@@ -272,4 +392,9 @@ module.exports = {
   updateStream,
   getSummaryReportCounts,
   getTopGames,
+  listAllEvents,
+  listPublishedEvents,
+  createEvent,
+  updateEvent,
+  deleteEvent,
 };

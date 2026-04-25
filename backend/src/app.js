@@ -29,6 +29,8 @@ app.use("/api/superadmin", require("./admin/superadmin.routes"));
 const streamRoutes = require("./stream/stream.routes");
 app.use("/api/streams", streamRoutes);
 
+app.use("/api/events", require("./events/event.routes"));
+
 const { poolConnect: authPoolConnect } = require("./config/db.auth");
 const { poolConnect: feedPoolConnect } = require("./config/db.feed");
 const { poolConnect: reactionPoolConnect } = require("./config/db.reaction");

@@ -145,6 +145,24 @@ async function microsoftCallback(req, res) {
   }
 }
 
+async function requestPasswordReset(req, res) {
+  try {
+    const result = await authService.requestPasswordReset(req.body);
+    res.status(200).json(result);
+  } catch (error) {
+    res.status(error.statusCode || 400).json({ message: error.message || "Failed to send reset code." });
+  }
+}
+
+async function resetPassword(req, res) {
+  try {
+    const result = await authService.resetPassword(req.body);
+    res.status(200).json(result);
+  } catch (error) {
+    res.status(error.statusCode || 400).json({ message: error.message || "Failed to reset password." });
+  }
+}
+
 module.exports = {
   register,
   login,
@@ -156,4 +174,6 @@ module.exports = {
   googleCallback,
   microsoftStart,
   microsoftCallback,
+  requestPasswordReset,
+  resetPassword,
 };

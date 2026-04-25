@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GamersHub — My Profile</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="../shared/css/admin-console.css" />
+  </head>
+  <body data-console-page="admin-profile" data-console-scope="admin">
+    <div class="console-shell">
+      <aside class="console-sidebar">
+        <div class="console-brand">
+          <img src="../assets/icons/gamershub-logo.png" alt="GamersHub" />
+          <div class="console-brand-copy"><strong>GamersHub</strong><span>Admin</span></div>
+        </div>
+        <nav class="console-nav" id="consoleNav"></nav>
+        <div class="console-sidebar-footer">
+          <a id="consolePlayerHome" href="../player/dashboard.html">Open Player App</a>
+          <button id="consoleLogoutBtn" type="button">Logout</button>
+        </div>
+      </aside>
+      <main class="console-main">
+        <div id="consoleFlash" class="console-message hidden"></div>
+        <div class="console-topbar">
+          <div><h1 id="consoleTitle">My Profile</h1><p id="consoleSubtitle"></p></div>
+          <div class="console-chip" id="consoleUserChip"></div>
+        </div>
+        <div id="consoleContent" class="console-grid"></div>
+      </main>
+    </div>
+    <script src="../shared/js/auth-state.js"></script>
+    <script src="../shared/js/admin-console.js"></script>
+  </body>
+</html>

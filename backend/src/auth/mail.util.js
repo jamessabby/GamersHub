@@ -52,6 +52,42 @@ async function sendMfaCodeEmail({ to, username, code, expiresInMinutes }) {
   return { mode: "smtp" };
 }
 
+async function sendPasswordResetEmail({ to, username, code, expiresInMinutes }) {
+  if (!to) {
+    throw new Error("User email address is missing.");
+  }
+
+  const subject = "Reset your GamersHub password";
+  const text = [
+    `Hi ${username || "Player"},`,
+    "",
+    `Your GamersHub password reset code is: ${code}`,
+    "",
+    `This code will expire in ${expiresInMinutes} minute${expiresInMinutes === 1 ? "" : "s"}.`,
+    "If you did not request a password reset, you can safely ignore this email.",
+  ].join("\n");
+
+  const html = `
+    <div style="font-family:Arial,sans-serif;line-height:1.6;color:#111827;">
+      <p>Hi ${escapeHtml(username || "Player")},</p>
+      <p>You requested a password reset for your GamersHub account.</p>
+      <p>Your reset code is:</p>
+      <p style="font-size:28px;font-weight:700;letter-spacing:6px;margin:20px 0;">${escapeHtml(code)}</p>
+      <p>This code will expire in ${expiresInMinutes} minute${expiresInMinutes === 1 ? "" : "s"}.</p>
+      <p>If you did not request a password reset, you can safely ignore this email.</p>
+    </div>
+  `;
+
+  if (!isSmtpConfigured()) {
+    console.info(`[GamersHub Password Reset] Email transport not configured. Reset code for ${to}: ${code}`);
+    return { mode: "console" };
+  }
+
+  const transporter = await getTransporter();
+  await transporter.sendMail({ from: SMTP_FROM, to, subject, text, html });
+  return { mode: "smtp" };
+}
+
 function isSmtpConfigured() {
   return Boolean(SMTP_FROM && SMTP_USER && SMTP_PASS && (SMTP_SERVICE || SMTP_HOST));
 }
@@ -99,5 +135,6 @@ function escapeHtml(value) {
 
 module.exports = {
   sendMfaCodeEmail,
+  sendPasswordResetEmail,
   isSmtpConfigured,
 };

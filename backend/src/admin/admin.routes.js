@@ -29,4 +29,10 @@ router.post("/streams", requireRole("admin", "superadmin"), adminController.publ
 router.put("/streams/:streamId", requireRole("admin", "superadmin"), adminController.updateStream);
 router.put("/streams/:streamId/moderation", requireRole("admin", "superadmin"), adminController.moderateStream);
 
+// Event management (admin)
+router.get("/events", requireRole("admin", "superadmin"), adminController.listEvents);
+router.post("/events", requireRole("admin", "superadmin"), adminController.createEvent);
+router.put("/events/:eventId", requireRole("admin", "superadmin"), adminController.updateEvent);
+router.delete("/events/:eventId", requireRole("admin", "superadmin"), adminController.deleteEvent);
+
 module.exports = router;

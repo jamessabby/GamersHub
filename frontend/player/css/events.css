@@ -345,6 +345,29 @@
   color: rgba(167, 139, 250, 0.65);
 }
 
+/* ─── PAGE HEADING SPACING ─────────────────────── */
+.events-page-heading {
+  margin-bottom: 18px;
+}
+
+/* ─── LOADING STATE ────────────────────────────── */
+.events-loading-state {
+  padding: 40px 0;
+  text-align: center;
+  color: rgba(192, 196, 216, 0.4);
+  font-family: "DM Sans", sans-serif;
+  font-size: 13px;
+}
+
+.events-loading-state.hidden {
+  display: none;
+}
+
+/* ─── HIDDEN LIST ──────────────────────────────── */
+.events-list--hidden {
+  display: none;
+}
+
 /* ─── EMPTY STATE ──────────────────────────────── */
 .events-empty {
   display: flex;

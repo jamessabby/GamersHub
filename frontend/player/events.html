@@ -130,45 +130,29 @@
       </aside>
 
       <main class="events-main events-main--solo">
-        <section class="gh-page-shell">
-          <div class="gh-page-heading">
-            <span class="gh-page-kicker">Campus Events</span>
-            <h1 class="gh-page-title">Events</h1>
-            <p class="gh-page-subtitle">
-              Event listings will appear here once organizers publish real
-              schedules and event records to the platform.
-            </p>
-          </div>
+        <div class="gh-page-heading events-page-heading">
+          <span class="gh-page-kicker">Campus Events</span>
+          <h1 class="gh-page-title">Events</h1>
+          <p class="gh-page-subtitle">Published campus and esports events from the GamersHub team.</p>
+        </div>
 
-          <section class="dashboard-empty-card">
-            <div>
-              <div class="gh-empty-icon">EVT</div>
-              <h2 class="gh-empty-title">No upcoming events yet</h2>
-              <p class="gh-empty-subtitle">
-                We removed placeholder tournaments and sample dates so this page
-                now reflects the actual database state instead of mock content.
-              </p>
-              <div class="gh-empty-actions">
-                <button
-                  type="button"
-                  class="gh-empty-button"
-                  data-gh-notification-title="Event alerts enabled"
-                  data-gh-notification-body="New event announcements will be saved in your notification panel when organizers start publishing events."
-                  data-gh-notification-href="../player/events.html"
-                  data-gh-notification-label="Saved To Notifications"
-                >
-                  Notify Me About New Events
-                </button>
-                <a href="./tournaments.html" class="gh-empty-button ghost">
-                  Open Tournaments
-                </a>
-              </div>
-              <p class="gh-empty-note">
-                This keeps the page clean until the SSMS event data is ready.
-              </p>
-            </div>
-          </section>
-        </section>
+        <div class="events-filters" id="eventsFilters">
+          <button type="button" class="events-pill active" data-filter="all">All</button>
+          <button type="button" class="events-pill" data-filter="gaming">Gaming</button>
+          <button type="button" class="events-pill" data-filter="workshop">Workshop</button>
+          <button type="button" class="events-pill" data-filter="social">Social</button>
+          <button type="button" class="events-pill" data-filter="tournament">Tournament</button>
+        </div>
+
+        <div id="eventsLoading" class="events-loading-state">Loading events…</div>
+
+        <div id="eventsList" class="events-list events-list--hidden"></div>
+
+        <div id="eventsEmpty" class="events-empty hidden">
+          <div class="events-empty-icon">📅</div>
+          <p class="events-empty-title">No events yet</p>
+          <p class="events-empty-sub">Check back soon — organizers will publish events here.</p>
+        </div>
       </main>
     </div>
 
