@@ -1,4 +1,8 @@
+const crypto = require("crypto");
 const tournamentRepo = require("./tournament.repository");
+const notificationRepo = require("../users/notification.repository");
+const { createPaymentLink } = require("../payments/paymongo.service");
+const { sendRegistrationApprovalEmail, sendRegistrationRejectionEmail } = require("../auth/mail.util");
 
 async function listTournaments() {
   const tournaments = await tournamentRepo.listTournaments();
@@ -178,6 +182,229 @@ async function updateMatch({ matchId, teamAScore, teamBScore, matchDate, matchTi
   });
 }
 
+// ── MATCH STATS ──────────────────���───────────────────────────────────────────
+
+async function getMatchStats(matchId) {
+  return tournamentRepo.listMatchStats(parsePositiveInt(matchId));
+}
+
+async function saveMatchStats({ actor, matchId, stats }) {
+  const mid = parsePositiveInt(matchId);
+  if (!Array.isArray(stats)) {
+    const e = new Error("stats must be an array.");
+    e.statusCode = 400;
+    throw e;
+  }
+  for (const s of stats) {
+    if (!String(s.statKey || "").trim()) {
+      const e = new Error("Each stat entry must have a non-empty statKey.");
+      e.statusCode = 400;
+      throw e;
+    }
+    if (s.statValue == null || String(s.statValue).trim() === "") {
+      const e = new Error("Each stat entry must have a statValue.");
+      e.statusCode = 400;
+      throw e;
+    }
+  }
+  return tournamentRepo.replaceMatchStats(mid, stats, actor.userId);
+}
+
+// ── TOURNAMENT REGISTRATION ───────────────────────────────────────────────────
+
+async function listRegistrations({ tournamentId, status }) {
+  const rows = await tournamentRepo.listRegistrations({
+    tournamentId: tournamentId ? Number(tournamentId) : null,
+    status: status || null,
+  });
+  return { items: rows, total: rows.length };
+}
+
+async function submitRegistration({ tournamentId, teamName, contactName, contactEmail, contactPhone, rosterNotes, paymentProofUrl, participants }) {
+  if (!tournamentId || !teamName || !contactName || !contactEmail) {
+    const e = new Error("Tournament, team name, contact name, and contact email are required.");
+    e.statusCode = 400;
+    throw e;
+  }
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+  if (!emailRegex.test(String(contactEmail).trim().toLowerCase())) {
+    const e = new Error("Please provide a valid contact email address.");
+    e.statusCode = 400;
+    throw e;
+  }
+  await getTournamentOrThrow(tournamentId);
+  const reg = await tournamentRepo.createRegistration({
+    tournamentId: Number(tournamentId),
+    teamName: String(teamName).trim(),
+    contactName: String(contactName).trim(),
+    contactEmail: String(contactEmail).trim().toLowerCase(),
+    contactPhone: contactPhone ? String(contactPhone).trim() : null,
+    rosterNotes: rosterNotes ? String(rosterNotes).trim() : null,
+    paymentProofUrl: paymentProofUrl || null,
+  });
+
+  const usernameList = Array.isArray(participants)
+    ? participants
+    : (typeof participants === "string" ? JSON.parse(participants) : []);
+  const cleaned = usernameList.map((u) => String(u || "").trim()).filter(Boolean);
+  if (cleaned.length && reg) {
+    await tournamentRepo.createRegistrationParticipants(reg.registrationId, cleaned);
+  }
+
+  // Create PayMongo payment link if key is configured
+  let checkoutUrl = null;
+  const secretKey = process.env.PAYMONGO_SECRET_KEY || "";
+  if (secretKey && !secretKey.startsWith("sk_test_REPLACE") && reg) {
+    try {
+      const fee = Number(process.env.PAYMONGO_REGISTRATION_FEE) || 10000;
+      const tournament = await tournamentRepo.findTournamentById(Number(tournamentId));
+      const link = await createPaymentLink({
+        amount: fee,
+        description: `Registration fee – ${tournament?.title || "Tournament"}`,
+        remarks: String(teamName).trim(),
+      });
+      await tournamentRepo.updateRegistrationPaymongoLink(reg.registrationId, link.linkId);
+      checkoutUrl = link.checkoutUrl;
+    } catch (err) {
+      console.error("PayMongo link creation failed:", err.message);
+    }
+  }
+
+  return { ...reg, checkoutUrl };
+}
+
+async function approveRegistration({ actor, registrationId }) {
+  const reg = await tournamentRepo.findRegistrationByPublicId(registrationId);
+  if (!reg) {
+    const e = new Error("Registration not found.");
+    e.statusCode = 404;
+    throw e;
+  }
+  if (reg.status === "approved") {
+    const e = new Error("Registration is already approved.");
+    e.statusCode = 409;
+    throw e;
+  }
+
+  const joinCode = generateJoinCode();
+  const updated = await tournamentRepo.updateRegistrationStatus({
+    registrationId: reg.registrationId,
+    status: "approved",
+    rejectionReason: null,
+    joinCode,
+    reviewedBy: actor.userId,
+  });
+
+  await sendRegistrationApprovalEmail({
+    to: reg.contactEmail,
+    teamName: reg.teamName,
+    tournamentTitle: reg.tournamentTitle,
+    joinCode,
+  }).catch(() => {});
+
+  // Notify each participant who has a GamersHub account
+  const participants = await tournamentRepo.listParticipantsByRegistrationId(reg.registrationId);
+  const notifyTargets = participants.filter((p) => p.userId);
+  for (const participant of notifyTargets) {
+    await notificationRepo.createNotification({
+      userId: participant.userId,
+      notificationType: "tournament_approved",
+      title: `Your team "${reg.teamName}" has been approved!`,
+      body: `You're registered for ${reg.tournamentTitle}. Use join code ${joinCode} to enter the tournament.`,
+      linkUrl: null,
+    }).catch(() => {});
+  }
+
+  return updated;
+}
+
+async function rejectRegistration({ actor, registrationId, reason }) {
+  const reg = await tournamentRepo.findRegistrationByPublicId(registrationId);
+  if (!reg) {
+    const e = new Error("Registration not found.");
+    e.statusCode = 404;
+    throw e;
+  }
+
+  const updated = await tournamentRepo.updateRegistrationStatus({
+    registrationId: reg.registrationId,
+    status: "rejected",
+    rejectionReason: reason ? String(reason).trim() : null,
+    joinCode: null,
+    reviewedBy: actor.userId,
+  });
+
+  await sendRegistrationRejectionEmail({
+    to: reg.contactEmail,
+    teamName: reg.teamName,
+    tournamentTitle: reg.tournamentTitle,
+    reason: reason || null,
+  }).catch(() => {});
+
+  return updated;
+}
+
+async function confirmRegistrationPayment({ actor, registrationId }) {
+  const reg = await tournamentRepo.findRegistrationByPublicId(registrationId);
+  if (!reg) {
+    const e = new Error("Registration not found.");
+    e.statusCode = 404;
+    throw e;
+  }
+  await tournamentRepo.updateRegistrationPayment({
+    registrationId: reg.registrationId,
+    paymentStatus: "paid",
+    paymentProofUrl: null,
+  });
+  return { message: "Payment confirmed." };
+}
+
+async function joinTournamentByCode({ tournamentId, joinCode }) {
+  if (!joinCode) {
+    const e = new Error("Join code is required.");
+    e.statusCode = 400;
+    throw e;
+  }
+
+  const reg = await tournamentRepo.findRegistrationByJoinCode(String(joinCode).trim().toUpperCase());
+  if (!reg) {
+    const e = new Error("Invalid join code.");
+    e.statusCode = 400;
+    throw e;
+  }
+  if (reg.status !== "approved") {
+    const e = new Error("This registration has not been approved yet.");
+    e.statusCode = 400;
+    throw e;
+  }
+  if (reg.joinCodeUsed) {
+    const e = new Error("This join code has already been used.");
+    e.statusCode = 409;
+    throw e;
+  }
+  if (tournamentId && Number(tournamentId) !== Number(reg.tournamentId)) {
+    const e = new Error("This code is for a different tournament.");
+    e.statusCode = 400;
+    throw e;
+  }
+
+  await tournamentRepo.markJoinCodeUsed(reg.registrationId);
+
+  const team = await tournamentRepo.createTeam({ teamName: reg.teamName });
+  await tournamentRepo.addTournamentTeam({ tournamentId: reg.tournamentId, teamId: team.teamId });
+
+  return {
+    message: `Team "${reg.teamName}" has joined the tournament.`,
+    teamName: reg.teamName,
+    tournamentId: reg.tournamentId,
+    tournament: { tournamentId: reg.tournamentId, title: reg.tournamentTitle },
+  };
+}
+
+function generateJoinCode() {
+  return crypto.randomBytes(4).toString("hex").toUpperCase();
+}
+
 function parsePositiveInt(value) {
   const parsed = Number(value);
   if (!Number.isInteger(parsed) || parsed < 1) {
@@ -198,4 +425,12 @@ module.exports = {
   upsertLeaderboardEntry,
   createMatch,
   updateMatch,
+  getMatchStats,
+  saveMatchStats,
+  listRegistrations,
+  submitRegistration,
+  approveRegistration,
+  rejectRegistration,
+  confirmRegistrationPayment,
+  joinTournamentByCode,
 };

@@ -130,10 +130,46 @@
         <div class="trn-page-header">
           <h1 class="trn-page-title">Tournaments</h1>
           <p class="trn-page-subtitle">
-            This page now reads from the tournament database instead of fixed mock
-            cards.
+            Browse active tournaments and join with a code if your team has been approved.
           </p>
         </div>
+
+        <!-- Join with Code panel -->
+        <section class="trn-join-panel" id="trnJoinPanel">
+          <div class="trn-join-inner">
+            <div class="trn-join-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
+                   stroke="currentColor" stroke-width="2">
+                <rect x="3" y="11" width="18" height="11" rx="2"/>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+              </svg>
+            </div>
+            <div class="trn-join-copy">
+              <h3 class="trn-join-title">Have a join code?</h3>
+              <p class="trn-join-sub">Enter the code your team received after registration approval.</p>
+            </div>
+            <button class="trn-join-toggle" id="joinCodeToggle" type="button">Enter Code</button>
+          </div>
+          <div class="trn-join-form hidden" id="joinCodeForm">
+            <input
+              type="text"
+              class="trn-join-input"
+              id="joinCodeInput"
+              placeholder="e.g. A3F72B1C"
+              maxlength="16"
+              spellcheck="false"
+            />
+            <button class="trn-join-btn" id="joinCodeBtn" type="button">Join</button>
+            <p class="trn-join-error" id="joinCodeError"></p>
+          </div>
+          <div class="trn-join-success hidden" id="joinCodeSuccess">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+                 stroke="#4ade80" stroke-width="2.5">
+              <polyline points="20 6 9 17 4 12"/>
+            </svg>
+            <span id="joinCodeSuccessMsg">Successfully joined!</span>
+          </div>
+        </section>
 
         <section class="trn-list" id="trnList" aria-label="Tournament listings"></section>
       </main>

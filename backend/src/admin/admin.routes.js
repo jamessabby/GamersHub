@@ -21,6 +21,14 @@ router.put("/tournaments/:tournamentId/leaderboard/:teamId", requireRole("admin"
 router.get("/tournaments/:tournamentId/matches", requireRole("admin", "superadmin"), tournamentController.listTournamentMatches);
 router.post("/tournaments/:tournamentId/matches", requireRole("admin", "superadmin"), tournamentController.createMatch);
 router.put("/tournaments/:tournamentId/matches/:matchId", requireRole("admin", "superadmin"), tournamentController.updateMatch);
+router.get("/tournaments/:tournamentId/matches/:matchId/stats", requireRole("admin", "superadmin"), tournamentController.getMatchStats);
+router.put("/tournaments/:tournamentId/matches/:matchId/stats", requireRole("admin", "superadmin"), tournamentController.saveMatchStats);
+
+// Registration waitlist (admin)
+router.get("/registrations", requireRole("admin", "superadmin"), tournamentController.listRegistrations);
+router.put("/registrations/:publicId/approve", requireRole("admin", "superadmin"), tournamentController.approveRegistration);
+router.put("/registrations/:publicId/reject", requireRole("admin", "superadmin"), tournamentController.rejectRegistration);
+router.put("/registrations/:publicId/payment", requireRole("admin", "superadmin"), tournamentController.confirmRegistrationPayment);
 
 // Stream management (admin) — upload-thumbnail must come before /:streamId
 router.get("/streams", requireRole("admin", "superadmin"), adminController.listStreams);

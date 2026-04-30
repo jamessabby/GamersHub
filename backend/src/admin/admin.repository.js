@@ -20,10 +20,16 @@ async function listUserProfiles(userIds) {
 
   const result = await request.query(`
     SELECT
-      USERID AS userId,
-      STUDENT_ID AS studentId,
-      IN_GAME_NAME AS displayName,
-      SCHOOL AS school
+      USERID        AS userId,
+      STUDENT_ID    AS studentId,
+      IN_GAME_NAME  AS displayName,
+      FIRST_NAME    AS firstName,
+      LAST_NAME     AS lastName,
+      SCHOOL        AS school,
+      COURSE_YEAR   AS courseYear,
+      PHONE_NUMBER  AS phoneNumber,
+      DATE_OF_BIRTH AS dateOfBirth,
+      PRIMARY_GAME  AS primaryGame
     FROM dbo.USER_PROFILE
     WHERE USERID IN (${placeholders.join(", ")})
   `);

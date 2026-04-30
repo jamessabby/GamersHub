@@ -41,6 +41,7 @@ async function createUser({
         )
         OUTPUT
           INSERTED.USERID AS userId,
+          INSERTED.PUBLIC_ID AS publicId,
           INSERTED.USERNAME AS username,
           INSERTED.EMAIL AS email,
           INSERTED.PASSWORD_HASH AS passwordHash,
@@ -89,7 +90,8 @@ async function findByUsername(username) {
         AVATAR_URL AS avatarUrl,
         MFA_ENROLLED AS mfaEnrolled,
         IS_ACTIVE AS isActive,
-        CREATED_AT AS createdAt
+        CREATED_AT AS createdAt,
+        PUBLIC_ID AS publicId
       FROM dbo.USERS
       WHERE USERNAME = @username
     `);
@@ -115,7 +117,8 @@ async function findByEmail(email) {
         AVATAR_URL AS avatarUrl,
         MFA_ENROLLED AS mfaEnrolled,
         IS_ACTIVE AS isActive,
-        CREATED_AT AS createdAt
+        CREATED_AT AS createdAt,
+        PUBLIC_ID AS publicId
       FROM dbo.USERS
       WHERE EMAIL = @email
     `);
@@ -141,7 +144,8 @@ async function findByGoogleSub(googleSub) {
         AVATAR_URL AS avatarUrl,
         MFA_ENROLLED AS mfaEnrolled,
         IS_ACTIVE AS isActive,
-        CREATED_AT AS createdAt
+        CREATED_AT AS createdAt,
+        PUBLIC_ID AS publicId
       FROM dbo.USERS
       WHERE GOOGLE_SUB = @googleSub
     `);
@@ -168,7 +172,8 @@ async function findByMicrosoftSub(microsoftSub) {
         AVATAR_URL AS avatarUrl,
         MFA_ENROLLED AS mfaEnrolled,
         IS_ACTIVE AS isActive,
-        CREATED_AT AS createdAt
+        CREATED_AT AS createdAt,
+        PUBLIC_ID AS publicId
       FROM dbo.USERS
       WHERE MICROSOFT_SUB = @microsoftSub
     `);
@@ -193,7 +198,8 @@ async function findById(userId) {
         AVATAR_URL AS avatarUrl,
         MFA_ENROLLED AS mfaEnrolled,
         IS_ACTIVE AS isActive,
-        CREATED_AT AS createdAt
+        CREATED_AT AS createdAt,
+        PUBLIC_ID AS publicId
       FROM dbo.USERS
       WHERE USERID = @userId
     `);
@@ -257,6 +263,7 @@ async function updateGoogleLink(userId, { googleSub, avatarUrl, authProvider = "
         END
       OUTPUT
         INSERTED.USERID AS userId,
+        INSERTED.PUBLIC_ID AS publicId,
         INSERTED.USERNAME AS username,
         INSERTED.EMAIL AS email,
         INSERTED.PASSWORD_HASH AS passwordHash,
@@ -294,6 +301,7 @@ async function updateMicrosoftLink(userId, { microsoftSub, avatarUrl, authProvid
         END
       OUTPUT
         INSERTED.USERID AS userId,
+        INSERTED.PUBLIC_ID AS publicId,
         INSERTED.USERNAME AS username,
         INSERTED.EMAIL AS email,
         INSERTED.PASSWORD_HASH AS passwordHash,
@@ -339,7 +347,7 @@ async function updateUserRole(userId, role) {
 async function listUsers({ query = null, role = null, limit = 50, offset = 0 } = {}) {
   await poolConnect;
 
-  const safeLimit = Number.isInteger(limit) && limit > 0 ? Math.min(limit, 100) : 50;
+  const safeLimit = Number.isInteger(limit) && limit > 0 ? Math.min(limit, 5000) : 50;
   const safeOffset = Number.isInteger(offset) && offset >= 0 ? offset : 0;
   const searchTerm = query ? `%${String(query).trim()}%` : null;
 
@@ -352,6 +360,7 @@ async function listUsers({ query = null, role = null, limit = 50, offset = 0 } =
       WITH filtered AS (
         SELECT
           USERID AS userId,
+          PUBLIC_ID AS publicId,
           USERNAME AS username,
           EMAIL AS email,
           USER_ROLE AS userRole,

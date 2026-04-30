@@ -47,6 +47,10 @@
       title: "Events",
       subtitle: "Create and manage campus events that appear on the player Events page.",
     },
+    "admin-registrations": {
+      title: "Registration Waitlist",
+      subtitle: "Review team registrations, approve or reject, and confirm payments.",
+    },
     "admin-profile": {
       title: "My Profile",
       subtitle: "Update your admin account profile and display information.",
@@ -78,8 +82,9 @@
       ["Tournaments", "tournaments.html", "Management"],
       ["Leaderboard", "leaderboard.html", "Rankings"],
       ["Schedule",    "schedule.html",    "Matches"],
-      ["Events",      "events.html",      "Campus"],
-      ["Profile",     "profile.html",     "My Account"],
+      ["Events",         "events.html",         "Campus"],
+      ["Registrations",  "registrations.html",  "Waitlist"],
+      ["Profile",        "profile.html",        "My Account"],
     ],
     superadmin: [
       ["Dashboard", "dashboard.html", "Overview"],
@@ -155,6 +160,9 @@
           break;
         case "admin-events":
           await renderEventsPage();
+          break;
+        case "admin-registrations":
+          await renderRegistrationsPage();
           break;
         case "admin-profile":
           await renderAdminProfilePage();
@@ -1316,7 +1324,7 @@
   }
 
   // ── SCHEDULE PAGE ──────────────────────────────────────────────────────────
-  async function renderSchedulePage() {
+  async function renderSchedulePage() { // eslint-disable-line no-unused-vars
     const tournaments = await fetchJson(`${auth.apiBase}/api/tournaments`).catch(() => ({ items: [] }));
 
     content.innerHTML = `
@@ -1350,7 +1358,7 @@
         if (matches.length) {
           html += `<div class="console-table-wrap" style="margin-bottom:18px;">
             <table class="console-table">
-              <thead><tr><th>Team A</th><th>Score A</th><th>Team B</th><th>Score B</th><th>Date</th><th>Time</th><th>Action</th></tr></thead>
+              <thead><tr><th>Team A</th><th>Score A</th><th>Team B</th><th>Score B</th><th>Date</th><th>Time</th><th>Actions</th></tr></thead>
               <tbody>${matches.map((m) => `
                 <tr>
                   <td style="font-size:0.85rem;">${escapeHtml(m.teamAName || "")}</td>
@@ -1359,10 +1367,43 @@
                   <td><input class="console-input sch-score-b" type="number" min="0" value="${m.teamBScore ?? ""}" placeholder="—" style="width:66px;padding:5px;" /></td>
                   <td><input class="console-input sch-date" type="date" value="${m.matchDate || ""}" style="width:135px;padding:5px;" /></td>
                   <td><input class="console-input sch-time" type="time" value="${m.matchTime ? m.matchTime.slice(0, 5) : ""}" style="width:105px;padding:5px;" /></td>
-                  <td><button class="console-btn primary sch-update-btn" data-match-id="${m.matchId}" data-tournament-id="${tournamentId}">Save</button></td>
+                  <td>
+                    <div style="display:flex;gap:5px;flex-wrap:wrap;">
+                      <button class="console-btn primary sch-update-btn" data-match-id="${m.matchId}" data-tournament-id="${tournamentId}">Save</button>
+                      <button class="console-btn sch-stats-btn"
+                        data-match-id="${m.matchId}"
+                        data-team-a-id="${m.teamAId || ""}"
+                        data-team-b-id="${m.teamBId || ""}"
+                        data-team-a-name="${escapeAttribute(m.teamAName || "Team A")}"
+                        data-team-b-name="${escapeAttribute(m.teamBName || "Team B")}">Stats</button>
+                    </div>
+                  </td>
                 </tr>`).join("")}
               </tbody>
-            </table></div>`;
+            </table></div>
+          <div id="matchStatsPanel" style="display:none;margin-bottom:18px;">
+            <div class="console-panel">
+              <div class="console-panel-header">
+                <h2>Match Stats — <span id="matchStatsLabel"></span></h2>
+                <button class="console-btn" id="closeMatchStatsBtn">Close</button>
+              </div>
+              <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px;">
+                <select id="gamePresetSel" class="console-input" style="width:185px;">
+                  <option value="">— Game preset —</option>
+                  <option value="mlbb">Mobile Legends (MLBB)</option>
+                  <option value="valorant">Valorant</option>
+                  <option value="cs2">CS2 / CS:GO</option>
+                </select>
+                <button class="console-btn" id="applyPresetBtn">Fill Preset</button>
+                <span style="color:#64748b;font-size:0.78rem;">or add rows manually below</span>
+              </div>
+              <div id="matchStatsRows" style="display:flex;flex-direction:column;gap:8px;margin-bottom:12px;"></div>
+              <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                <button class="console-btn" id="addStatRowBtn">+ Add Row</button>
+                <button class="console-btn primary" id="saveMatchStatsBtn">Save Stats</button>
+              </div>
+            </div>
+          </div>`;
         } else {
           html += "<p style=\"color:#64748b;font-size:0.88rem;margin-bottom:14px;\">No matches scheduled yet.</p>";
         }
@@ -1377,6 +1418,128 @@
           </form>
         `;
         schContent.innerHTML = html;
+
+        // ── Stats panel state ──────────────────────────────────────────────
+        let activeStatsMatchId = null;
+        let activeStatsTeams = [];
+
+        const STAT_PRESETS = {
+          mlbb:     ["kills", "deaths", "assists", "damage", "gold"],
+          valorant: ["kills", "deaths", "assists", "ACS"],
+          cs2:      ["kills", "deaths", "assists", "HS%", "ADR"],
+        };
+
+        function makeStatRow(teamOptions, row = {}) {
+          const div = document.createElement("div");
+          div.style.cssText = "display:flex;gap:6px;flex-wrap:wrap;align-items:center;";
+          div.innerHTML = `
+            <select class="console-input stat-team" style="flex:1 1 130px;">
+              <option value="">Team *</option>${teamOptions}
+            </select>
+            <input class="console-input stat-player" placeholder="Player (optional)" style="flex:1 1 130px;" value="${escapeAttribute(row.playerName || "")}" />
+            <input class="console-input stat-key" placeholder="Stat key *" style="flex:1 1 110px;" value="${escapeAttribute(row.statKey || "")}" />
+            <input class="console-input stat-value" placeholder="Value *" style="flex:1 1 80px;" value="${escapeAttribute(row.statValue || "")}" />
+            <button class="console-btn danger" style="padding:6px 10px;background:rgba(239,68,68,0.15);">✕</button>
+          `;
+          if (row.teamId) {
+            const sel = div.querySelector(".stat-team");
+            if (sel) sel.value = String(row.teamId);
+          }
+          div.querySelector(".console-btn.danger")?.addEventListener("click", () => div.remove());
+          return div;
+        }
+
+        schContent.querySelectorAll(".sch-stats-btn").forEach((btn) => {
+          btn.addEventListener("click", async () => {
+            const matchId = btn.dataset.matchId;
+            const panel = schContent.querySelector("#matchStatsPanel");
+            const label = schContent.querySelector("#matchStatsLabel");
+            const rowsContainer = schContent.querySelector("#matchStatsRows");
+            if (!panel || !rowsContainer) return;
+
+            activeStatsMatchId = matchId;
+            activeStatsTeams = [
+              { id: btn.dataset.teamAId, name: btn.dataset.teamAName },
+              { id: btn.dataset.teamBId, name: btn.dataset.teamBName },
+            ].filter((t) => t.id);
+
+            const teamOpts = activeStatsTeams.map((t) => `<option value="${t.id}">${escapeHtml(t.name)}</option>`).join("");
+            if (label) label.textContent = `${escapeHtml(btn.dataset.teamAName)} vs ${escapeHtml(btn.dataset.teamBName)}`;
+
+            btn.disabled = true; btn.textContent = "Loading…";
+            try {
+              const existing = await fetchJson(`${auth.apiBase}/api/admin/tournaments/${tournamentId}/matches/${matchId}/stats`);
+              rowsContainer.innerHTML = "";
+              (existing.items || []).forEach((row) => rowsContainer.appendChild(makeStatRow(teamOpts, row)));
+              if (!existing.items?.length) rowsContainer.appendChild(makeStatRow(teamOpts));
+            } catch {
+              rowsContainer.innerHTML = "";
+              rowsContainer.appendChild(makeStatRow(teamOpts));
+            }
+            panel.style.display = "block";
+            panel.scrollIntoView({ behavior: "smooth", block: "nearest" });
+            btn.disabled = false; btn.textContent = "Stats";
+          });
+        });
+
+        schContent.querySelector("#closeMatchStatsBtn")?.addEventListener("click", () => {
+          const panel = schContent.querySelector("#matchStatsPanel");
+          if (panel) panel.style.display = "none";
+          activeStatsMatchId = null;
+        });
+
+        schContent.querySelector("#applyPresetBtn")?.addEventListener("click", () => {
+          const preset = schContent.querySelector("#gamePresetSel")?.value;
+          if (!preset || !STAT_PRESETS[preset]) return;
+          const rowsContainer = schContent.querySelector("#matchStatsRows");
+          const teamOpts = activeStatsTeams.map((t) => `<option value="${t.id}">${escapeHtml(t.name)}</option>`).join("");
+          rowsContainer.innerHTML = "";
+          activeStatsTeams.forEach((team) => {
+            STAT_PRESETS[preset].forEach((key) => {
+              rowsContainer.appendChild(makeStatRow(teamOpts, { teamId: team.id, statKey: key }));
+            });
+          });
+        });
+
+        schContent.querySelector("#addStatRowBtn")?.addEventListener("click", () => {
+          const rowsContainer = schContent.querySelector("#matchStatsRows");
+          const teamOpts = activeStatsTeams.map((t) => `<option value="${t.id}">${escapeHtml(t.name)}</option>`).join("");
+          rowsContainer?.appendChild(makeStatRow(teamOpts));
+        });
+
+        schContent.querySelector("#saveMatchStatsBtn")?.addEventListener("click", async () => {
+          if (!activeStatsMatchId) return;
+          const saveBtn = schContent.querySelector("#saveMatchStatsBtn");
+          const rowsContainer = schContent.querySelector("#matchStatsRows");
+          const statDivs = rowsContainer?.querySelectorAll("div") || [];
+          const stats = [];
+          for (const div of statDivs) {
+            const teamId = div.querySelector(".stat-team")?.value;
+            const statKey = div.querySelector(".stat-key")?.value?.trim();
+            const statValue = div.querySelector(".stat-value")?.value?.trim();
+            if (!teamId || !statKey || !statValue) continue;
+            stats.push({
+              teamId: Number(teamId),
+              playerName: div.querySelector(".stat-player")?.value?.trim() || null,
+              statKey,
+              statValue,
+            });
+          }
+          saveBtn.disabled = true; saveBtn.textContent = "Saving…";
+          try {
+            await fetchJson(`${auth.apiBase}/api/admin/tournaments/${tournamentId}/matches/${activeStatsMatchId}/stats`, {
+              method: "PUT",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ stats }),
+            });
+            setFlash(`${stats.length} stat row(s) saved.`);
+            saveBtn.textContent = "Saved ✓";
+            setTimeout(() => { saveBtn.disabled = false; saveBtn.textContent = "Save Stats"; }, 2000);
+          } catch (error) {
+            setFlash(error.message || "Failed to save stats.", true);
+            saveBtn.disabled = false; saveBtn.textContent = "Save Stats";
+          }
+        });
 
         schContent.querySelectorAll(".sch-update-btn").forEach((btn) => {
           btn.addEventListener("click", async () => {
@@ -1640,6 +1803,201 @@
         } catch (error) {
           setFlash(error.message || "Failed to delete event.", true);
           button.disabled = false;
+        }
+      });
+    });
+  }
+
+  // ── ADMIN REGISTRATIONS WAITLIST ────────────────────────────────────────────
+  async function renderRegistrationsPage(statusFilter = "") {
+    const qs = new URLSearchParams();
+    if (statusFilter) qs.set("status", statusFilter);
+    const [regsPayload, tournamentsPayload] = await Promise.all([
+      fetchJson(`${auth.apiBase}/api/admin/registrations?${qs.toString()}`).catch(() => ({ items: [] })),
+      fetchJson(`${auth.apiBase}/api/tournaments`).catch(() => []),
+    ]);
+
+    const regs = regsPayload.items || regsPayload || [];
+    const tournaments = Array.isArray(tournamentsPayload) ? tournamentsPayload : (tournamentsPayload.items || []);
+
+    const tournamentMap = {};
+    tournaments.forEach((t) => { tournamentMap[t.tournamentId] = t.title; });
+
+    function statusBadge(s) {
+      const map = {
+        pending: 'style="color:#fbbf24;"',
+        approved: 'style="color:#4ade80;"',
+        rejected: 'style="color:#f87171;"',
+      };
+      return `<span ${map[s] || ""}>${escapeHtml(s || "—")}</span>`;
+    }
+
+    function paymentBadge(s) {
+      const map = {
+        unpaid: 'style="color:#94a3b8;"',
+        paid: 'style="color:#4ade80;"',
+        refunded: 'style="color:#f87171;"',
+      };
+      return `<span ${map[s] || ""}>${escapeHtml(s || "—")}</span>`;
+    }
+
+    const filterOptions = ["", "pending", "approved", "rejected"]
+      .map((v) => `<option value="${v}" ${v === statusFilter ? "selected" : ""}>${v ? v.charAt(0).toUpperCase() + v.slice(1) : "All statuses"}</option>`)
+      .join("");
+
+    const regRows = regs.map((r) => {
+      const tourTitle = tournamentMap[r.tournamentId] || `#${r.tournamentId}`;
+      return `
+        <tr data-reg-id="${escapeAttribute(r.publicId)}">
+          <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${escapeAttribute(r.teamName)}">${escapeHtml(r.teamName)}</td>
+          <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${escapeAttribute(tourTitle)}">${escapeHtml(tourTitle)}</td>
+          <td>${escapeHtml(r.contactName)}</td>
+          <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(r.contactEmail)}</td>
+          <td>${statusBadge(r.status)}</td>
+          <td>${paymentBadge(r.paymentStatus)}</td>
+          <td>${r.paymentProofUrl
+            ? `<a href="${escapeAttribute(auth.apiBase + r.paymentProofUrl)}" target="_blank" rel="noopener" style="color:#a78bfa;font-size:0.82rem;">View proof</a>`
+            : '<span style="color:#64748b;font-size:0.82rem;">—</span>'}</td>
+          <td>${escapeHtml(r.rosterNotes || "—")}</td>
+          <td>${r.joinCode
+            ? `<code style="background:rgba(167,139,250,0.12);padding:2px 7px;border-radius:5px;font-size:0.82rem;color:#c4b5fd;">${escapeHtml(r.joinCode)}</code>`
+            : '<span style="color:#64748b;">—</span>'}</td>
+          <td>${formatDate(r.createdAt)}</td>
+          <td>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;">
+              ${r.status === "pending" ? `
+                <button class="console-btn reg-approve-btn" data-reg-id="${escapeAttribute(r.publicId)}" data-team="${escapeAttribute(r.teamName)}">Approve</button>
+                <button class="console-btn danger reg-reject-btn" data-reg-id="${escapeAttribute(r.publicId)}" data-team="${escapeAttribute(r.teamName)}" style="background:rgba(239,68,68,0.18);">Reject</button>
+              ` : ""}
+              ${r.status === "approved" && r.paymentStatus !== "paid" ? `
+                <button class="console-btn reg-payment-btn" data-reg-id="${escapeAttribute(r.publicId)}" data-team="${escapeAttribute(r.teamName)}" style="background:rgba(74,222,128,0.12);color:#4ade80;border-color:rgba(74,222,128,0.25);">Confirm Payment</button>
+              ` : ""}
+            </div>
+          </td>
+        </tr>
+      `;
+    }).join("");
+
+    content.innerHTML = `
+      <section class="console-panel" style="margin-bottom:18px;">
+        <div class="console-panel-header" style="flex-wrap:wrap;gap:12px;">
+          <h2>Filter Registrations</h2>
+          <div style="display:flex;gap:10px;align-items:center;">
+            <select class="console-input" id="regStatusFilter" style="width:180px;">${filterOptions}</select>
+            <button class="console-btn primary" id="regFilterBtn">Apply</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Reject modal (hidden) -->
+      <div id="rejectModal" style="display:none;position:fixed;inset:0;z-index:999;background:rgba(0,0,0,0.6);align-items:center;justify-content:center;">
+        <div style="background:#1a1730;border:1px solid rgba(139,92,246,0.25);border-radius:16px;padding:28px 32px;max-width:420px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,0.6);">
+          <h3 style="margin:0 0 12px;color:#f1f0ff;font-family:Syne,sans-serif;font-size:1.1rem;">Reject Registration</h3>
+          <p id="rejectModalLabel" style="margin:0 0 14px;color:#94a3b8;font-size:0.9rem;"></p>
+          <textarea id="rejectReason" class="console-input" rows="3" placeholder="Reason for rejection (optional)" style="width:100%;resize:vertical;font-family:inherit;margin-bottom:16px;"></textarea>
+          <div style="display:flex;gap:10px;justify-content:flex-end;">
+            <button class="console-btn" id="cancelRejectBtn">Cancel</button>
+            <button class="console-btn danger" id="confirmRejectBtn" style="background:rgba(239,68,68,0.2);">Confirm Reject</button>
+          </div>
+        </div>
+      </div>
+
+      <section class="console-panel">
+        <h2>Team Registrations <span class="console-kicker">${regs.length} shown</span></h2>
+        <div class="console-table-wrap">
+          <table class="console-table" style="font-size:0.82rem;">
+            <thead>
+              <tr>
+                <th>Team</th>
+                <th>Tournament</th>
+                <th>Contact</th>
+                <th>Email</th>
+                <th>Status</th>
+                <th>Payment</th>
+                <th>Proof</th>
+                <th>Players</th>
+                <th>Join Code</th>
+                <th>Submitted</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>${regRows || '<tr><td colspan="11" style="color:#64748b;">No registrations found.</td></tr>'}</tbody>
+          </table>
+        </div>
+      </section>
+    `;
+
+    document.getElementById("regFilterBtn")?.addEventListener("click", () => {
+      const val = document.getElementById("regStatusFilter").value;
+      renderRegistrationsPage(val);
+    });
+
+    // Approve
+    content.querySelectorAll(".reg-approve-btn").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        if (!confirm(`Approve registration for "${btn.dataset.team}"? A join code will be sent to their email.`)) return;
+        btn.disabled = true; btn.textContent = "Approving…";
+        try {
+          await fetchJson(`${auth.apiBase}/api/admin/registrations/${btn.dataset.regId}/approve`, { method: "PUT" });
+          setFlash(`Registration for "${btn.dataset.team}" approved. Join code sent via email.`);
+          await renderRegistrationsPage(statusFilter);
+        } catch (error) {
+          setFlash(error.message || "Failed to approve registration.", true);
+          btn.disabled = false; btn.textContent = "Approve";
+        }
+      });
+    });
+
+    // Reject — open modal
+    let pendingRejectId = null;
+    let pendingRejectTeam = null;
+
+    content.querySelectorAll(".reg-reject-btn").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        pendingRejectId = btn.dataset.regId;
+        pendingRejectTeam = btn.dataset.team;
+        document.getElementById("rejectReason").value = "";
+        document.getElementById("rejectModalLabel").textContent = `Rejecting registration for: "${pendingRejectTeam}"`;
+        const modal = document.getElementById("rejectModal");
+        modal.style.display = "flex";
+      });
+    });
+
+    document.getElementById("cancelRejectBtn")?.addEventListener("click", () => {
+      document.getElementById("rejectModal").style.display = "none";
+    });
+
+    document.getElementById("confirmRejectBtn")?.addEventListener("click", async () => {
+      const reason = document.getElementById("rejectReason").value.trim() || null;
+      const confirmBtn = document.getElementById("confirmRejectBtn");
+      confirmBtn.disabled = true; confirmBtn.textContent = "Rejecting…";
+      try {
+        await fetchJson(`${auth.apiBase}/api/admin/registrations/${pendingRejectId}/reject`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ reason }),
+        });
+        setFlash(`Registration for "${pendingRejectTeam}" rejected.`);
+        document.getElementById("rejectModal").style.display = "none";
+        await renderRegistrationsPage(statusFilter);
+      } catch (error) {
+        setFlash(error.message || "Failed to reject registration.", true);
+        confirmBtn.disabled = false; confirmBtn.textContent = "Confirm Reject";
+      }
+    });
+
+    // Confirm payment
+    content.querySelectorAll(".reg-payment-btn").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        if (!confirm(`Mark payment as confirmed for "${btn.dataset.team}"?`)) return;
+        btn.disabled = true; btn.textContent = "Confirming…";
+        try {
+          await fetchJson(`${auth.apiBase}/api/admin/registrations/${btn.dataset.regId}/payment`, { method: "PUT" });
+          setFlash(`Payment confirmed for "${btn.dataset.team}".`);
+          await renderRegistrationsPage(statusFilter);
+        } catch (error) {
+          setFlash(error.message || "Failed to confirm payment.", true);
+          btn.disabled = false; btn.textContent = "Confirm Payment";
         }
       });
     });

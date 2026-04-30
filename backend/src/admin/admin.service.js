@@ -19,6 +19,7 @@ async function listUsers({ query, role, page, pageSize }) {
       const profile = profiles.get(item.userId);
       return {
         userId: item.userId,
+        publicId: item.publicId || "",
         username: item.username,
         email: item.email,
         role: item.userRole,
@@ -28,8 +29,14 @@ async function listUsers({ query, role, page, pageSize }) {
         isActive: Boolean(item.isActive),
         createdAt: item.createdAt || null,
         displayName: profile?.displayName || item.username,
+        firstName: profile?.firstName || "",
+        lastName: profile?.lastName || "",
         studentId: profile?.studentId || "",
         school: profile?.school || "",
+        courseYear: profile?.courseYear || "",
+        phoneNumber: profile?.phoneNumber || "",
+        dateOfBirth: profile?.dateOfBirth ? String(profile.dateOfBirth).slice(0, 10) : "",
+        primaryGame: profile?.primaryGame || "",
       };
     }),
     total: users.total,
@@ -237,15 +244,22 @@ function buildCsvReport(type, payload) {
   switch (type) {
     case "users":
       return toCsv(payload.items || [], [
+        "publicId",
         "userId",
         "username",
+        "firstName",
+        "lastName",
         "email",
+        "studentId",
+        "phoneNumber",
+        "school",
+        "courseYear",
+        "primaryGame",
+        "dateOfBirth",
         "role",
         "authProvider",
         "mfaEnrolled",
         "isActive",
-        "school",
-        "studentId",
         "createdAt",
       ]);
     case "audit":

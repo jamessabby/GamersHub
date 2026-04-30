@@ -14,18 +14,17 @@
   );
 
   tournamentList?.addEventListener("click", (event) => {
+    // Let the summary anchor navigate natively.
+    if (event.target.closest(".trn-row-summary-link")) return;
+
     const row = event.target.closest(".trn-row");
     const cta = event.target.closest(".trn-row-cta");
     const target = cta || row;
 
-    if (!target) {
-      return;
-    }
+    if (!target) return;
 
     const tournamentId = target.closest(".trn-row")?.dataset.id;
-    if (!tournamentId) {
-      return;
-    }
+    if (!tournamentId) return;
 
     window.location.href = `./schedule.html?tournament=${encodeURIComponent(tournamentId)}`;
   });
@@ -40,6 +39,59 @@
   searchInput?.addEventListener("input", () => {
     renderTournaments(filterTournaments(searchInput.value));
   });
+
+  // ── Join-with-code panel ────────────────────────
+  const joinToggle = document.getElementById("joinCodeToggle");
+  const joinForm = document.getElementById("joinCodeForm");
+  const joinInput = document.getElementById("joinCodeInput");
+  const joinBtn = document.getElementById("joinCodeBtn");
+  const joinError = document.getElementById("joinCodeError");
+  const joinSuccess = document.getElementById("joinCodeSuccess");
+  const joinSuccessMsg = document.getElementById("joinCodeSuccessMsg");
+
+  joinToggle?.addEventListener("click", () => {
+    const open = !joinForm.classList.contains("hidden");
+    joinForm.classList.toggle("hidden", open);
+    joinToggle.textContent = open ? "Enter Code" : "Cancel";
+    if (!open) joinInput?.focus();
+  });
+
+  joinBtn?.addEventListener("click", handleJoinCode);
+  joinInput?.addEventListener("keydown", (e) => { if (e.key === "Enter") handleJoinCode(); });
+
+  async function handleJoinCode() {
+    const code = joinInput.value.trim().toUpperCase();
+    joinError.textContent = "";
+    if (!code) { joinError.textContent = "Please enter a join code."; return; }
+
+    joinBtn.disabled = true;
+    joinBtn.textContent = "Joining…";
+    try {
+      const res = await fetch(`${API_BASE}/api/tournaments/join`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${window.GamersHubAuth?.getSession?.()?.token || ""}` },
+        body: JSON.stringify({ joinCode: code }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        joinError.textContent = data.message || "Invalid or already used code.";
+        joinBtn.disabled = false;
+        joinBtn.textContent = "Join";
+        return;
+      }
+      const tourTitle = data.tournament?.title || "the tournament";
+      joinForm.classList.add("hidden");
+      joinSuccess.classList.remove("hidden");
+      joinSuccessMsg.textContent = `Your team successfully joined "${tourTitle}"!`;
+      joinToggle.textContent = "Enter Code";
+      joinInput.value = "";
+      void loadTournaments();
+    } catch {
+      joinError.textContent = "Network error. Please try again.";
+      joinBtn.disabled = false;
+      joinBtn.textContent = "Join";
+    }
+  }
 
   renderLoadingState();
   void loadTournaments();
@@ -172,12 +224,19 @@
             </span>
           </div>
         </div>
-        <button class="trn-row-cta" aria-label="View ${escapeHtml(tournament.title)} schedule">
-          View Schedule
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-            <polyline points="9 18 15 12 9 6"></polyline>
-          </svg>
-        </button>
+        <div class="trn-row-actions">
+          <button class="trn-row-cta" aria-label="View ${escapeHtml(tournament.title)} schedule">
+            View Schedule
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <polyline points="9 18 15 12 9 6"></polyline>
+            </svg>
+          </button>
+          <a class="trn-row-summary-link"
+             href="./tournament-summary.html?tournament=${encodeURIComponent(tournament.tournamentId)}"
+             aria-label="View ${escapeHtml(tournament.title)} summary">
+            Summary
+          </a>
+        </div>
       </article>
     `;
   }

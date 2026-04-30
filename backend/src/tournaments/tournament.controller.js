@@ -126,6 +126,132 @@ async function updateMatch(req, res) {
   }
 }
 
+async function getMatchStats(req, res) {
+  try {
+    const stats = await tournamentService.getMatchStats(req.params.matchId);
+    res.status(200).json({ items: stats, total: stats.length });
+  } catch (error) {
+    res.status(error.statusCode || 500).json({ message: error.message || "Failed to load match stats." });
+  }
+}
+
+async function saveMatchStats(req, res) {
+  try {
+    const saved = await tournamentService.saveMatchStats({
+      actor: req.auth.user,
+      matchId: req.params.matchId,
+      stats: req.body.stats || [],
+    });
+    res.status(200).json({ items: saved, total: saved.length });
+  } catch (error) {
+    res.status(error.statusCode || 500).json({ message: error.message || "Failed to save match stats." });
+  }
+}
+
+async function listRegistrations(req, res) {
+  try {
+    const payload = await tournamentService.listRegistrations({
+      tournamentId: req.query.tournamentId || null,
+      status: req.query.status || null,
+    });
+    res.status(200).json(payload);
+  } catch (error) {
+    res.status(error.statusCode || 500).json({ message: error.message || "Failed to load registrations." });
+  }
+}
+
+async function submitRegistration(req, res) {
+  try {
+    const paymentProofUrl = req.file ? `/uploads/payment-proofs/${req.file.filename}` : null;
+    const playerCount = parseInt(req.body.playerCount, 10);
+    const rosterNotes = !Number.isNaN(playerCount) && playerCount > 0
+      ? `${playerCount} player${playerCount === 1 ? "" : "s"}`
+      : (req.body.rosterNotes || null);
+    const reg = await tournamentService.submitRegistration({
+      tournamentId: req.body.tournamentId,
+      teamName: req.body.teamName,
+      contactName: req.body.contactName,
+      contactEmail: req.body.contactEmail,
+      contactPhone: req.body.contactPhone || null,
+      rosterNotes,
+      paymentProofUrl,
+      participants: req.body.participants || [],
+    });
+    res.status(201).json({
+      message: "Registration submitted successfully.",
+      registration: reg,
+      checkoutUrl: reg.checkoutUrl || null,
+    });
+  } catch (error) {
+    res.status(error.statusCode || 400).json({ message: error.message || "Failed to submit registration." });
+  }
+}
+
+async function approveRegistration(req, res) {
+  try {
+    const updated = await tournamentService.approveRegistration({
+      actor: req.auth.user,
+      registrationId: req.params.publicId,
+    });
+    res.status(200).json({ message: "Registration approved.", registration: updated });
+  } catch (error) {
+    res.status(error.statusCode || 500).json({ message: error.message || "Failed to approve registration." });
+  }
+}
+
+async function rejectRegistration(req, res) {
+  try {
+    const updated = await tournamentService.rejectRegistration({
+      actor: req.auth.user,
+      registrationId: req.params.publicId,
+      reason: req.body.reason || null,
+    });
+    res.status(200).json({ message: "Registration rejected.", registration: updated });
+  } catch (error) {
+    res.status(error.statusCode || 500).json({ message: error.message || "Failed to reject registration." });
+  }
+}
+
+async function confirmRegistrationPayment(req, res) {
+  try {
+    const result = await tournamentService.confirmRegistrationPayment({
+      actor: req.auth.user,
+      registrationId: req.params.publicId,
+    });
+    res.status(200).json(result);
+  } catch (error) {
+    res.status(error.statusCode || 500).json({ message: error.message || "Failed to confirm payment." });
+  }
+}
+
+async function joinTournamentByCode(req, res) {
+  try {
+    const result = await tournamentService.joinTournamentByCode({
+      tournamentId: req.body.tournamentId || null,
+      joinCode: req.body.joinCode,
+    });
+    res.status(200).json(result);
+  } catch (error) {
+    res.status(error.statusCode || 400).json({ message: error.message || "Failed to join tournament." });
+  }
+}
+
+async function getTournamentSummary(req, res) {
+  try {
+    const [schedule, leaderboard] = await Promise.all([
+      tournamentService.getScheduleByTournamentId(req.params.tournamentId),
+      tournamentService.getLeaderboardByTournamentId(req.params.tournamentId),
+    ]);
+    res.status(200).json({
+      tournament: schedule.tournament || null,
+      schedule: schedule.items || [],
+      leaderboard: leaderboard.items || [],
+    });
+  } catch (error) {
+    res.status(error.statusCode || 500).json({ message: error.message || "Failed to load tournament summary." });
+  }
+}
+
 module.exports = {
   listTournaments,
   getSchedule,
@@ -137,4 +263,13 @@ module.exports = {
   listTournamentMatches,
   createMatch,
   updateMatch,
+  getMatchStats,
+  saveMatchStats,
+  listRegistrations,
+  submitRegistration,
+  approveRegistration,
+  rejectRegistration,
+  confirmRegistrationPayment,
+  joinTournamentByCode,
+  getTournamentSummary,
 };

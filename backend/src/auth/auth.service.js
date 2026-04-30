@@ -581,6 +581,7 @@ function buildAuthResponse(user, token, needsSchoolVerification) {
 function mapUser(user) {
   return {
     userId: user.userId,
+    publicId: user.publicId || null,
     username: user.username,
     role: user.userRole,
     email: user.email,

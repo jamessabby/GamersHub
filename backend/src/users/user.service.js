@@ -359,6 +359,7 @@ function mapProfileResponse(authUser, profile) {
 
   return {
     userId: authUser.userId,
+    publicId: authUser.publicId || null,
     username: authUser.username,
     email: authUser.email,
     role: authUser.userRole,

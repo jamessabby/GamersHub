@@ -374,6 +374,317 @@ async function updateMatch({ matchId, teamAScore, teamBScore, matchDate, matchTi
   return result.recordset[0] || null;
 }
 
+// ── MATCH STATS ──────────────────────────────────────────────────────────────
+
+async function listMatchStats(matchId) {
+  await poolConnect;
+  const result = await pool
+    .request()
+    .input("matchId", sql.Int, matchId)
+    .query(`
+      SELECT
+        STAT_ID     AS statId,
+        MATCH_ID    AS matchId,
+        TEAM_ID     AS teamId,
+        PLAYER_NAME AS playerName,
+        STAT_KEY    AS statKey,
+        STAT_VALUE  AS statValue,
+        ENTERED_BY  AS enteredBy,
+        CREATED_AT  AS createdAt
+      FROM dbo.MATCH_STATS
+      WHERE MATCH_ID = @matchId
+      ORDER BY TEAM_ID, PLAYER_NAME, STAT_KEY
+    `);
+  return result.recordset || [];
+}
+
+async function replaceMatchStats(matchId, stats, enteredBy) {
+  await poolConnect;
+  const request = pool.request().input("matchId", sql.Int, matchId);
+  await request.query(`DELETE FROM dbo.MATCH_STATS WHERE MATCH_ID = @matchId`);
+
+  if (!stats.length) return [];
+
+  const inserted = [];
+  for (const stat of stats) {
+    const r = pool
+      .request()
+      .input("matchId", sql.Int, matchId)
+      .input("teamId", sql.Int, Number(stat.teamId))
+      .input("playerName", sql.NVarChar(255), String(stat.playerName || "").trim() || null)
+      .input("statKey", sql.NVarChar(100), String(stat.statKey || "").trim())
+      .input("statValue", sql.NVarChar(255), String(stat.statValue ?? "").trim())
+      .input("enteredBy", sql.Int, enteredBy);
+    const row = await r.query(`
+      INSERT INTO dbo.MATCH_STATS (MATCH_ID, TEAM_ID, PLAYER_NAME, STAT_KEY, STAT_VALUE, ENTERED_BY)
+      OUTPUT INSERTED.STAT_ID AS statId, INSERTED.TEAM_ID AS teamId,
+             INSERTED.PLAYER_NAME AS playerName, INSERTED.STAT_KEY AS statKey,
+             INSERTED.STAT_VALUE AS statValue
+      VALUES (@matchId, @teamId, @playerName, @statKey, @statValue, @enteredBy)
+    `);
+    if (row.recordset[0]) inserted.push(row.recordset[0]);
+  }
+  return inserted;
+}
+
+// ── TOURNAMENT REGISTRATION ───────────────────────────────────────────────────
+
+async function listRegistrations({ tournamentId = null, status = null } = {}) {
+  await poolConnect;
+  const result = await pool
+    .request()
+    .input("tournamentId", sql.Int, tournamentId || null)
+    .input("status", sql.NVarChar(20), status || null)
+    .query(`
+      SELECT
+        r.REGISTRATION_ID   AS registrationId,
+        r.PUBLIC_ID         AS publicId,
+        r.TOURNAMENT_ID     AS tournamentId,
+        t.TITLE             AS tournamentTitle,
+        r.TEAM_NAME         AS teamName,
+        r.CONTACT_NAME      AS contactName,
+        r.CONTACT_EMAIL     AS contactEmail,
+        r.CONTACT_PHONE     AS contactPhone,
+        r.ROSTER_NOTES      AS rosterNotes,
+        r.STATUS            AS status,
+        r.REJECTION_REASON  AS rejectionReason,
+        r.PAYMENT_STATUS    AS paymentStatus,
+        r.PAYMENT_PROOF_URL AS paymentProofUrl,
+        r.JOIN_CODE         AS joinCode,
+        r.JOIN_CODE_USED    AS joinCodeUsed,
+        r.REVIEWED_BY       AS reviewedBy,
+        r.REVIEWED_AT       AS reviewedAt,
+        r.CREATED_AT        AS createdAt
+      FROM dbo.TOURNAMENT_REGISTRATION r
+      INNER JOIN dbo.TOURNAMENT t ON t.TOURNAMENT_ID = r.TOURNAMENT_ID
+      WHERE (@tournamentId IS NULL OR r.TOURNAMENT_ID = @tournamentId)
+        AND (@status IS NULL OR r.STATUS = @status)
+      ORDER BY r.CREATED_AT DESC
+    `);
+  return result.recordset || [];
+}
+
+async function findRegistrationByPublicId(publicId) {
+  await poolConnect;
+  const result = await pool
+    .request()
+    .input("publicId", sql.NVarChar(36), publicId)
+    .query(`
+      SELECT
+        r.REGISTRATION_ID   AS registrationId,
+        r.PUBLIC_ID         AS publicId,
+        r.TOURNAMENT_ID     AS tournamentId,
+        t.TITLE             AS tournamentTitle,
+        r.TEAM_NAME         AS teamName,
+        r.CONTACT_NAME      AS contactName,
+        r.CONTACT_EMAIL     AS contactEmail,
+        r.CONTACT_PHONE     AS contactPhone,
+        r.ROSTER_NOTES      AS rosterNotes,
+        r.STATUS            AS status,
+        r.REJECTION_REASON  AS rejectionReason,
+        r.PAYMENT_STATUS    AS paymentStatus,
+        r.PAYMENT_PROOF_URL AS paymentProofUrl,
+        r.JOIN_CODE         AS joinCode,
+        r.JOIN_CODE_USED    AS joinCodeUsed,
+        r.REVIEWED_BY       AS reviewedBy,
+        r.REVIEWED_AT       AS reviewedAt,
+        r.CREATED_AT        AS createdAt
+      FROM dbo.TOURNAMENT_REGISTRATION r
+      INNER JOIN dbo.TOURNAMENT t ON t.TOURNAMENT_ID = r.TOURNAMENT_ID
+      WHERE r.PUBLIC_ID = @publicId
+    `);
+  return result.recordset[0] || null;
+}
+
+async function createRegistration({ tournamentId, teamName, contactName, contactEmail, contactPhone, rosterNotes, paymentProofUrl }) {
+  await poolConnect;
+  const result = await pool
+    .request()
+    .input("tournamentId", sql.Int, tournamentId)
+    .input("teamName", sql.NVarChar(255), teamName)
+    .input("contactName", sql.NVarChar(255), contactName)
+    .input("contactEmail", sql.NVarChar(255), contactEmail)
+    .input("contactPhone", sql.NVarChar(50), contactPhone || null)
+    .input("rosterNotes", sql.NVarChar(sql.MAX), rosterNotes || null)
+    .input("paymentProofUrl", sql.NVarChar(1000), paymentProofUrl || null)
+    .query(`
+      INSERT INTO dbo.TOURNAMENT_REGISTRATION
+        (TOURNAMENT_ID, TEAM_NAME, CONTACT_NAME, CONTACT_EMAIL, CONTACT_PHONE, ROSTER_NOTES, PAYMENT_PROOF_URL)
+      OUTPUT
+        INSERTED.REGISTRATION_ID AS registrationId,
+        INSERTED.PUBLIC_ID       AS publicId,
+        INSERTED.TOURNAMENT_ID   AS tournamentId,
+        INSERTED.TEAM_NAME       AS teamName,
+        INSERTED.STATUS          AS status,
+        INSERTED.CREATED_AT      AS createdAt
+      VALUES
+        (@tournamentId, @teamName, @contactName, @contactEmail, @contactPhone, @rosterNotes, @paymentProofUrl)
+    `);
+  return result.recordset[0] || null;
+}
+
+async function updateRegistrationStatus({ registrationId, status, rejectionReason, joinCode, reviewedBy }) {
+  await poolConnect;
+  const result = await pool
+    .request()
+    .input("registrationId", sql.Int, registrationId)
+    .input("status", sql.NVarChar(20), status)
+    .input("rejectionReason", sql.NVarChar(500), rejectionReason || null)
+    .input("joinCode", sql.NVarChar(20), joinCode || null)
+    .input("reviewedBy", sql.Int, reviewedBy)
+    .query(`
+      UPDATE dbo.TOURNAMENT_REGISTRATION
+      SET
+        STATUS           = @status,
+        REJECTION_REASON = @rejectionReason,
+        JOIN_CODE        = COALESCE(@joinCode, JOIN_CODE),
+        REVIEWED_BY      = @reviewedBy,
+        REVIEWED_AT      = SYSUTCDATETIME(),
+        UPDATED_AT       = SYSUTCDATETIME()
+      OUTPUT
+        INSERTED.REGISTRATION_ID AS registrationId,
+        INSERTED.PUBLIC_ID       AS publicId,
+        INSERTED.STATUS          AS status,
+        INSERTED.JOIN_CODE       AS joinCode,
+        INSERTED.CONTACT_EMAIL   AS contactEmail,
+        INSERTED.TEAM_NAME       AS teamName,
+        INSERTED.TOURNAMENT_ID   AS tournamentId
+      WHERE REGISTRATION_ID = @registrationId
+    `);
+  return result.recordset[0] || null;
+}
+
+async function updateRegistrationPayment({ registrationId, paymentStatus, paymentProofUrl }) {
+  await poolConnect;
+  await pool
+    .request()
+    .input("registrationId", sql.Int, registrationId)
+    .input("paymentStatus", sql.NVarChar(20), paymentStatus)
+    .input("paymentProofUrl", sql.NVarChar(1000), paymentProofUrl || null)
+    .query(`
+      UPDATE dbo.TOURNAMENT_REGISTRATION
+      SET PAYMENT_STATUS    = @paymentStatus,
+          PAYMENT_PROOF_URL = COALESCE(@paymentProofUrl, PAYMENT_PROOF_URL),
+          UPDATED_AT        = SYSUTCDATETIME()
+      WHERE REGISTRATION_ID = @registrationId
+    `);
+}
+
+async function findRegistrationByJoinCode(joinCode) {
+  await poolConnect;
+  const result = await pool
+    .request()
+    .input("joinCode", sql.NVarChar(20), joinCode)
+    .query(`
+      SELECT
+        r.REGISTRATION_ID AS registrationId,
+        r.PUBLIC_ID       AS publicId,
+        r.TOURNAMENT_ID   AS tournamentId,
+        t.TITLE           AS tournamentTitle,
+        r.TEAM_NAME       AS teamName,
+        r.STATUS          AS status,
+        r.JOIN_CODE       AS joinCode,
+        r.JOIN_CODE_USED  AS joinCodeUsed
+      FROM dbo.TOURNAMENT_REGISTRATION r
+      INNER JOIN dbo.TOURNAMENT t ON t.TOURNAMENT_ID = r.TOURNAMENT_ID
+      WHERE r.JOIN_CODE = @joinCode
+    `);
+  return result.recordset[0] || null;
+}
+
+async function updateRegistrationPaymongoLink(registrationId, linkId) {
+  await poolConnect;
+  await pool
+    .request()
+    .input("registrationId", sql.Int, registrationId)
+    .input("linkId", sql.NVarChar(255), linkId)
+    .query(`
+      UPDATE dbo.TOURNAMENT_REGISTRATION
+      SET PAYMONGO_LINK_ID = @linkId, UPDATED_AT = SYSUTCDATETIME()
+      WHERE REGISTRATION_ID = @registrationId
+    `);
+}
+
+async function markRegistrationPaid(paymongoLinkId) {
+  await poolConnect;
+  await pool
+    .request()
+    .input("linkId", sql.NVarChar(255), paymongoLinkId)
+    .query(`
+      UPDATE dbo.TOURNAMENT_REGISTRATION
+      SET PAYMENT_STATUS = 'paid', UPDATED_AT = SYSUTCDATETIME()
+      WHERE PAYMONGO_LINK_ID = @linkId
+        AND PAYMENT_STATUS != 'paid'
+    `);
+}
+
+async function markJoinCodeUsed(registrationId) {
+  await poolConnect;
+  await pool
+    .request()
+    .input("registrationId", sql.Int, registrationId)
+    .query(`
+      UPDATE dbo.TOURNAMENT_REGISTRATION
+      SET JOIN_CODE_USED = 1, UPDATED_AT = SYSUTCDATETIME()
+      WHERE REGISTRATION_ID = @registrationId
+    `);
+}
+
+// ── REGISTRATION PARTICIPANTS ─────────────────────────────────────────────────
+
+async function createRegistrationParticipants(registrationId, usernames) {
+  await poolConnect;
+  const inserted = [];
+  for (const raw of usernames) {
+    const username = String(raw || "").trim();
+    if (!username) continue;
+
+    // Resolve userId from GAMERSHUB_AUTH on the same instance (cross-DB)
+    const lookupResult = await pool
+      .request()
+      .input("username", sql.NVarChar(100), username)
+      .query(`
+        SELECT USER_ID AS userId
+        FROM GAMERSHUB_AUTH.dbo.USERS
+        WHERE LOWER(USERNAME) = LOWER(@username)
+      `);
+    const userId = lookupResult.recordset[0]?.userId || null;
+
+    const insertResult = await pool
+      .request()
+      .input("registrationId", sql.Int, registrationId)
+      .input("username", sql.NVarChar(100), username)
+      .input("userId", sql.Int, userId)
+      .query(`
+        INSERT INTO dbo.TOURNAMENT_REGISTRATION_PARTICIPANT
+          (REGISTRATION_ID, USERNAME, USER_ID)
+        OUTPUT INSERTED.PARTICIPANT_ID AS participantId,
+               INSERTED.USERNAME       AS username,
+               INSERTED.USER_ID        AS userId
+        VALUES (@registrationId, @username, @userId)
+      `);
+    if (insertResult.recordset[0]) inserted.push(insertResult.recordset[0]);
+  }
+  return inserted;
+}
+
+async function listParticipantsByRegistrationId(registrationId) {
+  await poolConnect;
+  const result = await pool
+    .request()
+    .input("registrationId", sql.Int, registrationId)
+    .query(`
+      SELECT
+        PARTICIPANT_ID  AS participantId,
+        REGISTRATION_ID AS registrationId,
+        USERNAME        AS username,
+        USER_ID         AS userId
+      FROM dbo.TOURNAMENT_REGISTRATION_PARTICIPANT
+      WHERE REGISTRATION_ID = @registrationId
+    `);
+  return result.recordset || [];
+}
+
 module.exports = {
   listTournaments,
   findTournamentById,
@@ -387,4 +698,17 @@ module.exports = {
   upsertLeaderboardEntry,
   createMatch,
   updateMatch,
+  listMatchStats,
+  replaceMatchStats,
+  listRegistrations,
+  findRegistrationByPublicId,
+  createRegistration,
+  updateRegistrationStatus,
+  updateRegistrationPayment,
+  findRegistrationByJoinCode,
+  markJoinCodeUsed,
+  createRegistrationParticipants,
+  listParticipantsByRegistrationId,
+  updateRegistrationPaymongoLink,
+  markRegistrationPaid,
 };

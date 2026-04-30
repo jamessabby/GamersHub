@@ -88,6 +88,65 @@ async function sendPasswordResetEmail({ to, username, code, expiresInMinutes }) 
   return { mode: "smtp" };
 }
 
+async function sendRegistrationApprovalEmail({ to, teamName, tournamentTitle, joinCode }) {
+  if (!to) return;
+  const subject = `Your GamersHub tournament registration is approved!`;
+  const text = [
+    `Hi ${teamName},`,
+    "",
+    `Your registration for "${tournamentTitle}" has been approved.`,
+    "",
+    `Your join code is: ${joinCode}`,
+    "",
+    "Use this code on the GamersHub Tournaments page to complete your entry.",
+    "This code is single-use — keep it safe.",
+  ].join("\n");
+  const html = `
+    <div style="font-family:Arial,sans-serif;line-height:1.6;color:#111827;">
+      <p>Hi <strong>${escapeHtml(teamName)}</strong>,</p>
+      <p>Your registration for <strong>${escapeHtml(tournamentTitle)}</strong> has been <span style="color:#16a34a;font-weight:700;">approved</span>!</p>
+      <p>Your join code is:</p>
+      <p style="font-size:26px;font-weight:700;letter-spacing:5px;margin:20px 0;font-family:monospace;">${escapeHtml(joinCode)}</p>
+      <p>Enter this code on the GamersHub Tournaments page to complete your entry. It is single-use.</p>
+    </div>
+  `;
+  if (!isSmtpConfigured()) {
+    console.info(`[GamersHub Registration] Approval email for ${to}: join code ${joinCode}`);
+    return { mode: "console" };
+  }
+  const transporter = await getTransporter();
+  await transporter.sendMail({ from: SMTP_FROM, to, subject, text, html });
+  return { mode: "smtp" };
+}
+
+async function sendRegistrationRejectionEmail({ to, teamName, tournamentTitle, reason }) {
+  if (!to) return;
+  const subject = `GamersHub tournament registration update`;
+  const text = [
+    `Hi ${teamName},`,
+    "",
+    `We regret to inform you that your registration for "${tournamentTitle}" was not approved.`,
+    reason ? `\nReason: ${reason}` : "",
+    "",
+    "Please contact the organizers if you have questions.",
+  ].join("\n");
+  const html = `
+    <div style="font-family:Arial,sans-serif;line-height:1.6;color:#111827;">
+      <p>Hi <strong>${escapeHtml(teamName)}</strong>,</p>
+      <p>Unfortunately, your registration for <strong>${escapeHtml(tournamentTitle)}</strong> was not approved.</p>
+      ${reason ? `<p><strong>Reason:</strong> ${escapeHtml(reason)}</p>` : ""}
+      <p>Please contact the tournament organizers for more information.</p>
+    </div>
+  `;
+  if (!isSmtpConfigured()) {
+    console.info(`[GamersHub Registration] Rejection email for ${to}`);
+    return { mode: "console" };
+  }
+  const transporter = await getTransporter();
+  await transporter.sendMail({ from: SMTP_FROM, to, subject, text, html });
+  return { mode: "smtp" };
+}
+
 function isSmtpConfigured() {
   return Boolean(SMTP_FROM && SMTP_USER && SMTP_PASS && (SMTP_SERVICE || SMTP_HOST));
 }
@@ -136,5 +195,7 @@ function escapeHtml(value) {
 module.exports = {
   sendMfaCodeEmail,
   sendPasswordResetEmail,
+  sendRegistrationApprovalEmail,
+  sendRegistrationRejectionEmail,
   isSmtpConfigured,
 };
