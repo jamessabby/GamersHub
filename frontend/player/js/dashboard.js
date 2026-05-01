@@ -1,5 +1,5 @@
 (() => {
-  const API_BASE = `http://${window.location.hostname || "localhost"}:3000`;
+  const API_BASE = window.GamersHubAuth?.apiBase || `http://${window.location.hostname || "localhost"}:3000`;
   const auth = window.GamersHubAuth;
   const session = auth?.getSession?.() || {};
   const REACTION_META = {
@@ -187,6 +187,62 @@
   renderFriendsPlaceholder("Your accepted friends will appear here.");
   void Promise.all([loadFeed(), loadFriendPanel()]);
   startLivePolling();
+  void checkProfileCompleteness();
+
+  const profileCompleteBanner = document.getElementById("profileCompleteBanner");
+  const pcbDismiss = document.getElementById("pcbDismiss");
+  const pcbMissingFields = document.getElementById("pcbMissingFields");
+  const PCB_DISMISS_KEY = `gh_pcb_dismissed_${session.userId || ""}`;
+
+  pcbDismiss?.addEventListener("click", () => {
+    profileCompleteBanner?.classList.add("hidden");
+    try {
+      sessionStorage.setItem(PCB_DISMISS_KEY, "1");
+    } catch {
+      // storage unavailable — ignore
+    }
+  });
+
+  async function checkProfileCompleteness() {
+    if (!session.userId) {
+      return;
+    }
+
+    try {
+      const dismissed = sessionStorage.getItem(PCB_DISMISS_KEY);
+      if (dismissed) {
+        return;
+      }
+    } catch {
+      // storage unavailable — proceed
+    }
+
+    try {
+      const response = await fetch(`${API_BASE}/api/users/profile/${session.userId}`);
+      if (!response.ok) {
+        return;
+      }
+
+      const profile = await response.json();
+      const missing = [];
+      if (!profile.firstName) missing.push("first name");
+      if (!profile.lastName) missing.push("last name");
+      if (!profile.courseYear) missing.push("course & year");
+      if (!profile.phoneNumber) missing.push("phone number");
+
+      if (missing.length === 0 || !profileCompleteBanner) {
+        return;
+      }
+
+      if (pcbMissingFields) {
+        pcbMissingFields.textContent = missing.join(", ");
+      }
+
+      profileCompleteBanner.classList.remove("hidden");
+    } catch {
+      // silently ignore — banner is non-critical
+    }
+  }
 
   async function loadFeed({ preserveState = false, silent = false, items = null } = {}) {
     try {

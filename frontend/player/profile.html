@@ -284,6 +284,14 @@
                 <span class="pf-info-value" id="viewPhone">Not set</span>
               </div>
               <div class="pf-info-item">
+                <span class="pf-info-label">Student ID</span>
+                <span class="pf-info-value" id="viewStudentId">Not set</span>
+              </div>
+              <div class="pf-info-item">
+                <span class="pf-info-label">Course &amp; Year</span>
+                <span class="pf-info-value" id="viewCourseYear">Not set</span>
+              </div>
+              <div class="pf-info-item">
                 <span class="pf-info-label">User role</span>
                 <span class="pf-info-value pf-role-badge" id="viewRole"
                   >User</span
@@ -336,6 +344,27 @@
                   class="pf-input"
                   id="editPhone"
                   value=""
+                />
+              </div>
+              <div class="pf-field">
+                <label class="pf-label" for="editCourseYear">Course &amp; Year</label>
+                <input
+                  type="text"
+                  class="pf-input"
+                  id="editCourseYear"
+                  placeholder="e.g. BSCS4"
+                  value=""
+                />
+              </div>
+              <div class="pf-field">
+                <label class="pf-label" for="editStudentId">Student ID</label>
+                <input
+                  type="text"
+                  class="pf-input"
+                  id="editStudentId"
+                  value=""
+                  readonly
+                  title="Student ID is set during school verification"
                 />
               </div>
             </div>

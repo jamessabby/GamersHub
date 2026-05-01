@@ -1387,19 +1387,32 @@
                 <h2>Match Stats — <span id="matchStatsLabel"></span></h2>
                 <button class="console-btn" id="closeMatchStatsBtn">Close</button>
               </div>
-              <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px;">
-                <select id="gamePresetSel" class="console-input" style="width:185px;">
-                  <option value="">— Game preset —</option>
-                  <option value="mlbb">Mobile Legends (MLBB)</option>
-                  <option value="valorant">Valorant</option>
-                  <option value="cs2">CS2 / CS:GO</option>
-                </select>
-                <button class="console-btn" id="applyPresetBtn">Fill Preset</button>
-                <span style="color:#64748b;font-size:0.78rem;">or add rows manually below</span>
+              <p style="margin:0 0 12px;color:#94a3b8;font-size:0.84rem;">
+                Enter one row per player. Kills, deaths, and assists are saved as separate match-stat records.
+              </p>
+              <div style="display:flex;gap:6px;flex-wrap:wrap;padding:0 2px;margin-bottom:4px;">
+                <span style="flex:1 1 130px;font-size:0.75rem;color:#64748b;text-transform:uppercase;letter-spacing:0.04em;">Team</span>
+                <span style="flex:1 1 150px;font-size:0.75rem;color:#64748b;text-transform:uppercase;letter-spacing:0.04em;">Player</span>
+                <span style="flex:0 0 78px;font-size:0.75rem;color:#64748b;text-transform:uppercase;letter-spacing:0.04em;">Kills</span>
+                <span style="flex:0 0 78px;font-size:0.75rem;color:#64748b;text-transform:uppercase;letter-spacing:0.04em;">Deaths</span>
+                <span style="flex:0 0 78px;font-size:0.75rem;color:#64748b;text-transform:uppercase;letter-spacing:0.04em;">Assists</span>
+                <span style="flex:0 0 38px;"></span>
               </div>
-              <div id="matchStatsRows" style="display:flex;flex-direction:column;gap:8px;margin-bottom:12px;"></div>
+              <div id="kdaRows" style="display:flex;flex-direction:column;gap:8px;margin-bottom:12px;"></div>
+              <details style="margin:10px 0 12px;">
+                <summary style="cursor:pointer;color:#a78bfa;font-size:0.84rem;">Other stats</summary>
+                <div style="display:flex;gap:6px;flex-wrap:wrap;padding:12px 2px 4px;margin-bottom:4px;">
+                  <span style="flex:1 1 130px;font-size:0.75rem;color:#64748b;text-transform:uppercase;letter-spacing:0.04em;">Team</span>
+                  <span style="flex:1 1 130px;font-size:0.75rem;color:#64748b;text-transform:uppercase;letter-spacing:0.04em;">Player (opt.)</span>
+                  <span style="flex:1 1 110px;font-size:0.75rem;color:#64748b;text-transform:uppercase;letter-spacing:0.04em;">Stat</span>
+                  <span style="flex:1 1 80px;font-size:0.75rem;color:#64748b;text-transform:uppercase;letter-spacing:0.04em;">Value</span>
+                  <span style="flex:0 0 38px;"></span>
+                </div>
+                <div id="customStatsRows" style="display:flex;flex-direction:column;gap:8px;"></div>
+                <button class="console-btn" id="addStatRowBtn" type="button" style="margin-top:8px;">+ Add Custom Stat</button>
+              </details>
               <div style="display:flex;gap:8px;flex-wrap:wrap;">
-                <button class="console-btn" id="addStatRowBtn">+ Add Row</button>
+                <button class="console-btn" id="addKdaRowBtn" type="button">+ Add Player Row</button>
                 <button class="console-btn primary" id="saveMatchStatsBtn">Save Stats</button>
               </div>
             </div>
@@ -1423,14 +1436,31 @@
         let activeStatsMatchId = null;
         let activeStatsTeams = [];
 
-        const STAT_PRESETS = {
-          mlbb:     ["kills", "deaths", "assists", "damage", "gold"],
-          valorant: ["kills", "deaths", "assists", "ACS"],
-          cs2:      ["kills", "deaths", "assists", "HS%", "ADR"],
-        };
+        function makeKdaRow(teamOptions, row = {}) {
+          const div = document.createElement("div");
+          div.className = "kda-stat-row";
+          div.style.cssText = "display:flex;gap:6px;flex-wrap:wrap;align-items:center;";
+          div.innerHTML = `
+            <select class="console-input kda-team" style="flex:1 1 130px;">
+              <option value="">Team *</option>${teamOptions}
+            </select>
+            <input class="console-input kda-player" placeholder="Player name" style="flex:1 1 150px;" value="${escapeAttribute(row.playerName || "")}" />
+            <input class="console-input kda-kills" type="number" min="0" placeholder="0" style="flex:0 0 78px;" value="${escapeAttribute(row.kills ?? "")}" />
+            <input class="console-input kda-deaths" type="number" min="0" placeholder="0" style="flex:0 0 78px;" value="${escapeAttribute(row.deaths ?? "")}" />
+            <input class="console-input kda-assists" type="number" min="0" placeholder="0" style="flex:0 0 78px;" value="${escapeAttribute(row.assists ?? "")}" />
+            <button class="console-btn danger" type="button" style="padding:6px 10px;background:rgba(239,68,68,0.15);">X</button>
+          `;
+          if (row.teamId) {
+            const sel = div.querySelector(".kda-team");
+            if (sel) sel.value = String(row.teamId);
+          }
+          div.querySelector(".console-btn.danger")?.addEventListener("click", () => div.remove());
+          return div;
+        }
 
         function makeStatRow(teamOptions, row = {}) {
           const div = document.createElement("div");
+          div.className = "custom-stat-row";
           div.style.cssText = "display:flex;gap:6px;flex-wrap:wrap;align-items:center;";
           div.innerHTML = `
             <select class="console-input stat-team" style="flex:1 1 130px;">
@@ -1439,7 +1469,7 @@
             <input class="console-input stat-player" placeholder="Player (optional)" style="flex:1 1 130px;" value="${escapeAttribute(row.playerName || "")}" />
             <input class="console-input stat-key" placeholder="Stat key *" style="flex:1 1 110px;" value="${escapeAttribute(row.statKey || "")}" />
             <input class="console-input stat-value" placeholder="Value *" style="flex:1 1 80px;" value="${escapeAttribute(row.statValue || "")}" />
-            <button class="console-btn danger" style="padding:6px 10px;background:rgba(239,68,68,0.15);">✕</button>
+            <button class="console-btn danger" type="button" style="padding:6px 10px;background:rgba(239,68,68,0.15);">X</button>
           `;
           if (row.teamId) {
             const sel = div.querySelector(".stat-team");
@@ -1449,12 +1479,36 @@
           return div;
         }
 
+        function splitKdaStats(rows = []) {
+          const groups = new Map();
+          const customRows = [];
+          rows.forEach((row) => {
+            const key = String(row.statKey || "").trim().toLowerCase();
+            if (!["kills", "deaths", "assists"].includes(key)) {
+              customRows.push(row);
+              return;
+            }
+            const groupKey = `${row.teamId || ""}|${row.playerName || ""}`;
+            if (!groups.has(groupKey)) {
+              groups.set(groupKey, {
+                teamId: row.teamId,
+                playerName: row.playerName || "",
+                kills: "",
+                deaths: "",
+                assists: "",
+              });
+            }
+            groups.get(groupKey)[key] = row.statValue ?? "";
+          });
+          return { kdaRows: Array.from(groups.values()), customRows };
+        }
+
         schContent.querySelectorAll(".sch-stats-btn").forEach((btn) => {
           btn.addEventListener("click", async () => {
             const matchId = btn.dataset.matchId;
             const panel = schContent.querySelector("#matchStatsPanel");
             const label = schContent.querySelector("#matchStatsLabel");
-            const rowsContainer = schContent.querySelector("#matchStatsRows");
+            const rowsContainer = schContent.querySelector("#kdaRows");
             if (!panel || !rowsContainer) return;
 
             activeStatsMatchId = matchId;
@@ -1469,12 +1523,25 @@
             btn.disabled = true; btn.textContent = "Loading…";
             try {
               const existing = await fetchJson(`${auth.apiBase}/api/admin/tournaments/${tournamentId}/matches/${matchId}/stats`);
-              rowsContainer.innerHTML = "";
-              (existing.items || []).forEach((row) => rowsContainer.appendChild(makeStatRow(teamOpts, row)));
-              if (!existing.items?.length) rowsContainer.appendChild(makeStatRow(teamOpts));
+              const kdaRows = schContent.querySelector("#kdaRows");
+              const customRows = schContent.querySelector("#customStatsRows");
+              const splitRows = splitKdaStats(existing.items || []);
+              if (kdaRows) {
+                kdaRows.innerHTML = "";
+                const rowsToRender = splitRows.kdaRows.length
+                  ? splitRows.kdaRows
+                  : activeStatsTeams.map((team) => ({ teamId: team.id }));
+                rowsToRender.forEach((row) => kdaRows.appendChild(makeKdaRow(teamOpts, row)));
+              }
+              if (customRows) {
+                customRows.innerHTML = "";
+                splitRows.customRows.forEach((row) => customRows.appendChild(makeStatRow(teamOpts, row)));
+              }
             } catch {
               rowsContainer.innerHTML = "";
-              rowsContainer.appendChild(makeStatRow(teamOpts));
+              activeStatsTeams.forEach((team) => rowsContainer.appendChild(makeKdaRow(teamOpts, { teamId: team.id })));
+              const customRows = schContent.querySelector("#customStatsRows");
+              if (customRows) customRows.innerHTML = "";
             }
             panel.style.display = "block";
             panel.scrollIntoView({ behavior: "smooth", block: "nearest" });
@@ -1488,21 +1555,14 @@
           activeStatsMatchId = null;
         });
 
-        schContent.querySelector("#applyPresetBtn")?.addEventListener("click", () => {
-          const preset = schContent.querySelector("#gamePresetSel")?.value;
-          if (!preset || !STAT_PRESETS[preset]) return;
-          const rowsContainer = schContent.querySelector("#matchStatsRows");
+        schContent.querySelector("#addKdaRowBtn")?.addEventListener("click", () => {
+          const rowsContainer = schContent.querySelector("#kdaRows");
           const teamOpts = activeStatsTeams.map((t) => `<option value="${t.id}">${escapeHtml(t.name)}</option>`).join("");
-          rowsContainer.innerHTML = "";
-          activeStatsTeams.forEach((team) => {
-            STAT_PRESETS[preset].forEach((key) => {
-              rowsContainer.appendChild(makeStatRow(teamOpts, { teamId: team.id, statKey: key }));
-            });
-          });
+          rowsContainer?.appendChild(makeKdaRow(teamOpts));
         });
 
         schContent.querySelector("#addStatRowBtn")?.addEventListener("click", () => {
-          const rowsContainer = schContent.querySelector("#matchStatsRows");
+          const rowsContainer = schContent.querySelector("#customStatsRows");
           const teamOpts = activeStatsTeams.map((t) => `<option value="${t.id}">${escapeHtml(t.name)}</option>`).join("");
           rowsContainer?.appendChild(makeStatRow(teamOpts));
         });
@@ -1510,9 +1570,25 @@
         schContent.querySelector("#saveMatchStatsBtn")?.addEventListener("click", async () => {
           if (!activeStatsMatchId) return;
           const saveBtn = schContent.querySelector("#saveMatchStatsBtn");
-          const rowsContainer = schContent.querySelector("#matchStatsRows");
-          const statDivs = rowsContainer?.querySelectorAll("div") || [];
+          const kdaDivs = schContent.querySelectorAll("#kdaRows .kda-stat-row") || [];
+          const statDivs = schContent.querySelectorAll("#customStatsRows .custom-stat-row") || [];
           const stats = [];
+          for (const div of kdaDivs) {
+            const teamId = div.querySelector(".kda-team")?.value;
+            const playerName = div.querySelector(".kda-player")?.value?.trim() || null;
+            const kda = [
+              ["kills", div.querySelector(".kda-kills")?.value],
+              ["deaths", div.querySelector(".kda-deaths")?.value],
+              ["assists", div.querySelector(".kda-assists")?.value],
+            ];
+            if (!teamId) continue;
+            kda.forEach(([statKey, value]) => {
+              const statValue = String(value ?? "").trim();
+              if (statValue !== "") {
+                stats.push({ teamId: Number(teamId), playerName, statKey, statValue });
+              }
+            });
+          }
           for (const div of statDivs) {
             const teamId = div.querySelector(".stat-team")?.value;
             const statKey = div.querySelector(".stat-key")?.value?.trim();

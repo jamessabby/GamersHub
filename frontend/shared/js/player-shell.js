@@ -9,7 +9,7 @@
     return;
   }
 
-  const API_BASE = `http://${window.location.hostname || "localhost"}:3000`;
+  const API_BASE = auth?.apiBase || `http://${window.location.hostname || "localhost"}:3000`;
   const LOCAL_STORAGE_KEY = "gh_notifications";
   const SHARED_ACTIVITY_POLL_INTERVAL_MS = 8000;
   const FRIENDS_COPY = {

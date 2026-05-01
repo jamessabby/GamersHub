@@ -1,5 +1,5 @@
 (() => {
-  const API_BASE = `http://${window.location.hostname || "localhost"}:3000`;
+  const API_BASE = window.GamersHubAuth?.apiBase || `http://${window.location.hostname || "localhost"}:3000`;
   const PROFILE_UI_STORAGE_KEY = "gh_profile_ui";
   const auth = window.GamersHubAuth;
   const session = auth?.getSession?.() || {};
@@ -28,6 +28,7 @@
     school: "",
     schoolTag: "",
     studentId: "",
+    courseYear: "",
     primaryGames: [],
     avatar: "../assets/icons/player-dashboard-icons/user-profile.png",
     socials: {
@@ -86,6 +87,11 @@
   const editDob = document.getElementById("editDob");
   const editEmail = document.getElementById("editEmail");
   const editPhone = document.getElementById("editPhone");
+
+  const viewStudentId = document.getElementById("viewStudentId");
+  const viewCourseYear = document.getElementById("viewCourseYear");
+  const editCourseYear = document.getElementById("editCourseYear");
+  const editStudentId = document.getElementById("editStudentId");
 
   const viewSchool = document.getElementById("viewSchool");
   const editSchoolWrap = document.getElementById("editSchoolWrap");
@@ -301,6 +307,7 @@
     state.school = profile.school || "";
     state.schoolTag = profile.schoolTag || buildSchoolTag(state.school);
     state.studentId = profile.studentId || "";
+    state.courseYear = profile.courseYear || "";
     state.primaryGames = Array.isArray(profile.primaryGames)
       ? profile.primaryGames
       : profile.primaryGame
@@ -362,6 +369,13 @@
     viewDob.textContent = formatDate(state.dateOfBirth) || "Not set";
     viewEmail.textContent = state.email || "Not set";
     viewPhone.textContent = state.phoneNumber || "Not set";
+    if (viewStudentId) {
+      const rawId = state.studentId || "";
+      viewStudentId.textContent = rawId && !rawId.startsWith("TEMP-") ? rawId : "Not set";
+    }
+    if (viewCourseYear) {
+      viewCourseYear.textContent = state.courseYear || "Not set";
+    }
     viewRole.textContent = state.role || "user";
     viewSchool.textContent = state.school || "Not set";
 
@@ -410,6 +424,13 @@
     editDob.value = draft.dateOfBirth;
     editEmail.value = draft.email;
     editPhone.value = draft.phoneNumber;
+    if (editCourseYear) {
+      editCourseYear.value = draft.courseYear;
+    }
+    if (editStudentId) {
+      const rawId = draft.studentId || "";
+      editStudentId.value = rawId && !rawId.startsWith("TEMP-") ? rawId : "";
+    }
     editSchool.value = draft.school;
 
     identityView.classList.add("hidden");
@@ -460,6 +481,7 @@
     draft.lastName = editLastName.value.trim();
     draft.dateOfBirth = editDob.value || "";
     draft.phoneNumber = editPhone.value.trim();
+    draft.courseYear = editCourseYear ? editCourseYear.value.trim() : draft.courseYear;
     draft.school = editSchool.value.trim();
     syncPendingGameInput();
 
@@ -478,6 +500,7 @@
           displayName: draft.displayName,
           phoneNumber: draft.phoneNumber,
           school: draft.school,
+          courseYear: draft.courseYear,
           primaryGames: draft.primaryGames,
         }),
       });

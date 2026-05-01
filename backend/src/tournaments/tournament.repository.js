@@ -644,7 +644,7 @@ async function createRegistrationParticipants(registrationId, usernames) {
       .request()
       .input("username", sql.NVarChar(100), username)
       .query(`
-        SELECT USER_ID AS userId
+        SELECT USERID AS userId
         FROM GAMERSHUB_AUTH.dbo.USERS
         WHERE LOWER(USERNAME) = LOWER(@username)
       `);

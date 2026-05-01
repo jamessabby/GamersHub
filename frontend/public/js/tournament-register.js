@@ -117,6 +117,7 @@
       }
     } catch {
       tournamentSel.innerHTML = '<option value="">Failed to load tournaments</option>';
+      showError(`Could not reach the backend at ${API_BASE}. For the Vercel demo, open this page once with ?apiBase=https://YOUR-NGROK-URL.`);
     }
   }
 

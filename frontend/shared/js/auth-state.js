@@ -1,7 +1,8 @@
 (() => {
   const SESSION_KEY = "gh_session";
   const PENDING_MFA_KEY = "gh_pending_mfa";
-  const API_BASE = `http://${window.location.hostname || "localhost"}:3000`;
+  const API_BASE_KEY = "gh_api_base";
+  const API_BASE = resolveApiBase();
 
   function getSession() {
     try {
@@ -210,6 +211,66 @@
     sessionStorage.removeItem(PENDING_MFA_KEY);
   }
 
+  function resolveApiBase() {
+    const queryOverride = new URLSearchParams(window.location.search).get("apiBase");
+    const normalizedQueryOverride = normalizeApiBase(queryOverride);
+    if (normalizedQueryOverride) {
+      try {
+        localStorage.setItem(API_BASE_KEY, normalizedQueryOverride);
+      } catch {
+        // storage unavailable; use the override only for this page load
+      }
+      return normalizedQueryOverride;
+    }
+
+    const globalOverride = normalizeApiBase(window.GAMERSHUB_API_BASE);
+    if (globalOverride) {
+      return globalOverride;
+    }
+
+    try {
+      const storedOverride = normalizeApiBase(localStorage.getItem(API_BASE_KEY));
+      if (storedOverride) {
+        return storedOverride;
+      }
+    } catch {
+      // storage unavailable; fall back to local development default
+    }
+
+    const host = window.location.hostname || "localhost";
+    return `http://${host}:3000`;
+  }
+
+  function normalizeApiBase(value) {
+    const raw = String(value || "").trim();
+    if (!raw) {
+      return "";
+    }
+
+    try {
+      const url = new URL(raw);
+      if (!["http:", "https:"].includes(url.protocol)) {
+        return "";
+      }
+      return url.origin;
+    } catch {
+      return "";
+    }
+  }
+
+  function setApiBase(value) {
+    const normalized = normalizeApiBase(value);
+    if (!normalized) {
+      throw new Error("API base must be a valid http or https URL.");
+    }
+    localStorage.setItem(API_BASE_KEY, normalized);
+    return normalized;
+  }
+
+  function clearApiBase() {
+    localStorage.removeItem(API_BASE_KEY);
+  }
+
   function patchFetch() {
     if (window.__ghFetchPatched) {
       return;
@@ -219,21 +280,23 @@
     window.fetch = (input, init = {}) => {
       const requestUrl = typeof input === "string" ? input : input?.url || "";
       const resolvedUrl = requestUrl ? new URL(requestUrl, window.location.href) : null;
-      const shouldAttachToken = Boolean(
+      const isApiRequest = Boolean(
         resolvedUrl
-        && getSession()?.token
         && (
           resolvedUrl.origin === new URL(API_BASE).origin
           || resolvedUrl.pathname.startsWith("/api/")
         ),
       );
 
-      if (!shouldAttachToken) {
+      if (!isApiRequest) {
         return originalFetch(input, init);
       }
 
       const headers = new Headers(init.headers || (typeof input !== "string" ? input.headers : undefined) || {});
-      if (!headers.has("Authorization")) {
+      if (!headers.has("ngrok-skip-browser-warning")) {
+        headers.set("ngrok-skip-browser-warning", "true");
+      }
+      if (getSession()?.token && !headers.has("Authorization")) {
         headers.set("Authorization", `Bearer ${getSession().token}`);
       }
 
@@ -263,6 +326,8 @@
     setPendingMfa,
     getPendingMfa,
     clearPendingMfa,
+    setApiBase,
+    clearApiBase,
     apiBase: API_BASE,
   };
 })();

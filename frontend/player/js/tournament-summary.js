@@ -38,7 +38,11 @@
         const parts = [];
         if (tournament.gameName) parts.push(tournament.gameName);
         if (tournament.status) parts.push(tournament.status);
-        if (tournament.startDate) parts.push(`Started ${formatDate(tournament.startDate)}`);
+        if (tournament.startDate && tournament.endDate) {
+          parts.push(`${formatDate(tournament.startDate)} – ${formatDate(tournament.endDate)}`);
+        } else if (tournament.startDate) {
+          parts.push(`Started ${formatDate(tournament.startDate)}`);
+        }
         sumMeta.textContent = parts.join(" · ");
       } else {
         sumTitle.textContent = `Tournament #${tournamentId}`;
@@ -50,7 +54,10 @@
       sumLoading.style.display = "none";
       sumBody.classList.remove("hidden");
     } catch (error) {
-      sumLoading.innerHTML = `<p style="color:#f87171;">${escapeHtml(error.message || "Failed to load tournament.")}</p>`;
+      sumLoading.innerHTML = `
+        <p style="color:#f87171;margin-bottom:12px;">${escapeHtml(error.message || "Failed to load tournament.")}</p>
+        <a href="./tournaments.html" style="font-size:13px;color:rgba(167,139,250,0.7);text-decoration:none;">← Back to Tournaments</a>
+      `;
     }
   }
 
@@ -70,10 +77,13 @@
       const rank = i + 1;
       const pts = (row.wins || 0) * 3;
       const rankClass = rank === 1 ? "sum-rank-1" : rank === 2 ? "sum-rank-2" : rank === 3 ? "sum-rank-3" : "";
+      const rowClass = rank === 1 ? "sum-champion-row" : "";
+      const rankDisplay = rank === 1 ? "🥇" : rank === 2 ? "🥈" : rank === 3 ? "🥉" : rank;
+      const champBadge = rank === 1 ? ` <span class="sum-champ-badge">Champion</span>` : "";
       return `
-        <tr>
-          <td class="sum-rank-col ${rankClass}">${rank}</td>
-          <td class="sum-team-name">${escapeHtml(row.teamName || `Team #${row.teamId}`)}</td>
+        <tr class="${rowClass}">
+          <td class="sum-rank-col ${rankClass}">${rankDisplay}</td>
+          <td class="sum-team-name">${escapeHtml(row.teamName || `Team #${row.teamId}`)}${champBadge}</td>
           <td>${row.wins ?? 0}</td>
           <td>${row.losses ?? 0}</td>
           <td class="sum-pts">${pts}</td>
@@ -95,23 +105,42 @@
         ? `${formatDate(m.matchDate)}${m.matchTime ? `<br>${m.matchTime.slice(0, 5)}` : ""}`
         : "TBD";
 
+      const teamAName = m.teamAName || "Team A";
+      const teamBName = m.teamBName || "Team B";
+
       const scoreHtml = hasScore
         ? `<span class="sum-match-score">${escapeHtml(String(m.teamAScore))} – ${escapeHtml(String(m.teamBScore))}</span>`
         : `<span class="sum-match-vs">VS</span>`;
+
+      let winnerHtml = "";
+      if (hasScore) {
+        const aScore = Number(m.teamAScore);
+        const bScore = Number(m.teamBScore);
+        let winnerName;
+        if (aScore > bScore) winnerName = teamAName;
+        else if (bScore > aScore) winnerName = teamBName;
+        else winnerName = null;
+        winnerHtml = winnerName
+          ? `<span class="sum-match-winner">Winner: ${escapeHtml(winnerName)}</span>`
+          : `<span class="sum-match-winner sum-match-draw">Draw</span>`;
+      }
 
       const statusHtml = hasScore
         ? `<span class="sum-match-status sum-status-done">Completed</span>`
         : `<span class="sum-match-status sum-status-pending">Scheduled</span>`;
 
       return `
-        <div class="sum-match-card">
+        <div class="sum-match-card${hasScore ? " sum-match-card--done" : ""}">
           <div class="sum-match-date">${dateStr}</div>
           <div class="sum-match-teams">
-            <span>${escapeHtml(m.teamAName || `Team A`)}</span>
+            <span>${escapeHtml(teamAName)}</span>
             ${scoreHtml}
-            <span>${escapeHtml(m.teamBName || `Team B`)}</span>
+            <span>${escapeHtml(teamBName)}</span>
           </div>
-          ${statusHtml}
+          <div class="sum-match-right">
+            ${winnerHtml}
+            ${statusHtml}
+          </div>
         </div>
       `;
     }).join("");

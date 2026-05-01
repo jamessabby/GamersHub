@@ -37,6 +37,12 @@ These files are copy-ready prompts for Claude inside VS Code.
 - `11-match-stats-and-tournament-summary.md`
 - `12-deployment-domain-and-public-launch.md`
 - `13-codebase-roadmap-and-defense-prep.md`
+- `14-report-profile-completion.md`
+- `15-simplified-tournament-summary.md`
+- `16-demo-deployment-first.md`
+- `17-finalize-paymongo-payment-flow.md`
+- `18-simplify-match-stats-admin-ui.md`
+- `19-official-deployment-and-domain-later.md`
 
 ## Tip
 If Claude already has repo context loaded, you can use the shorter task-specific prompts directly.

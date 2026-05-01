@@ -2317,3 +2317,76 @@ body.has-friend-modal-open {
     width: 100%;
   }
 }
+
+/* ─── PROFILE COMPLETENESS BANNER ─────────────────── */
+.profile-complete-banner {
+  margin-bottom: 16px;
+  border-radius: 14px;
+  border: 1px solid rgba(167, 139, 250, 0.22);
+  background: rgba(109, 40, 217, 0.1);
+  padding: 12px 16px;
+}
+
+.profile-complete-banner.hidden {
+  display: none;
+}
+
+.pcb-inner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.pcb-icon {
+  flex-shrink: 0;
+  color: #a78bfa;
+}
+
+.pcb-text {
+  flex: 1;
+  font-size: 13px;
+  color: rgba(224, 222, 255, 0.88);
+  line-height: 1.5;
+  min-width: 0;
+}
+
+.pcb-link {
+  flex-shrink: 0;
+  font-size: 12px;
+  font-weight: 700;
+  font-family: "Syne", sans-serif;
+  color: #c4b5fd;
+  text-decoration: none;
+  border: 1px solid rgba(167, 139, 250, 0.3);
+  border-radius: 8px;
+  padding: 4px 12px;
+  background: rgba(139, 92, 246, 0.14);
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.pcb-link:hover {
+  background: rgba(139, 92, 246, 0.22);
+  border-color: rgba(167, 139, 250, 0.48);
+  color: #ede9fe;
+}
+
+.pcb-dismiss {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  color: rgba(167, 139, 250, 0.6);
+  cursor: pointer;
+  transition: color 0.2s ease, background 0.2s ease;
+}
+
+.pcb-dismiss:hover {
+  background: rgba(139, 92, 246, 0.14);
+  color: #c4b5fd;
+}

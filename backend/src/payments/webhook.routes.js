@@ -4,17 +4,26 @@ const tournamentRepo = require("../tournaments/tournament.repository");
 
 const router = express.Router();
 
-// Raw body needed for signature verification
+// Raw body needed for HMAC signature verification.
+// Use type:'*/*' so express.raw buffers regardless of Content-Type variant.
 router.post(
   "/paymongo",
-  express.raw({ type: "application/json" }),
+  express.raw({ type: "*/*" }),
   async (req, res) => {
     const sig = req.headers["paymongo-signature"] || "";
     const secret = process.env.PAYMONGO_WEBHOOK_SECRET || "";
+
+    // req.body is a Buffer when express.raw matched, otherwise undefined.
+    if (!req.body || !Buffer.isBuffer(req.body)) {
+      console.warn("PayMongo webhook: no raw body received (Content-Type mismatch or empty body).");
+      return res.status(400).json({ message: "Empty or unreadable body." });
+    }
+
     const rawBody = req.body.toString("utf8");
 
-    if (secret && !verifyWebhookSignature(rawBody, sig, secret)) {
-      return res.status(401).json({ message: "Invalid signature." });
+    if (secret && secret !== "whsec_REPLACE_ME" && !verifyWebhookSignature(rawBody, sig, secret)) {
+      console.warn("PayMongo webhook: signature mismatch.");
+      return res.status(401).json({ message: "Invalid webhook signature." });
     }
 
     let event;
@@ -25,18 +34,31 @@ router.post(
     }
 
     const eventType = event?.data?.attributes?.type;
+    console.log("PayMongo webhook received:", eventType);
 
     try {
       if (eventType === "link.payment.paid") {
-        // Payment link paid — link ID is the data object's own ID
+        // Payload structure: event.data.attributes.data.id = "link_xxx"
         const linkId = event?.data?.attributes?.data?.id;
-        if (linkId) await tournamentRepo.markRegistrationPaid(linkId);
+        if (linkId) {
+          console.log("PayMongo link.payment.paid — marking paid for linkId:", linkId);
+          await tournamentRepo.markRegistrationPaid(linkId);
+        } else {
+          console.warn("PayMongo link.payment.paid — no linkId found in payload:", JSON.stringify(event?.data?.attributes?.data));
+        }
 
       } else if (eventType === "payment.paid") {
-        // General payment paid — link ID is in source.resource_id
+        // Payload structure: event.data.attributes.data.attributes.source.resource_id = "link_xxx"
         const source = event?.data?.attributes?.data?.attributes?.source;
         const linkId = source?.type === "payment_link" ? source.resource_id : null;
-        if (linkId) await tournamentRepo.markRegistrationPaid(linkId);
+        if (linkId) {
+          console.log("PayMongo payment.paid — marking paid for linkId:", linkId);
+          await tournamentRepo.markRegistrationPaid(linkId);
+        } else {
+          console.log("PayMongo payment.paid — not from a payment_link, skipping.");
+        }
+      } else {
+        console.log("PayMongo webhook — unhandled event type, ignoring.");
       }
     } catch (err) {
       console.error("Webhook processing error:", err);

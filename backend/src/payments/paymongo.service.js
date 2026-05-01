@@ -45,11 +45,16 @@ async function createPaymentLink({ amount, description, remarks }) {
 function verifyWebhookSignature(rawBody, signatureHeader, secret) {
   if (!secret || !signatureHeader) return false;
   try {
-    const parts = Object.fromEntries(
-      signatureHeader.split(",").map((p) => p.split("="))
-    );
+    // Split on ',' first to get each key=value pair, then split each pair on the
+    // FIRST '=' only (using indexOf) so that values containing '=' are preserved.
+    const parts = {};
+    for (const segment of signatureHeader.split(",")) {
+      const idx = segment.indexOf("=");
+      if (idx === -1) continue;
+      parts[segment.slice(0, idx)] = segment.slice(idx + 1);
+    }
     const timestamp = parts.t;
-    const receivedSig = parts.te || parts.li;
+    const receivedSig = parts.te || parts.li; // te = test mode, li = live mode
     if (!timestamp || !receivedSig) return false;
 
     const payload = `${timestamp}.${rawBody}`;

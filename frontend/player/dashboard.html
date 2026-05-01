@@ -139,6 +139,23 @@
       </aside>
 
       <main class="main-feed dashboard-main-feed">
+        <div class="profile-complete-banner hidden" id="profileCompleteBanner" role="alert">
+          <div class="pcb-inner">
+            <svg class="pcb-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"/>
+              <line x1="12" y1="8" x2="12" y2="12"/>
+              <line x1="12" y1="16" x2="12.01" y2="16"/>
+            </svg>
+            <span class="pcb-text">Your profile is incomplete. Add your <strong id="pcbMissingFields">name, course, and year</strong> so admins can find you in reports.</span>
+            <a href="./profile.html" class="pcb-link">Complete profile</a>
+            <button class="pcb-dismiss" id="pcbDismiss" type="button" aria-label="Dismiss">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+
         <section class="create-post-card" aria-label="Create post">
           <div class="create-post-top">
             <div class="cp-avatar">

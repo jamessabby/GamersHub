@@ -1,5 +1,5 @@
 (() => {
-  const API_BASE = `http://${window.location.hostname || "localhost"}:3000`;
+  const API_BASE = window.GamersHubAuth?.apiBase || `http://${window.location.hostname || "localhost"}:3000`;
   const tournamentId =
     new URLSearchParams(window.location.search).get("tournament") || "1";
   const topNav = document.getElementById("topNav");
