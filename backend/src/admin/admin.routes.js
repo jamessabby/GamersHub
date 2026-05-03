@@ -23,6 +23,7 @@ router.post("/tournaments/:tournamentId/matches", requireRole("admin", "superadm
 router.put("/tournaments/:tournamentId/matches/:matchId", requireRole("admin", "superadmin"), tournamentController.updateMatch);
 router.get("/tournaments/:tournamentId/matches/:matchId/stats", requireRole("admin", "superadmin"), tournamentController.getMatchStats);
 router.put("/tournaments/:tournamentId/matches/:matchId/stats", requireRole("admin", "superadmin"), tournamentController.saveMatchStats);
+router.patch("/tournaments/:tournamentId/end", requireRole("admin", "superadmin"), tournamentController.endTournament);
 
 // Registration waitlist (admin)
 router.get("/registrations", requireRole("admin", "superadmin"), tournamentController.listRegistrations);

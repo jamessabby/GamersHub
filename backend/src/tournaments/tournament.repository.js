@@ -685,6 +685,34 @@ async function listParticipantsByRegistrationId(registrationId) {
   return result.recordset || [];
 }
 
+async function updateTournamentStatus({ tournamentId, status, isActive }) {
+  await poolConnect;
+
+  const result = await pool
+    .request()
+    .input("tournamentId", sql.Int, tournamentId)
+    .input("status", sql.NVarChar(50), status)
+    .input("isActive", sql.Bit, isActive ? 1 : 0)
+    .query(`
+      UPDATE dbo.TOURNAMENT
+      SET STATUS = @status, IS_ACTIVE = @isActive
+      WHERE TOURNAMENT_ID = @tournamentId;
+
+      SELECT
+        TOURNAMENT_ID AS tournamentId,
+        TITLE         AS title,
+        GAME_NAME     AS gameName,
+        CONVERT(varchar(10), START_DATE, 23) AS startDate,
+        CONVERT(varchar(10), END_DATE,   23) AS endDate,
+        STATUS        AS status,
+        CAST(IS_ACTIVE AS bit) AS isActive
+      FROM dbo.TOURNAMENT
+      WHERE TOURNAMENT_ID = @tournamentId;
+    `);
+
+  return result.recordset[0] || null;
+}
+
 module.exports = {
   listTournaments,
   findTournamentById,
@@ -711,4 +739,5 @@ module.exports = {
   listParticipantsByRegistrationId,
   updateRegistrationPaymongoLink,
   markRegistrationPaid,
+  updateTournamentStatus,
 };

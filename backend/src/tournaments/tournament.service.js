@@ -138,6 +138,24 @@ async function createTournament({ title, gameName, startDate, endDate, status, i
   };
 }
 
+async function endTournament(tournamentId) {
+  const tournament = await getTournamentOrThrow(tournamentId);
+
+  const updated = await tournamentRepo.updateTournamentStatus({
+    tournamentId: tournament.tournamentId,
+    status: "Completed",
+    isActive: false,
+  });
+
+  if (!updated) {
+    const error = new Error("Tournament could not be ended.");
+    error.statusCode = 500;
+    throw error;
+  }
+
+  return mapTournament(updated);
+}
+
 async function listTeamsByTournament(tournamentId) {
   const parsedId = parsePositiveInt(tournamentId);
   return tournamentRepo.listTeamsByTournamentId(parsedId);
@@ -417,6 +435,7 @@ function parsePositiveInt(value) {
 
 module.exports = {
   listTournaments,
+  endTournament,
   getScheduleByTournamentId,
   getLeaderboardByTournamentId,
   createTournament,

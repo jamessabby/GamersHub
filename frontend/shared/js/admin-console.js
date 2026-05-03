@@ -498,6 +498,8 @@
           if (s.includes("complet")) return "color:#94a3b8;";
           return "color:#f59e0b;";
         })();
+        const isCompleted = String(tournament.status || "").toLowerCase().includes("complet");
+        const summaryUrl = `${auth.buildAppUrl("player/tournament-summary.html")}?tournament=${tournament.tournamentId}`;
         return `
         <tr>
           <td>${escapeHtml(tournament.title)}</td>
@@ -505,6 +507,14 @@
           <td><span style="${statusColor}">${escapeHtml(tournament.status)}</span></td>
           <td>${tournament.teamCount ?? 0}</td>
           <td>${tournament.matchCount ?? 0}</td>
+          <td>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
+              ${!isCompleted
+                ? `<button class="console-btn warn" data-end-tournament-id="${tournament.tournamentId}" style="white-space:nowrap;">End Tournament</button>`
+                : '<span class="console-kicker" style="color:#4ade80;">✓ Completed</span>'}
+              <a class="console-btn" href="${escapeAttribute(summaryUrl)}" target="_blank" style="white-space:nowrap;">View Summary</a>
+            </div>
+          </td>
         </tr>
       `;
       })
@@ -568,7 +578,7 @@
         <h2>Tournament overview <span class="console-kicker">${tournaments.items.length} total</span></h2>
         <div class="console-table-wrap">
           <table class="console-table">
-            <thead><tr><th>Title</th><th>Game</th><th>Status</th><th>Teams</th><th>Matches</th></tr></thead>
+            <thead><tr><th>Title</th><th>Game</th><th>Status</th><th>Teams</th><th>Matches</th><th>Actions</th></tr></thead>
             <tbody>${tournamentRows || '<tr><td colspan="5" style="color:#64748b;">No tournaments yet.</td></tr>'}</tbody>
           </table>
         </div>
@@ -583,6 +593,26 @@
       </div>
     `;
 
+    content.querySelectorAll("[data-end-tournament-id]").forEach((button) => {
+      button.addEventListener("click", async () => {
+        const tournamentId = button.dataset.endTournamentId;
+        if (!confirm("End this tournament? Its status will be set to Completed and it will no longer be active.")) return;
+        button.disabled = true;
+        button.textContent = "Ending...";
+        try {
+          await fetchJson(`${auth.apiBase}/api/admin/tournaments/${tournamentId}/end`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+          });
+          setFlash("Tournament ended. Status set to Completed.");
+          await renderTournamentsPage();
+        } catch (error) {
+          setFlash(error.message || "Failed to end tournament.", true);
+          button.disabled = false;
+          button.textContent = "End Tournament";
+        }
+      });
+    });
 
     document.getElementById("publishStreamForm")?.addEventListener("submit", async (event) => {
       event.preventDefault();

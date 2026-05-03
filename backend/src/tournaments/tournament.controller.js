@@ -236,6 +236,15 @@ async function joinTournamentByCode(req, res) {
   }
 }
 
+async function endTournament(req, res) {
+  try {
+    const tournament = await tournamentService.endTournament(req.params.tournamentId);
+    res.status(200).json({ message: "Tournament ended successfully.", tournament });
+  } catch (error) {
+    res.status(error.statusCode || 500).json({ message: error.message || "Failed to end tournament." });
+  }
+}
+
 async function getTournamentSummary(req, res) {
   try {
     const [schedule, leaderboard] = await Promise.all([
@@ -254,6 +263,7 @@ async function getTournamentSummary(req, res) {
 
 module.exports = {
   listTournaments,
+  endTournament,
   getSchedule,
   getLeaderboard,
   createTournament,
