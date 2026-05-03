@@ -222,6 +222,19 @@ async function deleteEvent(req, res) {
   }
 }
 
+async function setStreamLiveStatus(req, res) {
+  try {
+    const payload = await adminService.setStreamLiveStatus({
+      actor: req.auth.user,
+      streamId: req.params.streamId,
+      isLive: req.body.isLive,
+    });
+    res.status(200).json(payload);
+  } catch (error) {
+    res.status(error.statusCode || 500).json({ message: error.message || "Failed to update stream live status." });
+  }
+}
+
 module.exports = {
   listUsers,
   updateUserRole,
@@ -239,4 +252,5 @@ module.exports = {
   createEvent,
   updateEvent,
   deleteEvent,
+  setStreamLiveStatus,
 };

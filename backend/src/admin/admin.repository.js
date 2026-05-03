@@ -104,6 +104,9 @@ async function listStreamsForModeration() {
       s.VIEW_COUNT AS viewerCount,
       s.TOURNAMENT_ID AS tournamentId,
       s.STARTED_AT AS startedAt,
+      s.PLAYBACK_URL AS playbackUrl,
+      s.THUMBNAIL_URL AS thumbnailUrl,
+      s.STREAM_DESCRIPTION AS description,
       (
         SELECT COUNT(*)
         FROM dbo.STREAM_REACTION sr
@@ -145,7 +148,7 @@ async function createStream({ userId, title, gameName, playbackUrl, thumbnailUrl
   const request = feedPool
     .request()
     .input("userId", feedSql.Int, userId)
-    .input("title", feedSql.NVarChar(255), title)
+    .input("title", feedSql.NVarChar(500), title)
     .input("gameName", feedSql.NVarChar(100), gameName || null)
     .input("playbackUrl", feedSql.NVarChar(feedSql.MAX), playbackUrl)
     .input("thumbnailUrl", feedSql.NVarChar(feedSql.MAX), thumbnailUrl || null)
@@ -234,7 +237,7 @@ async function updateStream({ streamId, title, gameName, playbackUrl, thumbnailU
   const result = await feedPool
     .request()
     .input("streamId", feedSql.Int, streamId)
-    .input("title", feedSql.NVarChar(255), title)
+    .input("title", feedSql.NVarChar(500), title)
     .input("gameName", feedSql.NVarChar(100), gameName || null)
     .input("playbackUrl", feedSql.NVarChar(feedSql.MAX), playbackUrl)
     .input("thumbnailUrl", feedSql.NVarChar(feedSql.MAX), thumbnailUrl || null)
@@ -244,14 +247,19 @@ async function updateStream({ streamId, title, gameName, playbackUrl, thumbnailU
     .input("tournamentId", feedSql.Int, tournamentId || null).query(`
       UPDATE dbo.STREAM
       SET
-        STREAM_TITLE      = @title,
-        GAME_NAME         = @gameName,
-        PLAYBACK_URL      = @playbackUrl,
-        THUMBNAIL_URL     = @thumbnailUrl,
+        STREAM_TITLE       = @title,
+        GAME_NAME          = @gameName,
+        PLAYBACK_URL       = @playbackUrl,
+        THUMBNAIL_URL      = @thumbnailUrl,
         STREAM_DESCRIPTION = @description,
-        IS_LIVE           = @isLive,
-        IS_VISIBLE        = @isVisible,
-        TOURNAMENT_ID     = @tournamentId
+        IS_LIVE            = @isLive,
+        IS_VISIBLE         = @isVisible,
+        TOURNAMENT_ID      = @tournamentId,
+        ENDED_AT = CASE
+          WHEN @isLive = 0 AND ENDED_AT IS NULL THEN SYSDATETIME()
+          WHEN @isLive = 1 THEN NULL
+          ELSE ENDED_AT
+        END
       OUTPUT
         INSERTED.STREAM_ID AS streamId,
         INSERTED.USER_ID AS userId,
@@ -262,7 +270,8 @@ async function updateStream({ streamId, title, gameName, playbackUrl, thumbnailU
         INSERTED.PLAYBACK_URL AS playbackUrl,
         INSERTED.THUMBNAIL_URL AS thumbnailUrl,
         INSERTED.STREAM_DESCRIPTION AS description,
-        INSERTED.TOURNAMENT_ID AS tournamentId
+        INSERTED.TOURNAMENT_ID AS tournamentId,
+        INSERTED.ENDED_AT AS endedAt
       WHERE STREAM_ID = @streamId
     `);
 
@@ -389,6 +398,32 @@ async function deleteEvent(eventId) {
   return result.rowsAffected[0] > 0;
 }
 
+async function setStreamLiveStatus({ streamId, isLive }) {
+  await feedPoolConnect;
+
+  const result = await feedPool
+    .request()
+    .input("streamId", feedSql.Int, streamId)
+    .input("isLive", feedSql.Bit, isLive ? 1 : 0)
+    .query(`
+      UPDATE dbo.STREAM
+      SET
+        IS_LIVE  = @isLive,
+        ENDED_AT = CASE
+          WHEN @isLive = 0 AND ENDED_AT IS NULL THEN SYSDATETIME()
+          WHEN @isLive = 1 THEN NULL
+          ELSE ENDED_AT
+        END
+      OUTPUT
+        INSERTED.STREAM_ID AS streamId,
+        CAST(INSERTED.IS_LIVE AS bit) AS isLive,
+        INSERTED.ENDED_AT AS endedAt
+      WHERE STREAM_ID = @streamId
+    `);
+
+  return result.recordset[0] || null;
+}
+
 module.exports = {
   listUserProfiles,
   getAnalyticsCounts,
@@ -396,6 +431,7 @@ module.exports = {
   updateStreamVisibility,
   createStream,
   updateStream,
+  setStreamLiveStatus,
   getSummaryReportCounts,
   getTopGames,
   listAllEvents,

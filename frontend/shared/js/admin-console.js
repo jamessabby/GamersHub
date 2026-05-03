@@ -1002,6 +1002,9 @@
         <td>${stream.isVisible ? "Visible" : '<span style="color:#f87171;">Hidden</span>'}</td>
         <td>
           <div style="display:flex;gap:5px;flex-wrap:wrap;">
+            <button class="console-btn ${stream.isLive ? "warn" : "primary"}" data-live-toggle-id="${stream.streamId}" data-next-live="${stream.isLive ? "false" : "true"}">
+              ${stream.isLive ? "End Stream" : "Go Live"}
+            </button>
             <button class="console-btn"
               data-edit-stream-id="${stream.streamId}"
               data-edit-title="${escapeAttribute(stream.title || "")}"
@@ -1157,6 +1160,27 @@
         submitBtn.disabled = false;
         submitBtn.textContent = "Publish Stream";
       }
+    });
+
+    content.querySelectorAll("[data-live-toggle-id]").forEach((button) => {
+      button.addEventListener("click", async () => {
+        const streamId = button.dataset.liveToggleId;
+        const isLive = button.dataset.nextLive === "true";
+        button.disabled = true;
+        button.textContent = "Saving...";
+        try {
+          await fetchJson(`${auth.apiBase}/api/admin/streams/${streamId}/live-status`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ isLive }),
+          });
+          setFlash(isLive ? "Stream marked as live." : "Stream ended.");
+          await renderStreamsPage();
+        } catch (error) {
+          setFlash(error.message || "Failed to update stream live status.", true);
+          button.disabled = false;
+        }
+      });
     });
 
     content.querySelectorAll("[data-stream-id]").forEach((button) => {

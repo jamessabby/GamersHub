@@ -36,6 +36,7 @@ router.post("/streams/upload-thumbnail", requireRole("admin", "superadmin"), adm
 router.post("/streams", requireRole("admin", "superadmin"), adminController.publishStream);
 router.put("/streams/:streamId", requireRole("admin", "superadmin"), adminController.updateStream);
 router.put("/streams/:streamId/moderation", requireRole("admin", "superadmin"), adminController.moderateStream);
+router.patch("/streams/:streamId/live-status", requireRole("admin", "superadmin"), adminController.setStreamLiveStatus);
 
 // Event management (admin)
 router.get("/events", requireRole("admin", "superadmin"), adminController.listEvents);

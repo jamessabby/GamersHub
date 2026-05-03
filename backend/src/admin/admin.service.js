@@ -415,6 +415,30 @@ async function deleteEvent({ eventId }) {
   return { message: "Event deleted." };
 }
 
+async function setStreamLiveStatus({ actor, streamId, isLive }) {
+  const updated = await adminRepo.setStreamLiveStatus({
+    streamId: Number(streamId),
+    isLive: Boolean(isLive),
+  });
+
+  if (!updated) {
+    const error = new Error("Stream not found.");
+    error.statusCode = 404;
+    throw error;
+  }
+
+  await auditService.logAuditEvent({
+    actorUserId: actor.userId,
+    actorRole: actor.userRole,
+    actionType: "admin.stream_updated",
+    entityType: "stream",
+    entityId: updated.streamId,
+    details: { isLive: updated.isLive },
+  });
+
+  return updated;
+}
+
 module.exports = {
   listUsers,
   updateUserRole,
@@ -424,6 +448,7 @@ module.exports = {
   moderateStream,
   publishStream,
   updateStream,
+  setStreamLiveStatus,
   getReportsSummary,
   buildCsvReport,
   listAllEvents,
