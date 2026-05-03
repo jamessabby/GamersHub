@@ -80,8 +80,13 @@ window.GAMERSHUB_API_BASE = "https://reputable-amigo-thermos.ngrok-free.dev"; //
       return null;
     }
 
-    const normalizedRoles = Array.isArray(roles) ? roles.map((role) => String(role).toLowerCase()) : [];
-    if (!normalizedRoles.length || normalizedRoles.includes(String(session.role || "").toLowerCase())) {
+    const normalizedRoles = Array.isArray(roles)
+      ? roles.map((role) => String(role).toLowerCase())
+      : [];
+    if (
+      !normalizedRoles.length ||
+      normalizedRoles.includes(String(session.role || "").toLowerCase())
+    ) {
       return session;
     }
 
@@ -130,7 +135,13 @@ window.GAMERSHUB_API_BASE = "https://reputable-amigo-thermos.ngrok-free.dev"; //
 
     const normalizedPath = String(relativePath).replace(/^\/+/, "");
     const basePath = getFrontendBasePath();
-    if (basePath || normalizedPath.startsWith("auth/") || normalizedPath.startsWith("player/") || normalizedPath.startsWith("admin/") || normalizedPath.startsWith("superadmin/")) {
+    if (
+      basePath ||
+      normalizedPath.startsWith("auth/") ||
+      normalizedPath.startsWith("player/") ||
+      normalizedPath.startsWith("admin/") ||
+      normalizedPath.startsWith("superadmin/")
+    ) {
       return `${window.location.origin}${basePath}/${normalizedPath}`;
     }
 
@@ -148,7 +159,9 @@ window.GAMERSHUB_API_BASE = "https://reputable-amigo-thermos.ngrok-free.dev"; //
       return pathname.slice(0, frontendIndex + "/frontend".length);
     }
 
-    const sectionMatch = pathname.match(/^(.*)\/(auth|player|admin|superadmin)(?:\/.*)?$/);
+    const sectionMatch = pathname.match(
+      /^(.*)\/(auth|player|admin|superadmin)(?:\/.*)?$/,
+    );
     if (sectionMatch) {
       return sectionMatch[1] || "";
     }
@@ -200,7 +213,10 @@ window.GAMERSHUB_API_BASE = "https://reputable-amigo-thermos.ngrok-free.dev"; //
   }
 
   function setPendingMfa(pendingState) {
-    sessionStorage.setItem(PENDING_MFA_KEY, JSON.stringify(pendingState || null));
+    sessionStorage.setItem(
+      PENDING_MFA_KEY,
+      JSON.stringify(pendingState || null),
+    );
   }
 
   function getPendingMfa() {
@@ -216,7 +232,9 @@ window.GAMERSHUB_API_BASE = "https://reputable-amigo-thermos.ngrok-free.dev"; //
   }
 
   function resolveApiBase() {
-    const queryOverride = new URLSearchParams(window.location.search).get("apiBase");
+    const queryOverride = new URLSearchParams(window.location.search).get(
+      "apiBase",
+    );
     const normalizedQueryOverride = normalizeApiBase(queryOverride);
     if (normalizedQueryOverride) {
       try {
@@ -233,7 +251,9 @@ window.GAMERSHUB_API_BASE = "https://reputable-amigo-thermos.ngrok-free.dev"; //
     }
 
     try {
-      const storedOverride = normalizeApiBase(localStorage.getItem(API_BASE_KEY));
+      const storedOverride = normalizeApiBase(
+        localStorage.getItem(API_BASE_KEY),
+      );
       if (storedOverride) {
         return storedOverride;
       }
@@ -293,20 +313,24 @@ window.GAMERSHUB_API_BASE = "https://reputable-amigo-thermos.ngrok-free.dev"; //
     const originalFetch = window.fetch.bind(window);
     window.fetch = (input, init = {}) => {
       const requestUrl = typeof input === "string" ? input : input?.url || "";
-      const resolvedUrl = requestUrl ? new URL(requestUrl, window.location.href) : null;
+      const resolvedUrl = requestUrl
+        ? new URL(requestUrl, window.location.href)
+        : null;
       const isApiRequest = Boolean(
-        resolvedUrl
-        && (
-          resolvedUrl.origin === new URL(API_BASE).origin
-          || resolvedUrl.pathname.startsWith("/api/")
-        ),
+        resolvedUrl &&
+          (resolvedUrl.origin === new URL(API_BASE).origin ||
+            resolvedUrl.pathname.startsWith("/api/")),
       );
 
       if (!isApiRequest) {
         return originalFetch(input, init);
       }
 
-      const headers = new Headers(init.headers || (typeof input !== "string" ? input.headers : undefined) || {});
+      const headers = new Headers(
+        init.headers ||
+          (typeof input !== "string" ? input.headers : undefined) ||
+          {},
+      );
       if (!headers.has("ngrok-skip-browser-warning")) {
         headers.set("ngrok-skip-browser-warning", "true");
       }
@@ -332,19 +356,19 @@ window.GAMERSHUB_API_BASE = "https://reputable-amigo-thermos.ngrok-free.dev"; //
     style.id = "gh-toast-styles";
     style.textContent = [
       "#gh-toast-container{",
-        "position:fixed;bottom:24px;right:24px;",
-        "display:flex;flex-direction:column;gap:10px;",
-        "z-index:9999;pointer-events:none;",
+      "position:fixed;bottom:24px;right:24px;",
+      "display:flex;flex-direction:column;gap:10px;",
+      "z-index:9999;pointer-events:none;",
       "}",
       ".gh-toast{",
-        "display:flex;align-items:flex-start;gap:10px;",
-        "min-width:260px;max-width:380px;",
-        "padding:12px 16px;border-radius:12px;",
-        "font-family:inherit;font-size:13.5px;line-height:1.45;",
-        "color:#e2e8f0;pointer-events:auto;",
-        "box-shadow:0 8px 24px rgba(0,0,0,0.45);",
-        "animation:gh-toast-in 0.22s ease forwards;",
-        "border:1px solid rgba(255,255,255,0.07);",
+      "display:flex;align-items:flex-start;gap:10px;",
+      "min-width:260px;max-width:380px;",
+      "padding:12px 16px;border-radius:12px;",
+      "font-family:inherit;font-size:13.5px;line-height:1.45;",
+      "color:#e2e8f0;pointer-events:auto;",
+      "box-shadow:0 8px 24px rgba(0,0,0,0.45);",
+      "animation:gh-toast-in 0.22s ease forwards;",
+      "border:1px solid rgba(255,255,255,0.07);",
       "}",
       ".gh-toast.is-hiding{animation:gh-toast-out 0.2s ease forwards;}",
       ".gh-toast--error{background:rgba(220,38,38,0.18);border-color:rgba(220,38,38,0.35);}",
@@ -356,17 +380,17 @@ window.GAMERSHUB_API_BASE = "https://reputable-amigo-thermos.ngrok-free.dev"; //
       ".gh-toast__title{font-weight:600;margin-bottom:2px;}",
       ".gh-toast__msg{opacity:0.85;}",
       ".gh-toast__close{",
-        "flex-shrink:0;background:none;border:none;",
-        "color:rgba(226,232,240,0.5);cursor:pointer;",
-        "font-size:16px;line-height:1;padding:0;margin-top:1px;",
-        "transition:color 0.15s;",
+      "flex-shrink:0;background:none;border:none;",
+      "color:rgba(226,232,240,0.5);cursor:pointer;",
+      "font-size:16px;line-height:1;padding:0;margin-top:1px;",
+      "transition:color 0.15s;",
       "}",
       ".gh-toast__close:hover{color:#e2e8f0;}",
       "@keyframes gh-toast-in{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:translateX(0)}}",
       "@keyframes gh-toast-out{from{opacity:1;transform:translateX(0)}to{opacity:0;transform:translateX(20px)}}",
       "@media(max-width:480px){",
-        "#gh-toast-container{left:12px;right:12px;bottom:16px;}",
-        ".gh-toast{min-width:0;max-width:100%;}",
+      "#gh-toast-container{left:12px;right:12px;bottom:16px;}",
+      ".gh-toast{min-width:0;max-width:100%;}",
       "}",
     ].join("");
     document.head.appendChild(style);
@@ -374,7 +398,9 @@ window.GAMERSHUB_API_BASE = "https://reputable-amigo-thermos.ngrok-free.dev"; //
 
   function toast(message, type, options) {
     if (typeof message !== "string") return;
-    type = ["error", "success", "warning", "info"].includes(type) ? type : "info";
+    type = ["error", "success", "warning", "info"].includes(type)
+      ? type
+      : "info";
     const opts = Object.assign({ title: "", duration: 4000 }, options || {});
 
     let container = document.getElementById("gh-toast-container");
@@ -385,7 +411,12 @@ window.GAMERSHUB_API_BASE = "https://reputable-amigo-thermos.ngrok-free.dev"; //
     }
 
     const icons = { error: "✕", success: "✓", warning: "⚠", info: "ℹ" };
-    const titles = { error: "Error", success: "Success", warning: "Warning", info: "Info" };
+    const titles = {
+      error: "Error",
+      success: "Success",
+      warning: "Warning",
+      info: "Info",
+    };
 
     const el = document.createElement("div");
     el.className = `gh-toast gh-toast--${type}`;
@@ -393,8 +424,8 @@ window.GAMERSHUB_API_BASE = "https://reputable-amigo-thermos.ngrok-free.dev"; //
     el.innerHTML =
       `<span class="gh-toast__icon">${icons[type]}</span>` +
       `<div class="gh-toast__body">` +
-        `<div class="gh-toast__title">${opts.title || titles[type]}</div>` +
-        `<div class="gh-toast__msg">${message}</div>` +
+      `<div class="gh-toast__title">${opts.title || titles[type]}</div>` +
+      `<div class="gh-toast__msg">${message}</div>` +
       `</div>` +
       `<button class="gh-toast__close" aria-label="Dismiss">×</button>`;
 
