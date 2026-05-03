@@ -20,6 +20,13 @@ document.addEventListener("DOMContentLoaded", function () {
     navLogin.addEventListener("click", redirectToLogin);
   }
 
+  const btnLearnMore = document.getElementById("btn-learn-more");
+  if (btnLearnMore) {
+    btnLearnMore.addEventListener("click", function () {
+      window.location.href = new URL("./learn-more.html", window.location.href).href;
+    });
+  }
+
   const navbar = document.querySelector(".gh-navbar");
   if (navbar) {
     window.addEventListener(
