@@ -3,8 +3,18 @@ const authUserRepo = require("../users/user.repository");
 const profileRepo = require("../users/profile.repository");
 const auditService = require("../audit/audit.service");
 
-async function listFeed({ limit } = {}) {
-  const posts = await feedRepo.listPosts({ limit });
+async function listFeed({ viewerUserId, limit } = {}) {
+  const parsedViewerUserId = Number(viewerUserId);
+  if (!Number.isInteger(parsedViewerUserId) || parsedViewerUserId <= 0) {
+    const error = new Error("Authentication required to load feed.");
+    error.statusCode = 401;
+    throw error;
+  }
+
+  const posts = await feedRepo.listFeedForUser({
+    viewerUserId: parsedViewerUserId,
+    limit,
+  });
   const authors = await loadAuthors(posts.map((post) => post.userId));
   const validPosts = posts.filter((post) => authors.has(post.userId));
 

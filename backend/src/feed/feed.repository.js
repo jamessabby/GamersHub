@@ -92,8 +92,45 @@ async function deletePostById(postId) {
   return result.recordset[0] || null;
 }
 
+async function listFeedForUser({ viewerUserId, limit = 20 } = {}) {
+  await poolConnect;
+
+  const safeLimit = Number.isInteger(limit) && limit > 0 ? Math.min(limit, 50) : 20;
+
+  const result = await pool
+    .request()
+    .input("viewerUserId", sql.Int, viewerUserId)
+    .input("limit", sql.Int, safeLimit)
+    .query(`
+      SELECT TOP (@limit)
+        p.POST_ID  AS postId,
+        p.USER_ID  AS userId,
+        p.CONTENT  AS content,
+        p.MEDIA_URL  AS mediaUrl,
+        p.MEDIA_TYPE AS mediaType,
+        p.LIKE_COUNT AS likeCount,
+        p.CREATED_AT AS createdAt
+      FROM dbo.POST p
+      WHERE p.USER_ID = @viewerUserId
+         OR p.USER_ID IN (
+           SELECT
+             CASE
+               WHEN f.USERA_ID = @viewerUserId THEN f.USERB_ID
+               ELSE f.USERA_ID
+             END
+           FROM GAMERSHUB_USER.dbo.FRIENDS f
+           WHERE (f.USERA_ID = @viewerUserId OR f.USERB_ID = @viewerUserId)
+             AND f.STATUS = 'accepted'
+         )
+      ORDER BY p.CREATED_AT DESC, p.POST_ID DESC
+    `);
+
+  return result.recordset;
+}
+
 module.exports = {
   listPosts,
+  listFeedForUser,
   createPost,
   findPostById,
   deletePostById,

@@ -4,12 +4,14 @@ const fs = require("fs");
 async function getFeed(req, res) {
   try {
     const data = await feedService.listFeed({
-      userId: req.query.userId || null,
+      viewerUserId: req.auth.user.userId,
       limit: req.query.limit ? Number(req.query.limit) : undefined,
     });
     res.status(200).json(data);
   } catch (error) {
-    res.status(500).json({ message: error.message || "Failed to load feed." });
+    res
+      .status(error.statusCode || 500)
+      .json({ message: error.message || "Failed to load feed." });
   }
 }
 
