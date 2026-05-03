@@ -29,7 +29,7 @@ async function ensureProfileForUser({ userId, username, email }) {
   return profile;
 }
 
-async function getProfileByUserId(userId) {
+async function getProfileByUserId(userId, { viewerUserId } = {}) {
   const parsedUserId = Number(userId);
   if (!Number.isInteger(parsedUserId) || parsedUserId < 1) {
     const error = new Error("A valid userId is required.");
@@ -50,7 +50,9 @@ async function getProfileByUserId(userId) {
     email: authUser.email,
   });
 
-  return mapProfileResponse(authUser, profile);
+  return Number(viewerUserId) === parsedUserId
+    ? mapProfileResponse(authUser, profile)
+    : mapPublicProfileResponse(authUser, profile);
 }
 
 async function updateProfileByUserId(userId, payload) {
@@ -358,6 +360,7 @@ function mapProfileResponse(authUser, profile) {
   const primaryGames = splitPrimaryGames(profile?.primaryGame);
 
   return {
+    isOwnProfile: true,
     userId: authUser.userId,
     publicId: authUser.publicId || null,
     username: authUser.username,
@@ -369,6 +372,26 @@ function mapProfileResponse(authUser, profile) {
     dateOfBirth: profile?.dateOfBirth || "",
     displayName: profile?.displayName || authUser.username,
     phoneNumber: profile?.phoneNumber || "",
+    school: profile?.school || "",
+    courseYear: profile?.courseYear || "",
+    primaryGames,
+    primaryGame: primaryGames[0] || "",
+    schoolTag: buildSchoolTag(profile?.school),
+  };
+}
+
+function mapPublicProfileResponse(authUser, profile) {
+  const primaryGames = splitPrimaryGames(profile?.primaryGame);
+
+  return {
+    isOwnProfile: false,
+    userId: authUser.userId,
+    publicId: authUser.publicId || null,
+    username: authUser.username,
+    role: authUser.userRole,
+    firstName: profile?.firstName || "",
+    lastName: profile?.lastName || "",
+    displayName: profile?.displayName || authUser.username,
     school: profile?.school || "",
     courseYear: profile?.courseYear || "",
     primaryGames,

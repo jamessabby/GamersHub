@@ -1861,6 +1861,17 @@ body::before {
   border-color: rgba(139, 92, 246, 0.12);
 }
 
+.friend-item-profile-link {
+  cursor: pointer;
+}
+
+.friend-item-profile-link:hover,
+.friend-item-profile-link:focus-visible {
+  background: rgba(139, 92, 246, 0.12);
+  border-color: rgba(167, 139, 250, 0.28);
+  outline: none;
+}
+
 .friend-item-empty {
   display: block;
   padding: 16px 14px;

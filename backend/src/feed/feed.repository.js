@@ -128,9 +128,35 @@ async function listFeedForUser({ viewerUserId, limit = 20 } = {}) {
   return result.recordset;
 }
 
+async function listPostsByUserId({ userId, limit = 20 } = {}) {
+  await poolConnect;
+
+  const safeLimit = Number.isInteger(limit) && limit > 0 ? Math.min(limit, 50) : 20;
+  const result = await pool
+    .request()
+    .input("userId", sql.Int, userId)
+    .input("limit", sql.Int, safeLimit)
+    .query(`
+      SELECT TOP (@limit)
+        POST_ID AS postId,
+        USER_ID AS userId,
+        CONTENT AS content,
+        MEDIA_URL AS mediaUrl,
+        MEDIA_TYPE AS mediaType,
+        LIKE_COUNT AS likeCount,
+        CREATED_AT AS createdAt
+      FROM dbo.POST
+      WHERE USER_ID = @userId
+      ORDER BY CREATED_AT DESC, POST_ID DESC
+    `);
+
+  return result.recordset;
+}
+
 module.exports = {
   listPosts,
   listFeedForUser,
+  listPostsByUserId,
   createPost,
   findPostById,
   deletePostById,

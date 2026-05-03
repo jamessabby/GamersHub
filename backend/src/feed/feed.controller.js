@@ -15,6 +15,21 @@ async function getFeed(req, res) {
   }
 }
 
+async function getUserPosts(req, res) {
+  try {
+    const data = await feedService.listUserPosts({
+      viewerUserId: req.auth.user.userId,
+      userId: req.params.userId,
+      limit: req.query.limit ? Number(req.query.limit) : undefined,
+    });
+    res.status(200).json(data);
+  } catch (error) {
+    res
+      .status(error.statusCode || 500)
+      .json({ message: error.message || "Failed to load profile posts." });
+  }
+}
+
 async function createPost(req, res) {
   try {
     const { content } = req.body;
@@ -57,6 +72,7 @@ async function deletePost(req, res) {
 
 module.exports = {
   getFeed,
+  getUserPosts,
   createPost,
   deletePost,
 };

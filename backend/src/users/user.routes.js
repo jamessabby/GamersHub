@@ -7,7 +7,7 @@ const {
 } = require("../middleware/auth.middleware");
 
 router.get("/search", requireAuth, userController.searchPlayers);
-router.get("/profile/:userId", userController.getProfile);
+router.get("/profile/:userId", requireAuth, userController.getProfile);
 router.put("/profile/:userId", requireAuth, ensureScopedUserAccess("userId"), userController.updateProfile);
 router.get("/:userId/friends", requireAuth, ensureScopedUserAccess("userId"), userController.getFriends);
 router.post("/:userId/friends/requests", requireAuth, ensureScopedUserAccess("userId"), userController.createFriendRequest);

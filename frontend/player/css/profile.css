@@ -546,6 +546,64 @@
 }
 
 /* ─── ACTION BAR (edit mode) ────────────────────── */
+.profile-posts-card {
+  background: rgba(18, 16, 36, 0.65);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(139, 92, 246, 0.13);
+  border-radius: 20px;
+  padding: 24px 32px;
+  margin-bottom: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
+}
+
+.profile-posts-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.profile-posts-subtitle {
+  margin: 6px 0 0;
+  color: rgba(192, 196, 216, 0.56);
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.profile-posts-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.profile-post-card {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+}
+
+.profile-posts-empty {
+  min-height: 88px;
+  display: grid;
+  place-items: center;
+  padding: 18px;
+  border: 1px dashed rgba(139, 92, 246, 0.22);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.025);
+  color: rgba(224, 222, 255, 0.66);
+  font-size: 13px;
+  text-align: center;
+}
+
+.profile-posts-empty.is-error {
+  border-color: rgba(248, 113, 113, 0.28);
+  color: #fca5a5;
+}
+
 .profile-action-bar {
   display: flex;
   align-items: center;

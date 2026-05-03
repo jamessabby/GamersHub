@@ -24,6 +24,43 @@ async function listFeed({ viewerUserId, limit } = {}) {
   };
 }
 
+async function listUserPosts({ viewerUserId, userId, limit } = {}) {
+  const parsedViewerUserId = Number(viewerUserId);
+  const parsedUserId = Number(userId);
+  if (!Number.isInteger(parsedViewerUserId) || parsedViewerUserId <= 0) {
+    const error = new Error("Authentication required to load profile posts.");
+    error.statusCode = 401;
+    throw error;
+  }
+  if (!Number.isInteger(parsedUserId) || parsedUserId <= 0) {
+    const error = new Error("A valid userId is required.");
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const [viewer, targetUser] = await Promise.all([
+    authUserRepo.findById(parsedViewerUserId),
+    authUserRepo.findById(parsedUserId),
+  ]);
+  if (!viewer || !targetUser) {
+    const error = new Error("User not found.");
+    error.statusCode = 404;
+    throw error;
+  }
+
+  const posts = await feedRepo.listPostsByUserId({
+    userId: parsedUserId,
+    limit,
+  });
+  const authors = await loadAuthors(posts.map((post) => post.userId));
+  const validPosts = posts.filter((post) => authors.has(post.userId));
+
+  return {
+    items: validPosts.map((post) => mapFeedItem(post, authors)),
+    total: validPosts.length,
+  };
+}
+
 async function createPost(payload) {
   const userId = Number(payload.userId);
   const content = normalizeText(payload.content);
@@ -289,6 +326,7 @@ function formatRelativeTime(value) {
 
 module.exports = {
   listFeed,
+  listUserPosts,
   createPost,
   deletePost,
 };

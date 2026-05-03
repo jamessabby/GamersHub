@@ -103,6 +103,24 @@
     const button = event.target.closest("[data-add-friend]");
     if (button) {
       void sendFriendRequest(button.dataset.addFriend);
+      return;
+    }
+
+    const profileTarget = event.target.closest("[data-profile-user-id]");
+    if (profileTarget) {
+      window.location.href = `../player/profile.html?userId=${encodeURIComponent(profileTarget.dataset.profileUserId)}`;
+    }
+  });
+
+  friendSearchResults?.addEventListener("keydown", (event) => {
+    if (!["Enter", " "].includes(event.key)) {
+      return;
+    }
+
+    const profileTarget = event.target.closest("[data-profile-user-id]");
+    if (profileTarget) {
+      event.preventDefault();
+      window.location.href = `../player/profile.html?userId=${encodeURIComponent(profileTarget.dataset.profileUserId)}`;
     }
   });
 
@@ -1100,7 +1118,7 @@
       : "";
 
     return `
-      <li class="friend-item friend-item-static">
+      <li class="friend-item friend-item-profile-link" data-profile-user-id="${escapeAttribute(String(player.userId))}" tabindex="0" role="link" aria-label="View ${escapeAttribute(player.displayName)} profile">
         <div class="friend-avatar">
           <img src="../assets/icons/player-dashboard-icons/user-profile.png" alt="${escapeAttribute(player.displayName)}" />
         </div>

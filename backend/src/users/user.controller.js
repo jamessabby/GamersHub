@@ -2,7 +2,9 @@ const userService = require("./user.service");
 
 async function getProfile(req, res) {
   try {
-    const profile = await userService.getProfileByUserId(req.params.userId);
+    const profile = await userService.getProfileByUserId(req.params.userId, {
+      viewerUserId: req.auth.user.userId,
+    });
     res.status(200).json(profile);
   } catch (error) {
     res

@@ -59,6 +59,12 @@
   const profilePublicBanner = document.getElementById("profilePublicBanner");
   const editToggleBtn = document.getElementById("editToggleBtn");
   const editToggleLabel = document.getElementById("editToggleLabel");
+  const privateProfileFields = [
+    document.getElementById("viewDob")?.closest(".pf-info-item"),
+    document.getElementById("viewEmail")?.closest(".pf-info-item"),
+    document.getElementById("viewPhone")?.closest(".pf-info-item"),
+    document.getElementById("viewStudentId")?.closest(".pf-info-item"),
+  ].filter(Boolean);
 
   const avatarWrap = document.getElementById("avatarWrap");
   const avatarImg = document.getElementById("avatarImg");
@@ -125,6 +131,9 @@
   const socialModalLabel = document.getElementById("socialModalLabel");
   const modalIcon = document.getElementById("modalIcon");
   const socialModalSuccess = document.getElementById("socialModalSuccess");
+  const profilePostsTitle = document.getElementById("profilePostsTitle");
+  const profilePostsSubtitle = document.getElementById("profilePostsSubtitle");
+  const profilePostsList = document.getElementById("profilePostsList");
 
   const PLATFORM_META = {
     instagram: {
@@ -264,6 +273,7 @@
   applyProfileMode();
   renderView();
   void hydrateProfile();
+  void hydrateProfilePosts();
 
   async function hydrateProfile() {
     if (!viewedUserId) {
@@ -354,12 +364,146 @@
       socialCard.classList.toggle("hidden", isPublicProfile);
     }
 
+    privateProfileFields.forEach((node) => {
+      node.classList.toggle("hidden", isPublicProfile);
+    });
+
+    if (profilePostsTitle) {
+      profilePostsTitle.textContent = isPublicProfile
+        ? `${state.displayName || state.username || "Player"}'s Posts`
+        : "Your Posts";
+    }
+
+    if (profilePostsSubtitle) {
+      profilePostsSubtitle.textContent = isPublicProfile
+        ? "Public posts shared by this player."
+        : "Recent posts you have shared on GamersHub.";
+    }
+
     if (isPublicProfile) {
       cancelEdit();
       document.title = `GamersHub - ${state.displayName || state.username || "Player"}`;
     } else {
       document.title = "GamersHub - Profile";
     }
+  }
+
+  async function hydrateProfilePosts() {
+    if (!viewedUserId || !profilePostsList) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`${API_BASE}/api/feed/users/${viewedUserId}/posts?limit=12`);
+      const payload = await response.json();
+      if (!response.ok) {
+        throw new Error(payload.message || "Failed to load profile posts.");
+      }
+
+      renderProfilePosts(payload.items || []);
+    } catch (error) {
+      console.error("Profile posts hydration failed:", error);
+      profilePostsList.innerHTML = `
+        <div class="profile-posts-empty is-error">
+          Could not load posts right now.
+        </div>
+      `;
+    }
+  }
+
+  function renderProfilePosts(items) {
+    if (!profilePostsList) {
+      return;
+    }
+
+    if (!items.length) {
+      profilePostsList.innerHTML = `
+        <div class="profile-posts-empty">
+          No posts to show yet.
+        </div>
+      `;
+      return;
+    }
+
+    profilePostsList.innerHTML = items.map(renderProfilePost).join("");
+  }
+
+  function renderProfilePost(post) {
+    const schoolTag = post.author?.schoolTag
+      ? `<span class="post-school-tag">${escapeHtml(post.author.schoolTag)}</span>`
+      : "";
+
+    return `
+      <article class="post-card profile-post-card">
+        <div class="post-header">
+          <div class="post-avatar">
+            <img
+              src="../assets/icons/player-dashboard-icons/user-profile.png"
+              alt="${escapeAttribute(post.author?.displayName || "Player")}"
+            />
+          </div>
+          <div class="post-meta">
+            <div class="post-author-row">
+              <span class="post-author">${escapeHtml(post.author?.displayName || "Player")}</span>
+              ${schoolTag}
+            </div>
+            <div class="post-time">
+              <img class="privacy-icon" src="../assets/icons/player-dashboard-icons/privacy-public.png" alt="" />
+              <span>${escapeHtml(post.createdLabel || "Recently posted")}</span>
+              <span>&bull;</span>
+              <span>@${escapeHtml(post.author?.username || "user")}</span>
+            </div>
+          </div>
+        </div>
+        <div class="post-body">
+          ${post.content ? `<p class="post-text">${escapeHtml(post.content).replace(/\n/g, "<br />")}</p>` : ""}
+          ${renderProfilePostMedia(post)}
+        </div>
+      </article>
+    `;
+  }
+
+  function renderProfilePostMedia(post) {
+    if (!post.mediaUrl) {
+      return "";
+    }
+
+    const mediaSrc = normalizeMediaSource(post.mediaUrl);
+    if (post.mediaType === "image") {
+      return `
+        <div class="post-image-wrap">
+          <img class="post-image" src="${escapeAttribute(mediaSrc)}" alt="Post attachment" />
+        </div>
+      `;
+    }
+
+    if (post.mediaType === "video") {
+      return `
+        <div class="post-video-wrap">
+          <video class="post-video" controls preload="metadata">
+            <source src="${escapeAttribute(mediaSrc)}" />
+            Your browser does not support the video tag.
+          </video>
+        </div>
+      `;
+    }
+
+    return `
+      <a class="post-link-card" href="${escapeAttribute(mediaSrc)}" target="_blank" rel="noreferrer">
+        <span class="post-link-label">Attached Media</span>
+        <span class="post-link-url">${escapeHtml(post.mediaUrl)}</span>
+      </a>
+    `;
+  }
+
+  function normalizeMediaSource(mediaUrl) {
+    if (!mediaUrl) {
+      return "";
+    }
+
+    return String(mediaUrl).startsWith("/uploads/")
+      ? `${API_BASE}${mediaUrl}`
+      : mediaUrl;
   }
 
   function renderView() {
@@ -729,5 +873,18 @@
       .slice(0, 4)
       .map((part) => part[0].toUpperCase())
       .join("");
+  }
+
+  function escapeHtml(value) {
+    return String(value || "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+  }
+
+  function escapeAttribute(value) {
+    return escapeHtml(value).replace(/`/g, "&#96;");
   }
 })();
