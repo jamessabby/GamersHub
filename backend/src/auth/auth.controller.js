@@ -66,17 +66,6 @@ async function googleStart(req, res) {
   }
 }
 
-async function microsoftStart(req, res) {
-  try {
-    const url = authService.buildMicrosoftStartUrl({
-      redirectBase: req.query.redirectBase,
-    });
-    res.redirect(url);
-  } catch (error) {
-    res.status(error.statusCode || 500).json({ message: error.message || "Failed to start Microsoft OAuth." });
-  }
-}
-
 async function googleCallback(req, res) {
   try {
     const result = await authService.handleGoogleCallback({
@@ -111,40 +100,6 @@ async function googleCallback(req, res) {
   }
 }
 
-async function microsoftCallback(req, res) {
-  try {
-    const result = await authService.handleMicrosoftCallback({
-      code: req.query.code,
-      state: req.query.state,
-    });
-
-    const redirectUrl = new URL(`${result.redirectBase}/auth/login.html`);
-    redirectUrl.hash = new URLSearchParams({
-      oauth: "success",
-      token: result.token,
-      redirectPath: result.redirectPath,
-    }).toString();
-
-    res.redirect(redirectUrl.toString());
-  } catch (error) {
-    await auditService.logAuditEvent({
-      actorUserId: null,
-      actorRole: null,
-      actionType: "auth.microsoft_login_failed",
-      entityType: "user",
-      entityId: null,
-      details: { reason: error.message || "Microsoft OAuth failed." },
-    });
-    const fallbackBase = process.env.APP_BASE_URL || "http://127.0.0.1:5500/frontend";
-    const redirectUrl = new URL(`${String(fallbackBase).replace(/\/+$/, "")}/auth/login.html`);
-    redirectUrl.hash = new URLSearchParams({
-      oauth: "error",
-      message: error.message || "Microsoft OAuth failed.",
-    }).toString();
-    res.redirect(redirectUrl.toString());
-  }
-}
-
 async function requestPasswordReset(req, res) {
   try {
     const result = await authService.requestPasswordReset(req.body);
@@ -172,8 +127,6 @@ module.exports = {
   logout,
   googleStart,
   googleCallback,
-  microsoftStart,
-  microsoftCallback,
   requestPasswordReset,
   resetPassword,
 };

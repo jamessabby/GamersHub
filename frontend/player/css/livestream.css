@@ -462,6 +462,13 @@
   }
 }
 @media (max-width: 768px) {
+  .main-feed,
+  .main-feed.main-feed--solo {
+    margin-left: 0;
+    margin-right: 0;
+    padding: 16px;
+  }
+
   .channels-grid {
     grid-template-columns: repeat(2, 1fr);
   }

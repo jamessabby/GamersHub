@@ -525,6 +525,7 @@
     } catch (error) {
       console.error("Post creation failed:", error);
       setComposerBusy(false, error.message || "Post creation failed.", true);
+      window.GamersHubAuth?.toast(error.message || "Post creation failed. Please try again.", "error");
     }
   }
 

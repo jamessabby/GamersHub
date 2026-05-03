@@ -1,7 +1,7 @@
 const sql = require("mssql/msnodesqlv8");
 
 const config = {
-  server: "LAPTOP-VO6I66G0\\SQLEXPRESS",
+  server: process.env.DB_SERVER || "LAPTOP-VO6I66G0\\SQLEXPRESS",
   database: "GAMERSHUB_USER",
   driver: "ODBC Driver 18 for SQL Server",
   options: {

@@ -17,10 +17,6 @@ const { sendMfaCodeEmail, sendPasswordResetEmail } = require("./mail.util");
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || "";
 const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET || "";
 const GOOGLE_CALLBACK_URL = process.env.GOOGLE_CALLBACK_URL || "http://localhost:3000/api/auth/google/callback";
-const MICROSOFT_CLIENT_ID = process.env.MICROSOFT_CLIENT_ID || "";
-const MICROSOFT_CLIENT_SECRET = process.env.MICROSOFT_CLIENT_SECRET || "";
-const MICROSOFT_CALLBACK_URL = process.env.MICROSOFT_CALLBACK_URL || "http://localhost:3000/api/auth/microsoft/callback";
-const MICROSOFT_TENANT_ID = process.env.MICROSOFT_TENANT_ID || "common";
 const FALLBACK_APP_BASE_URL = (process.env.APP_BASE_URL || "http://127.0.0.1:5500/frontend").replace(/\/+$/, "");
 const MFA_CODE_TTL_MINUTES = Math.max(1, Number(process.env.MFA_CODE_TTL_MINUTES) || 10);
 const RESET_CODE_TTL_MINUTES = 15;
@@ -259,18 +255,6 @@ function buildGoogleStartUrl({ redirectBase } = {}) {
   });
 }
 
-function buildMicrosoftStartUrl({ redirectBase } = {}) {
-  ensureMicrosoftConfigured();
-  return buildOAuthStartUrl({
-    provider: "microsoft",
-    redirectBase,
-    clientId: MICROSOFT_CLIENT_ID,
-    authorizationUrl: getMicrosoftAuthorizationUrl(),
-    callbackUrl: MICROSOFT_CALLBACK_URL,
-    scopes: ["openid", "email", "profile", "User.Read"],
-  });
-}
-
 async function handleGoogleCallback({ code, state }) {
   ensureGoogleConfigured();
   const verifiedState = verifyOAuthState(state, "google");
@@ -292,27 +276,6 @@ async function handleGoogleCallback({ code, state }) {
   });
 }
 
-async function handleMicrosoftCallback({ code, state }) {
-  ensureMicrosoftConfigured();
-  const verifiedState = verifyOAuthState(state, "microsoft");
-  const tokenPayload = await exchangeOAuthCode({
-    providerLabel: "Microsoft",
-    tokenUrl: getMicrosoftTokenUrl(),
-    clientId: MICROSOFT_CLIENT_ID,
-    clientSecret: MICROSOFT_CLIENT_SECRET,
-    callbackUrl: MICROSOFT_CALLBACK_URL,
-    code,
-  });
-
-  const microsoftProfile = await fetchMicrosoftProfile(tokenPayload);
-  const user = await upsertMicrosoftUser(microsoftProfile);
-  return finalizeOAuthSignIn({
-    user,
-    redirectBase: verifiedState.redirectBase,
-    auditActionType: "auth.microsoft_login_success",
-  });
-}
-
 async function requestPasswordReset({ username }) {
   if (!username) {
     throw badRequest("Username is required.");
@@ -325,7 +288,7 @@ async function requestPasswordReset({ username }) {
   }
 
   if ((user.authProvider || "local") !== "local") {
-    throw badRequest("This account uses Google or Microsoft sign-in. Please use that provider to access your account.");
+    throw badRequest("This account uses Google sign-in. Please use Google to access your account.");
   }
 
   const code = generateEmailCode();
@@ -461,48 +424,6 @@ async function upsertGoogleUser(googleProfile) {
     authProvider: "google",
     googleSub: googleProfile.sub,
     avatarUrl: googleProfile.picture || null,
-    mfaEnrolled: false,
-  });
-
-  await profileService.ensureProfileForUser({
-    userId: createdUser.userId,
-    username: createdUser.username,
-    email: createdUser.email,
-  });
-
-  return createdUser;
-}
-
-async function upsertMicrosoftUser(microsoftProfile) {
-  if (!microsoftProfile.sub || !microsoftProfile.email) {
-    throw badRequest("Microsoft account did not return a usable email address.");
-  }
-
-  const existingByMicrosoftSub = await userRepo.findByMicrosoftSub(microsoftProfile.sub);
-  if (existingByMicrosoftSub) {
-    return existingByMicrosoftSub;
-  }
-
-  const existingByEmail = await userRepo.findByEmail(microsoftProfile.email);
-  if (existingByEmail) {
-    return userRepo.updateMicrosoftLink(existingByEmail.userId, {
-      microsoftSub: microsoftProfile.sub,
-      avatarUrl: microsoftProfile.picture || null,
-      authProvider: "microsoft",
-    });
-  }
-
-  const username = await generateUniqueUsername(microsoftProfile);
-  const passwordHash = await bcrypt.hash(crypto.randomBytes(24).toString("hex"), 10);
-  const createdUser = await userRepo.createUser({
-    username,
-    email: microsoftProfile.email,
-    passwordHash,
-    mfaSecret: generateBase32Secret(),
-    role: "user",
-    authProvider: "microsoft",
-    microsoftSub: microsoftProfile.sub,
-    avatarUrl: microsoftProfile.picture || null,
     mfaEnrolled: false,
   });
 
@@ -675,45 +596,6 @@ async function fetchGoogleProfile(accessToken) {
   };
 }
 
-async function fetchMicrosoftProfile(tokenPayload) {
-  const graphResponse = await fetch("https://graph.microsoft.com/v1.0/me?$select=id,displayName,givenName,surname,userPrincipalName,mail", {
-    headers: {
-      Authorization: `Bearer ${tokenPayload.access_token}`,
-    },
-  });
-
-  let graphPayload = {};
-  if (graphResponse.ok) {
-    graphPayload = await graphResponse.json();
-  } else {
-    graphPayload = {};
-  }
-
-  const idTokenClaims = decodeJwtPayload(tokenPayload.id_token);
-  const email = normalizeEmail(
-    graphPayload.mail
-      || graphPayload.userPrincipalName
-      || idTokenClaims.email
-      || idTokenClaims.preferred_username,
-  );
-  const sub = String(
-    idTokenClaims.oid
-      || idTokenClaims.sub
-      || graphPayload.id
-      || "",
-  ).trim();
-
-  return {
-    sub,
-    email,
-    emailVerified: Boolean(email),
-    picture: null,
-    givenName: graphPayload.givenName || idTokenClaims.given_name || "",
-    name: graphPayload.displayName || idTokenClaims.name || "",
-    preferredUsername: graphPayload.userPrincipalName || idTokenClaims.preferred_username || "",
-  };
-}
-
 function verifyOAuthState(state, provider) {
   const verifiedState = verifySignedToken(state);
   if (!verifiedState || verifiedState.type !== `${provider}_oauth_state`) {
@@ -744,20 +626,6 @@ function ensureGoogleConfigured() {
   if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET) {
     throw badRequest("Google OAuth is not configured on the backend.");
   }
-}
-
-function ensureMicrosoftConfigured() {
-  if (!MICROSOFT_CLIENT_ID || !MICROSOFT_CLIENT_SECRET) {
-    throw badRequest("Microsoft OAuth is not configured on the backend.");
-  }
-}
-
-function getMicrosoftAuthorizationUrl() {
-  return `https://login.microsoftonline.com/${encodeURIComponent(MICROSOFT_TENANT_ID)}/oauth2/v2.0/authorize`;
-}
-
-function getMicrosoftTokenUrl() {
-  return `https://login.microsoftonline.com/${encodeURIComponent(MICROSOFT_TENANT_ID)}/oauth2/v2.0/token`;
 }
 
 function decodeJwtPayload(token) {
@@ -834,9 +702,7 @@ module.exports = {
   getCurrentUser,
   logoutUser,
   buildGoogleStartUrl,
-  buildMicrosoftStartUrl,
   handleGoogleCallback,
-  handleMicrosoftCallback,
   requestPasswordReset,
   resetPassword,
 };

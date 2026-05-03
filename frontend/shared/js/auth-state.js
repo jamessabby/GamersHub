@@ -237,8 +237,18 @@
       // storage unavailable; fall back to local development default
     }
 
+    // Only trust the page's own hostname when running locally.
+    // On deployed frontends (Vercel etc.) the hostname is unrelated to the
+    // backend, so fall back to localhost. Set gh_api_base in localStorage
+    // (or window.GAMERSHUB_API_BASE) to point at the live ngrok tunnel.
     const host = window.location.hostname || "localhost";
-    return `http://${host}:3000`;
+    const isLocal =
+      host === "localhost" ||
+      host === "127.0.0.1" ||
+      /^192\.168\./.test(host) ||
+      /^10\./.test(host) ||
+      /^172\.(1[6-9]|2\d|3[01])\./.test(host);
+    return `http://${isLocal ? host : "localhost"}:3000`;
   }
 
   function normalizeApiBase(value) {
@@ -311,6 +321,90 @@
 
   patchFetch();
 
+  // ── Toast notification system ──────────────────────────────────────────────
+  (function injectToastStyles() {
+    if (document.getElementById("gh-toast-styles")) return;
+    const style = document.createElement("style");
+    style.id = "gh-toast-styles";
+    style.textContent = [
+      "#gh-toast-container{",
+        "position:fixed;bottom:24px;right:24px;",
+        "display:flex;flex-direction:column;gap:10px;",
+        "z-index:9999;pointer-events:none;",
+      "}",
+      ".gh-toast{",
+        "display:flex;align-items:flex-start;gap:10px;",
+        "min-width:260px;max-width:380px;",
+        "padding:12px 16px;border-radius:12px;",
+        "font-family:inherit;font-size:13.5px;line-height:1.45;",
+        "color:#e2e8f0;pointer-events:auto;",
+        "box-shadow:0 8px 24px rgba(0,0,0,0.45);",
+        "animation:gh-toast-in 0.22s ease forwards;",
+        "border:1px solid rgba(255,255,255,0.07);",
+      "}",
+      ".gh-toast.is-hiding{animation:gh-toast-out 0.2s ease forwards;}",
+      ".gh-toast--error{background:rgba(220,38,38,0.18);border-color:rgba(220,38,38,0.35);}",
+      ".gh-toast--success{background:rgba(16,185,129,0.16);border-color:rgba(16,185,129,0.32);}",
+      ".gh-toast--warning{background:rgba(245,158,11,0.16);border-color:rgba(245,158,11,0.3);}",
+      ".gh-toast--info{background:rgba(99,102,241,0.18);border-color:rgba(99,102,241,0.32);}",
+      ".gh-toast__icon{flex-shrink:0;margin-top:1px;font-size:15px;}",
+      ".gh-toast__body{flex:1;}",
+      ".gh-toast__title{font-weight:600;margin-bottom:2px;}",
+      ".gh-toast__msg{opacity:0.85;}",
+      ".gh-toast__close{",
+        "flex-shrink:0;background:none;border:none;",
+        "color:rgba(226,232,240,0.5);cursor:pointer;",
+        "font-size:16px;line-height:1;padding:0;margin-top:1px;",
+        "transition:color 0.15s;",
+      "}",
+      ".gh-toast__close:hover{color:#e2e8f0;}",
+      "@keyframes gh-toast-in{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:translateX(0)}}",
+      "@keyframes gh-toast-out{from{opacity:1;transform:translateX(0)}to{opacity:0;transform:translateX(20px)}}",
+      "@media(max-width:480px){",
+        "#gh-toast-container{left:12px;right:12px;bottom:16px;}",
+        ".gh-toast{min-width:0;max-width:100%;}",
+      "}",
+    ].join("");
+    document.head.appendChild(style);
+  })();
+
+  function toast(message, type, options) {
+    if (typeof message !== "string") return;
+    type = ["error", "success", "warning", "info"].includes(type) ? type : "info";
+    const opts = Object.assign({ title: "", duration: 4000 }, options || {});
+
+    let container = document.getElementById("gh-toast-container");
+    if (!container) {
+      container = document.createElement("div");
+      container.id = "gh-toast-container";
+      document.body.appendChild(container);
+    }
+
+    const icons = { error: "✕", success: "✓", warning: "⚠", info: "ℹ" };
+    const titles = { error: "Error", success: "Success", warning: "Warning", info: "Info" };
+
+    const el = document.createElement("div");
+    el.className = `gh-toast gh-toast--${type}`;
+    el.setAttribute("role", "alert");
+    el.innerHTML =
+      `<span class="gh-toast__icon">${icons[type]}</span>` +
+      `<div class="gh-toast__body">` +
+        `<div class="gh-toast__title">${opts.title || titles[type]}</div>` +
+        `<div class="gh-toast__msg">${message}</div>` +
+      `</div>` +
+      `<button class="gh-toast__close" aria-label="Dismiss">×</button>`;
+
+    container.appendChild(el);
+
+    function dismiss() {
+      el.classList.add("is-hiding");
+      el.addEventListener("animationend", () => el.remove(), { once: true });
+    }
+
+    el.querySelector(".gh-toast__close").addEventListener("click", dismiss);
+    setTimeout(dismiss, opts.duration);
+  }
+
   window.GamersHubAuth = {
     getSession,
     setSession,
@@ -329,5 +423,6 @@
     setApiBase,
     clearApiBase,
     apiBase: API_BASE,
+    toast,
   };
 })();

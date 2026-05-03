@@ -283,6 +283,11 @@
       applyProfileMode();
     } catch (error) {
       console.error("Profile hydration failed:", error);
+      window.GamersHubAuth?.toast(
+        "Could not load profile data. Check your connection and try refreshing.",
+        "error",
+        { title: "Profile Unavailable" },
+      );
       if (editToggleLabel) {
         editToggleLabel.textContent = "Profile offline";
         setTimeout(() => {
@@ -526,6 +531,10 @@
     } catch (error) {
       console.error("Profile save failed:", error);
       setSavingState(false, "Save failed");
+      window.GamersHubAuth?.toast(
+        error.message || "Could not save your profile. Please try again.",
+        "error",
+      );
       setTimeout(() => {
         if (!editToggleLabel || isPublicProfile) {
           return;

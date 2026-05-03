@@ -107,6 +107,49 @@
     if (role === "admin" || role === "superadmin") {
       injectRoleShortcut(role);
     }
+
+    injectMobileHamburger();
+  }
+
+  function injectMobileHamburger() {
+    const navInner = document.querySelector(".nav-inner");
+    const leftSidebar = document.querySelector(".left-sidebar");
+    if (!navInner || !leftSidebar) return;
+
+    const btn = document.createElement("button");
+    btn.className = "nav-hamburger";
+    btn.setAttribute("aria-label", "Open navigation");
+    btn.setAttribute("aria-expanded", "false");
+    btn.innerHTML =
+      '<svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">' +
+      '<rect x="2" y="4" width="14" height="1.8" rx="0.9" fill="currentColor"/>' +
+      '<rect x="2" y="8.1" width="14" height="1.8" rx="0.9" fill="currentColor"/>' +
+      '<rect x="2" y="12.2" width="14" height="1.8" rx="0.9" fill="currentColor"/>' +
+      "</svg>";
+    navInner.prepend(btn);
+
+    const overlay = document.createElement("div");
+    overlay.className = "sidebar-overlay";
+    document.body.appendChild(overlay);
+
+    function openSidebar() {
+      leftSidebar.classList.add("is-mobile-open");
+      overlay.classList.add("is-visible");
+      btn.setAttribute("aria-expanded", "true");
+    }
+
+    function closeSidebar() {
+      leftSidebar.classList.remove("is-mobile-open");
+      overlay.classList.remove("is-visible");
+      btn.setAttribute("aria-expanded", "false");
+    }
+
+    btn.addEventListener("click", openSidebar);
+    overlay.addEventListener("click", closeSidebar);
+
+    leftSidebar.querySelectorAll("a, button").forEach((el) => {
+      el.addEventListener("click", closeSidebar);
+    });
   }
 
   function injectRoleShortcut(role) {
