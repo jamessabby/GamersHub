@@ -6,6 +6,15 @@
   font-family: "DM Sans", sans-serif;
 }
 
+/* Lift all content above the body::after vignette overlay (z-index: 0) from theme.css */
+.lm-hero,
+.lm-section,
+.lm-cta,
+.lm-divider {
+  position: relative;
+  z-index: 1;
+}
+
 /* ── INTRO HERO ── */
 .lm-hero {
   position: relative;
