@@ -1,6 +1,6 @@
 // ── DEMO CONFIG ── Update this URL each time you restart ngrok ───────────────
 window.GAMERSHUB_API_BASE = "https://reputable-amigo-thermos.ngrok-free.dev"; // e.g. "https://xxxx.ngrok-free.app"
-// ─────────────────────────────────────────────────────────────────────────────
+// ─────────────────────────  ────────────────────────────────────────────────────
 
 (() => {
   const SESSION_KEY = "gh_session";
