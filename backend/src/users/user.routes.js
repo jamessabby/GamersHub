@@ -18,6 +18,7 @@ router.put(
   ensureScopedUserAccess("userId"),
   userController.respondToFriendRequest,
 );
+router.put("/:userId/activity", requireAuth, ensureScopedUserAccess("userId"), userController.setActivity);
 router.get("/:userId/notifications", requireAuth, ensureScopedUserAccess("userId"), userController.getNotifications);
 router.put(
   "/:userId/notifications/read-all",

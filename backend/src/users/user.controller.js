@@ -129,6 +129,21 @@ async function markAllNotificationsRead(req, res) {
   }
 }
 
+async function setActivity(req, res) {
+  try {
+    const data = await userService.setActivityStatus({
+      userId: req.params.userId,
+      actorUserId: req.auth.user.userId,
+      activityStatus: req.body.activityStatus,
+    });
+    res.status(200).json(data);
+  } catch (error) {
+    res
+      .status(error.statusCode || 500)
+      .json({ message: error.message || "Failed to update activity status." });
+  }
+}
+
 module.exports = {
   getProfile,
   updateProfile,
@@ -140,4 +155,5 @@ module.exports = {
   getNotifications,
   markNotificationRead,
   markAllNotificationsRead,
+  setActivity,
 };

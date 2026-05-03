@@ -436,7 +436,32 @@ async function loadPersonSummary(userId) {
     school: profile?.school || "",
     schoolTag: buildSchoolTag(profile?.school),
     primaryGame: profile?.primaryGame || "",
+    activityStatus: profile?.activityStatus || "",
   };
+}
+
+async function setActivityStatus({ userId, actorUserId, activityStatus }) {
+  const parsedUserId = parsePositiveUserId(userId);
+  const parsedActorUserId = parsePositiveUserId(actorUserId);
+
+  if (parsedUserId !== parsedActorUserId) {
+    const error = new Error("You can only update your own activity status.");
+    error.statusCode = 403;
+    throw error;
+  }
+
+  await assertUserExists(parsedUserId);
+
+  const trimmed = String(activityStatus || "").trim().slice(0, 100) || null;
+  const updated = await profileRepo.updateActivityStatus(parsedUserId, trimmed);
+
+  if (!updated) {
+    const error = new Error("Activity status could not be saved.");
+    error.statusCode = 500;
+    throw error;
+  }
+
+  return { userId: parsedUserId, activityStatus: updated.activityStatus || "" };
 }
 
 function mapRelationshipState(relationship, viewerUserId, targetUserId) {
@@ -577,6 +602,7 @@ module.exports = {
   respondToFriendRequest,
   removeFriendByUserId,
   getNotificationsByUserId,
+  setActivityStatus,
   markNotificationReadByUserId,
   markAllNotificationsReadByUserId,
 };

@@ -15,7 +15,8 @@ async function findByUserId(userId) {
       PHONE_NUMBER AS phoneNumber,
       SCHOOL AS school,
       COURSE_YEAR AS courseYear,
-      PRIMARY_GAME AS primaryGame
+      PRIMARY_GAME AS primaryGame,
+      ACTIVITY_STATUS AS activityStatus
     FROM dbo.USER_PROFILE
     WHERE USERID = @userId
   `);
@@ -51,6 +52,7 @@ async function searchProfiles({ query, excludeUserId, limit = 8 }) {
         p.SCHOOL AS school,
         p.COURSE_YEAR AS courseYear,
         p.PRIMARY_GAME AS primaryGame,
+        p.ACTIVITY_STATUS AS activityStatus,
         u.USERNAME AS username,
         CASE
           WHEN u.USERNAME = @exactTerm THEN 'username'
@@ -217,9 +219,27 @@ async function updateProfile(
   return result.recordset[0] || null;
 }
 
+async function updateActivityStatus(userId, activityStatus) {
+  await poolConnect;
+
+  const result = await pool
+    .request()
+    .input("userId", sql.Int, userId)
+    .input("activityStatus", sql.NVarChar(100), activityStatus || null)
+    .query(`
+      UPDATE dbo.USER_PROFILE
+      SET ACTIVITY_STATUS = @activityStatus
+      OUTPUT INSERTED.USERID AS userId, INSERTED.ACTIVITY_STATUS AS activityStatus
+      WHERE USERID = @userId
+    `);
+
+  return result.recordset[0] || null;
+}
+
 module.exports = {
   findByUserId,
   searchProfiles,
   createProfile,
   updateProfile,
+  updateActivityStatus,
 };

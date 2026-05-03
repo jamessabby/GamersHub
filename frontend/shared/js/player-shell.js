@@ -43,6 +43,7 @@
   setupFriendActions();
   setupNotifications();
   startSharedActivityPolling();
+  injectActivityWidget();
 
   window.addEventListener("gh:friends-updated", () => {
     closeFriendMenu();
@@ -238,7 +239,7 @@
       ? `<span class="friend-school-tag">${escapeHtml(friend.schoolTag)}</span>`
       : "";
     const statusCopy =
-      friend.primaryGame || friend.school || options.statusCopy || FRIENDS_COPY.defaultStatus;
+      friend.activityStatus || friend.primaryGame || friend.school || options.statusCopy || FRIENDS_COPY.defaultStatus;
 
     return `
       <li class="friend-item friend-item-static friend-item-menuable">
@@ -881,6 +882,207 @@
       openNotifications();
     } else {
       closeNotifications();
+    }
+  }
+
+  function injectActivityWidget() {
+    const rightSidebar = document.querySelector(".right-sidebar");
+    if (!rightSidebar || !session.userId) {
+      return;
+    }
+
+    if (document.getElementById("gh-activity-widget")) {
+      return;
+    }
+
+    const ACTIVITY_STORAGE_KEY = `gh_activity_${session.userId}`;
+    const cached = localStorage.getItem(ACTIVITY_STORAGE_KEY) || "";
+
+    const style = document.createElement("style");
+    style.textContent = `
+      .gh-activity-widget {
+        background: rgba(255,255,255,0.04);
+        border: 1px solid rgba(255,255,255,0.08);
+        border-radius: 10px;
+        padding: 12px 14px;
+        margin-bottom: 14px;
+      }
+      .gh-activity-label {
+        display: block;
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--color-accent, #a78bfa);
+        margin-bottom: 8px;
+      }
+      .gh-activity-current {
+        font-size: 12px;
+        color: #c4c4e0;
+        margin-bottom: 8px;
+        min-height: 16px;
+        word-break: break-word;
+      }
+      .gh-activity-placeholder { color: rgba(255,255,255,0.3); font-style: italic; }
+      .gh-activity-presets {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 5px;
+        margin-bottom: 8px;
+      }
+      .gh-activity-preset {
+        background: rgba(167,139,250,0.1);
+        border: 1px solid rgba(167,139,250,0.25);
+        color: #c4b5fd;
+        border-radius: 20px;
+        padding: 3px 9px;
+        font-size: 10px;
+        cursor: pointer;
+        transition: background 0.15s;
+        white-space: nowrap;
+      }
+      .gh-activity-preset:hover { background: rgba(167,139,250,0.22); }
+      .gh-activity-preset[data-preset=""] { color: #f87171; border-color: rgba(248,113,113,0.3); background: rgba(248,113,113,0.06); }
+      .gh-activity-preset[data-preset=""]:hover { background: rgba(248,113,113,0.14); }
+      .gh-activity-input-row {
+        display: flex;
+        gap: 6px;
+      }
+      .gh-activity-input {
+        flex: 1;
+        background: rgba(255,255,255,0.06);
+        border: 1px solid rgba(255,255,255,0.12);
+        border-radius: 6px;
+        color: #e2e8f0;
+        font-size: 11px;
+        padding: 5px 8px;
+        outline: none;
+        min-width: 0;
+      }
+      .gh-activity-input:focus { border-color: rgba(167,139,250,0.5); }
+      .gh-activity-save-btn {
+        background: rgba(167,139,250,0.18);
+        border: 1px solid rgba(167,139,250,0.35);
+        color: #c4b5fd;
+        border-radius: 6px;
+        font-size: 11px;
+        font-weight: 600;
+        padding: 5px 10px;
+        cursor: pointer;
+        white-space: nowrap;
+        transition: background 0.15s;
+      }
+      .gh-activity-save-btn:hover { background: rgba(167,139,250,0.3); }
+      .gh-activity-save-btn.is-saving { opacity: 0.6; pointer-events: none; }
+    `;
+    document.head.appendChild(style);
+
+    const widget = document.createElement("div");
+    widget.id = "gh-activity-widget";
+    widget.className = "gh-activity-widget";
+    widget.innerHTML = `
+      <span class="gh-activity-label">Your Status</span>
+      <div class="gh-activity-current" id="ghActivityCurrent">
+        ${cached
+          ? escapeHtml(cached)
+          : '<span class="gh-activity-placeholder">Set your status...</span>'}
+      </div>
+      <div class="gh-activity-presets">
+        <button type="button" class="gh-activity-preset" data-preset="Playing Valorant">Playing Valorant</button>
+        <button type="button" class="gh-activity-preset" data-preset="Watching livestreams">Watching</button>
+        <button type="button" class="gh-activity-preset" data-preset="Looking for team">LFT</button>
+        <button type="button" class="gh-activity-preset" data-preset="">Clear</button>
+      </div>
+      <div class="gh-activity-input-row">
+        <input
+          type="text"
+          id="ghActivityInput"
+          class="gh-activity-input"
+          placeholder="Custom status..."
+          maxlength="100"
+          value="${escapeAttribute(cached)}"
+        />
+        <button type="button" id="ghActivitySaveBtn" class="gh-activity-save-btn">Set</button>
+      </div>
+    `;
+
+    rightSidebar.insertBefore(widget, rightSidebar.firstChild);
+
+    widget.querySelectorAll(".gh-activity-preset").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const preset = btn.dataset.preset;
+        const input = document.getElementById("ghActivityInput");
+        if (input) {
+          input.value = preset;
+        }
+        void saveActivityStatus(preset, ACTIVITY_STORAGE_KEY);
+      });
+    });
+
+    document.getElementById("ghActivitySaveBtn")?.addEventListener("click", () => {
+      const input = document.getElementById("ghActivityInput");
+      void saveActivityStatus((input?.value || "").trim(), ACTIVITY_STORAGE_KEY);
+    });
+
+    document.getElementById("ghActivityInput")?.addEventListener("keydown", (event) => {
+      if (event.key === "Enter") {
+        const input = document.getElementById("ghActivityInput");
+        void saveActivityStatus((input?.value || "").trim(), ACTIVITY_STORAGE_KEY);
+      }
+    });
+  }
+
+  async function saveActivityStatus(activityText, storageKey) {
+    const trimmed = String(activityText || "").trim().slice(0, 100);
+    const saveBtn = document.getElementById("ghActivitySaveBtn");
+
+    if (saveBtn) {
+      saveBtn.classList.add("is-saving");
+      saveBtn.textContent = "...";
+    }
+
+    try {
+      const response = await fetch(`${API_BASE}/api/users/${session.userId}/activity`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ activityStatus: trimmed }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to save status.");
+      }
+
+      if (storageKey) {
+        localStorage.setItem(storageKey, trimmed);
+      }
+
+      const currentEl = document.getElementById("ghActivityCurrent");
+      if (currentEl) {
+        currentEl.innerHTML = trimmed
+          ? escapeHtml(trimmed)
+          : '<span class="gh-activity-placeholder">Set your status...</span>';
+      }
+
+      const input = document.getElementById("ghActivityInput");
+      if (input) {
+        input.value = trimmed;
+      }
+
+      if (saveBtn) {
+        saveBtn.textContent = "Saved";
+        setTimeout(() => {
+          saveBtn.textContent = "Set";
+        }, 1200);
+      }
+    } catch (error) {
+      console.error("Activity status save failed:", error);
+      if (saveBtn) {
+        saveBtn.textContent = "Set";
+      }
+    } finally {
+      if (saveBtn) {
+        saveBtn.classList.remove("is-saving");
+      }
     }
   }
 
