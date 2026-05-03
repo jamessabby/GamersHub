@@ -406,11 +406,13 @@ async function mapRelationshipProfile(profile, viewerUserId) {
 
   return {
     userId: profile.userId,
-    username: authUser?.username || `user-${profile.userId}`,
+    username: profile.username || authUser?.username || `user-${profile.userId}`,
     displayName: profile.displayName || authUser?.username || `User ${profile.userId}`,
     school: profile.school || "",
     schoolTag: buildSchoolTag(profile.school),
     primaryGame: profile.primaryGame || "",
+    matchField: profile.matchField || "",
+    matchValue: profile.matchValue || "",
     relationshipState: mapRelationshipState(relationship, viewerUserId, profile.userId),
   };
 }

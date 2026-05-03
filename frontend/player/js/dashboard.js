@@ -1091,7 +1091,7 @@
     }
 
     setFriendSearchStatus(
-      "Search existing players by in-game name, first name, last name, or school.",
+      "Search existing players by username, in-game name, name, school, or game.",
       false,
     );
     friendSearchResults.innerHTML = "";
@@ -1116,6 +1116,7 @@
     const schoolTag = player.schoolTag
       ? `<span class="friend-school-tag">${escapeHtml(player.schoolTag)}</span>`
       : "";
+    const matchCopy = formatSearchMatch(player);
 
     return `
       <li class="friend-item friend-item-profile-link" data-profile-user-id="${escapeAttribute(String(player.userId))}" tabindex="0" role="link" aria-label="View ${escapeAttribute(player.displayName)} profile">
@@ -1128,11 +1129,29 @@
             ${schoolTag}
           </div>
           <span class="friend-username">@${escapeHtml(player.username)}</span>
-          <span class="friend-status watching">${escapeHtml(player.primaryGame || player.school || "GamersHub player")}</span>
+          <span class="friend-status watching">${escapeHtml(matchCopy || player.primaryGame || player.school || "GamersHub player")}</span>
         </div>
         <div class="friend-actions">${renderSearchAction(player)}</div>
       </li>
     `;
+  }
+
+  function formatSearchMatch(player) {
+    const value = String(player.matchValue || "").trim();
+    if (!value) {
+      return "";
+    }
+
+    const labels = {
+      username: "Username",
+      displayName: "In-game name",
+      firstName: "First name",
+      lastName: "Last name",
+      school: "School",
+      primaryGame: "Game",
+    };
+    const label = labels[player.matchField] || "Match";
+    return `${label}: ${value}`;
   }
 
   function renderSearchAction(player) {
