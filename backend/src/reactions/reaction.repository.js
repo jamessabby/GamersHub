@@ -115,6 +115,7 @@ async function listCommentsByPostId(postId, limit = 20) {
         POST_ID AS postId,
         USER_ID AS userId,
         MESSAGE AS message,
+        GIF_URL AS gifUrl,
         CREATED_AT AS createdAt
       FROM dbo.POST_COMMENT
       WHERE POST_ID = @postId
@@ -124,18 +125,20 @@ async function listCommentsByPostId(postId, limit = 20) {
   return result.recordset;
 }
 
-async function createComment({ postId, userId, message }) {
+async function createComment({ postId, userId, message, gifUrl }) {
   await poolConnect;
 
   const result = await pool
     .request()
     .input("postId", sql.Int, postId)
     .input("userId", sql.Int, userId)
-    .input("message", sql.NVarChar(sql.MAX), message).query(`
+    .input("message", sql.NVarChar(sql.MAX), message || "")
+    .input("gifUrl", sql.NVarChar(1000), gifUrl || null).query(`
       INSERT INTO dbo.POST_COMMENT (
         POST_ID,
         USER_ID,
         MESSAGE,
+        GIF_URL,
         CREATED_AT
       )
       OUTPUT
@@ -143,11 +146,13 @@ async function createComment({ postId, userId, message }) {
         INSERTED.POST_ID AS postId,
         INSERTED.USER_ID AS userId,
         INSERTED.MESSAGE AS message,
+        INSERTED.GIF_URL AS gifUrl,
         INSERTED.CREATED_AT AS createdAt
       VALUES (
         @postId,
         @userId,
         @message,
+        @gifUrl,
         SYSDATETIME()
       )
     `);

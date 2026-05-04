@@ -34,6 +34,16 @@ app.use("/api/streams", streamRoutes);
 
 app.use("/api/events", require("./events/event.routes"));
 
+// ── Public config endpoint: exposes non-secret keys to frontend ────────────
+// Tenor API key is safe to expose to authenticated users — it's a public
+// client key, not a server secret. We still serve it from the backend so
+// it isn't hardcoded in frontend source files.
+app.get("/api/config/tenor", (_req, res) => {
+  const key = process.env.TENOR_API_KEY || "";
+  res.json({ key, configured: Boolean(key) });
+});
+// ───────────────────────────────────────────────────────────────────────────
+
 const { poolConnect: authPoolConnect } = require("./config/db.auth");
 const { poolConnect: feedPoolConnect } = require("./config/db.feed");
 const { poolConnect: reactionPoolConnect } = require("./config/db.reaction");

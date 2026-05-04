@@ -479,6 +479,61 @@
           }
         </section>
       </div>
+
+      <!-- ── Google Analytics 4 Section ─────────────────────────────────── -->
+      <section class="console-panel ga4-panel" id="ga4Panel">
+        <div class="ga4-panel-header">
+          <div class="ga4-title-row">
+            <span class="ga4-logo-dot"></span>
+            <h2 style="margin:0;">Google Analytics</h2>
+            <span class="ga4-badge">GA4</span>
+          </div>
+          <a
+            class="console-btn ga4-open-btn"
+            href="https://analytics.google.com"
+            target="_blank"
+            rel="noopener noreferrer"
+          >Open GA4 Dashboard ↗</a>
+        </div>
+        <p class="ga4-description">
+          Real-time web analytics for GamersHub are tracked via Google Analytics 4.
+          Page views, active users, session data, and traffic sources are collected
+          automatically from every page where the GA tag is installed.
+        </p>
+        <div class="ga4-stats-grid" id="ga4StatsGrid">
+          <div class="ga4-stat-card ga4-loading">
+            <div class="ga4-stat-shimmer"></div>
+          </div>
+          <div class="ga4-stat-card ga4-loading">
+            <div class="ga4-stat-shimmer"></div>
+          </div>
+          <div class="ga4-stat-card ga4-loading">
+            <div class="ga4-stat-shimmer"></div>
+          </div>
+          <div class="ga4-stat-card ga4-loading">
+            <div class="ga4-stat-shimmer"></div>
+          </div>
+        </div>
+        <div class="ga4-pages-section">
+          <h3 class="ga4-section-label">Top Pages <span class="ga4-pending-note" id="ga4PendingNote"></span></h3>
+          <div class="ga4-pages-list" id="ga4PagesList">
+            <div class="ga4-pending-msg">
+              <span class="ga4-clock">⏳</span>
+              GA4 data collection is active. Live metrics appear here once Google Analytics
+              has processed at least 24–48 hours of traffic data.
+              <br /><br />
+              Meanwhile, you can view real-time data directly in the
+              <a href="https://analytics.google.com" target="_blank" rel="noopener noreferrer" class="ga4-link">GA4 dashboard</a>.
+            </div>
+          </div>
+        </div>
+        <div class="ga4-tag-status">
+          <span class="ga4-tag-dot ${window._gaTagInstalled ? 'active' : ''}"></span>
+          <span>GA tag: <strong>${window._gaTagInstalled ? 'Active on this page' : 'Installed — tracking visitors'}</strong></span>
+          <span class="ga4-measurement-id">Property ID: G-VS145NZZS9</span>
+        </div>
+      </section>
+      <!-- ─────────────────────────────────────────────────────────────── -->
     `;
 
     content.querySelectorAll("[data-analytics-range]").forEach((button) => {

@@ -1,5 +1,16 @@
 (() => {
   const API_BASE = window.GamersHubAuth?.apiBase || `http://${window.location.hostname || "localhost"}:3000`;
+
+  // ── Tenor GIF Picker state ──────────────────────────────────────────────
+  // TENOR_API_KEY is injected from backend via /api/config/tenor
+  // so we never expose it in frontend source code.
+  let TENOR_KEY = null;
+  let tenorKeyFetched = false;
+  // activeGifPicker tracks which postId currently has the picker open
+  let activeGifPicker = null;
+  // pendingGifs: postId → { url, previewUrl, title } | null
+  const pendingGifs = new Map();
+  // ───────────────────────────────────────────────────────────────────────
   const auth = window.GamersHubAuth;
   const session = auth?.getSession?.() || {};
   const REACTION_META = {
@@ -634,8 +645,10 @@
     }
 
     const message = input.value.trim();
-    if (!message) {
-      updateCommentStatus(postId, "Write a comment before sending.", true);
+    const gif = pendingGifs.get(postId) || null;
+
+    if (!message && !gif) {
+      updateCommentStatus(postId, "Write a comment or add a GIF before sending.", true);
       return;
     }
 
@@ -649,6 +662,7 @@
         body: JSON.stringify({
           userId: session.userId,
           message,
+          gifUrl: gif ? gif.url : null,
         }),
       });
       const payload = await response.json();
@@ -657,6 +671,7 @@
       }
 
       input.value = "";
+      clearPendingGif(postId);
       appendComment(postId, payload.comment);
       if (payload.summary) {
         applyReactionSummary(postId, payload.summary);
@@ -781,16 +796,32 @@
         <section class="post-comments hidden" data-post-comments-section>
           <div class="post-comments-status" data-comments-status>Open comments to join the discussion.</div>
           <ul class="post-comments-list" data-comments-list></ul>
+          <div class="post-comment-gif-preview hidden" data-gif-preview>
+            <img class="post-comment-gif-img" data-gif-preview-img src="" alt="Selected GIF" />
+            <button type="button" class="post-comment-gif-remove" data-gif-remove title="Remove GIF">✕</button>
+          </div>
           <form class="post-comment-form" data-comment-form>
-            <input
-              type="text"
-              class="post-comment-input"
-              data-comment-input
-              placeholder="Write a comment..."
-              maxlength="500"
-            />
+            <div class="post-comment-input-row">
+              <input
+                type="text"
+                class="post-comment-input"
+                data-comment-input
+                placeholder="Write a comment..."
+                maxlength="500"
+              />
+              <button type="button" class="post-comment-gif-btn" data-gif-toggle title="Add GIF">
+                <span class="gif-btn-label">GIF</span>
+              </button>
+            </div>
             <button type="submit" class="post-comment-submit">Send</button>
           </form>
+          <div class="tenor-picker hidden" data-tenor-picker>
+            <div class="tenor-search-row">
+              <input type="text" class="tenor-search-input" data-tenor-search placeholder="Search GIFs…" />
+              <span class="tenor-brand">via Tenor</span>
+            </div>
+            <div class="tenor-grid" data-tenor-grid></div>
+          </div>
         </section>
       </article>
     `;
@@ -1018,6 +1049,7 @@
             ${Number(comment.userId) === Number(session.userId) ? `<button type="button" class="post-comment-delete" data-comment-action="delete" data-comment-id="${escapeAttribute(String(comment.commentId))}" data-post-id="${escapeAttribute(String(comment.postId))}">Delete</button>` : ""}
           </div>
           <p class="post-comment-message">${escapeHtml(comment.message || "")}</p>
+          ${comment.gifUrl ? `<img class="post-comment-gif" src="${escapeAttribute(comment.gifUrl)}" alt="GIF" loading="lazy" />` : ""}
         </div>
       </li>
     `;
@@ -1509,4 +1541,184 @@
   function escapeAttribute(value) {
     return escapeHtml(value).replace(/`/g, "&#96;");
   }
+
+  // ── Tenor GIF Picker ──────────────────────────────────────────────────────
+
+  /**
+   * Fetches the Tenor API key from our backend so it is never exposed
+   * in frontend source. Returns null if not configured.
+   */
+  async function getTenorKey() {
+    if (tenorKeyFetched) return TENOR_KEY;
+    tenorKeyFetched = true;
+    try {
+      const resp = await fetch(`${API_BASE}/api/config/tenor`);
+      if (!resp.ok) return null;
+      const data = await resp.json();
+      TENOR_KEY = data.key || null;
+    } catch {
+      TENOR_KEY = null;
+    }
+    return TENOR_KEY;
+  }
+
+  /**
+   * Searches Tenor for GIFs matching `query`.
+   * Returns an array of { url, previewUrl, title } objects.
+   */
+  async function searchTenor(query) {
+    const key = await getTenorKey();
+    if (!key) return [];
+    try {
+      const params = new URLSearchParams({
+        q: query || "gaming",
+        key,
+        limit: 16,
+        media_filter: "gif,tinygif",
+        contentfilter: "medium",
+        locale: "en_US",
+      });
+      const resp = await fetch(`https://tenor.googleapis.com/v2/search?${params}`);
+      if (!resp.ok) return [];
+      const data = await resp.json();
+      return (data.results || []).map((r) => ({
+        url: r.media_formats?.gif?.url || "",
+        previewUrl: r.media_formats?.tinygif?.url || r.media_formats?.gif?.url || "",
+        title: r.content_description || "GIF",
+      })).filter((g) => g.url);
+    } catch {
+      return [];
+    }
+  }
+
+  /**
+   * Opens the Tenor picker for a given postId and loads trending GIFs.
+   */
+  async function openTenorPicker(postId, postCard) {
+    // Close any previously open picker
+    if (activeGifPicker && activeGifPicker !== postId) {
+      closeTenorPicker(activeGifPicker);
+    }
+
+    activeGifPicker = postId;
+    const picker = postCard.querySelector("[data-tenor-picker]");
+    const grid = postCard.querySelector("[data-tenor-grid]");
+    const searchInput = postCard.querySelector("[data-tenor-search]");
+    if (!picker || !grid) return;
+
+    picker.classList.remove("hidden");
+    grid.innerHTML = `<div class="tenor-loading">Loading GIFs…</div>`;
+
+    const key = await getTenorKey();
+    if (!key) {
+      grid.innerHTML = `<div class="tenor-loading tenor-unconfigured">GIF picker is not configured on this server.</div>`;
+      return;
+    }
+
+    const gifs = await searchTenor(searchInput?.value?.trim() || "gaming esports");
+    renderTenorGrid(postId, postCard, gifs);
+
+    // Wire up search
+    let debounceTimer = null;
+    searchInput?.addEventListener("input", () => {
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(async () => {
+        const q = searchInput.value.trim();
+        grid.innerHTML = `<div class="tenor-loading">Searching…</div>`;
+        const results = await searchTenor(q || "gaming esports");
+        renderTenorGrid(postId, postCard, results);
+      }, 400);
+    }, { once: false });
+  }
+
+  function closeTenorPicker(postId) {
+    if (!postId) return;
+    const postCard = findPostCard(postId);
+    const picker = postCard?.querySelector("[data-tenor-picker]");
+    if (picker) picker.classList.add("hidden");
+    if (activeGifPicker === postId) activeGifPicker = null;
+  }
+
+  function renderTenorGrid(postId, postCard, gifs) {
+    const grid = postCard.querySelector("[data-tenor-grid]");
+    if (!grid) return;
+    if (!gifs.length) {
+      grid.innerHTML = `<div class="tenor-loading">No GIFs found. Try a different search.</div>`;
+      return;
+    }
+    grid.innerHTML = gifs.map((gif, i) => `
+      <button
+        type="button"
+        class="tenor-gif-item"
+        data-gif-index="${i}"
+        title="${escapeAttribute(gif.title)}"
+      >
+        <img src="${escapeAttribute(gif.previewUrl)}" alt="${escapeAttribute(gif.title)}" loading="lazy" />
+      </button>
+    `).join("");
+
+    grid.querySelectorAll(".tenor-gif-item").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const idx = Number(btn.dataset.gifIndex);
+        selectGif(postId, postCard, gifs[idx]);
+      });
+    });
+  }
+
+  function selectGif(postId, postCard, gif) {
+    pendingGifs.set(postId, gif);
+    closeTenorPicker(postId);
+
+    // Show preview above the input
+    const preview = postCard.querySelector("[data-gif-preview]");
+    const previewImg = postCard.querySelector("[data-gif-preview-img]");
+    if (preview && previewImg) {
+      previewImg.src = gif.previewUrl;
+      preview.classList.remove("hidden");
+    }
+  }
+
+  function clearPendingGif(postId) {
+    pendingGifs.delete(postId);
+    const postCard = findPostCard(postId);
+    const preview = postCard?.querySelector("[data-gif-preview]");
+    const previewImg = postCard?.querySelector("[data-gif-preview-img]");
+    if (preview) preview.classList.add("hidden");
+    if (previewImg) previewImg.src = "";
+  }
+
+  // Wire GIF button and remove button via event delegation on feedList
+  document.addEventListener("click", (e) => {
+    // GIF toggle button
+    const gifToggle = e.target.closest("[data-gif-toggle]");
+    if (gifToggle) {
+      const postCard = gifToggle.closest("[data-post-id]");
+      const postId = Number(postCard?.dataset?.postId);
+      if (!postId) return;
+      const picker = postCard.querySelector("[data-tenor-picker]");
+      if (picker?.classList.contains("hidden")) {
+        void openTenorPicker(postId, postCard);
+      } else {
+        closeTenorPicker(postId);
+      }
+      return;
+    }
+
+    // Remove GIF button
+    const gifRemove = e.target.closest("[data-gif-remove]");
+    if (gifRemove) {
+      const postCard = gifRemove.closest("[data-post-id]");
+      const postId = Number(postCard?.dataset?.postId);
+      if (postId) clearPendingGif(postId);
+      return;
+    }
+
+    // Click outside picker — close it
+    if (activeGifPicker && !e.target.closest("[data-tenor-picker]") && !e.target.closest("[data-gif-toggle]")) {
+      closeTenorPicker(activeGifPicker);
+    }
+  });
+
+  // ─────────────────────────────────────────────────────────────────────────
 })();
+  

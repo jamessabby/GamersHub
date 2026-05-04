@@ -98,9 +98,11 @@ async function createPostComment(postId, payload) {
   const parsedPostId = parsePositiveInt(postId, "A valid postId is required.");
   const parsedUserId = parsePositiveInt(payload.userId, "A valid userId is required.");
   const message = normalizeText(payload.message);
+  const gifUrl = payload.gifUrl ? String(payload.gifUrl).trim().substring(0, 1000) : null;
 
-  if (!message) {
-    const error = new Error("Comment message is required.");
+  // Allow GIF-only comments (message can be empty if a GIF is attached)
+  if (!message && !gifUrl) {
+    const error = new Error("Comment message or GIF is required.");
     error.statusCode = 400;
     throw error;
   }
@@ -113,7 +115,8 @@ async function createPostComment(postId, payload) {
   const comment = await reactionRepo.createComment({
     postId: parsedPostId,
     userId: parsedUserId,
-    message,
+    message: message || "",
+    gifUrl,
   });
 
   await auditService.logAuditEvent({
@@ -259,6 +262,7 @@ function mapComment(comment, authors) {
     postId: comment.postId,
     userId: comment.userId,
     message: comment.message || "",
+    gifUrl: comment.gifUrl || null,
     createdAt: comment.createdAt || null,
     createdLabel: formatRelativeTime(comment.createdAt),
     author,
