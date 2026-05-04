@@ -154,6 +154,29 @@
             </div>
             <div class="channels-grid" id="streamsGrid"></div>
           </section>
+
+          <!-- ── Twitch External Streams Section ───────────────────────── -->
+          <!-- This section is enhancement-only. It never saves to SQL Server,
+               never appears in admin moderation, and opens streams on Twitch. -->
+          <section class="channels-section twitch-section" id="twitchSection">
+            <div class="channels-header twitch-section-header">
+              <div class="channels-title">
+                <span class="twitch-dot"></span>
+                <span>External Esports Streams</span>
+                <span class="twitch-badge">via Twitch</span>
+              </div>
+              <div class="twitch-game-pills" id="twitchGamePills">
+                <button class="twitch-pill active" data-game="Valorant">Valorant</button>
+                <button class="twitch-pill" data-game="League of Legends">LoL</button>
+                <button class="twitch-pill" data-game="Mobile Legends: Bang Bang">MLBB</button>
+                <button class="twitch-pill" data-game="Counter-Strike 2">CS2</button>
+                <button class="twitch-pill" data-game="Dota 2">Dota 2</button>
+              </div>
+            </div>
+            <div id="twitchStatus" class="twitch-loading-state">Loading external streams…</div>
+            <div class="channels-grid" id="twitchGrid"></div>
+          </section>
+          <!-- ─────────────────────────────────────────────────────────── -->
         </section>
       </main>
 

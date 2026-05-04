@@ -567,3 +567,19 @@
   font-size: 13px;
   color: #4ade80;
 }
+
+/* ── IGDB Game Cover Enhancement ───────────────────────────────────────── */
+
+/* Smooth transition when IGDB cover loads to replace the local fallback */
+.trn-row-thumb img.igdb-cover {
+  transition: opacity 0.3s ease;
+  object-fit: cover;
+}
+
+/* Subtle indicator on game tag when IGDB enriched it with genre data */
+.trn-row-game-tag.igdb-enriched {
+  cursor: help;
+  border-bottom: 1px dotted rgba(139, 92, 246, 0.4);
+}
+
+/* ─────────────────────────────────────────────────────────────────────── */

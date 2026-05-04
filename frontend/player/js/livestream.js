@@ -23,6 +23,116 @@
   renderLoadingState();
   void loadStreams();
 
+  // ── Twitch External Streams ───────────────────────────────────────────────
+  const twitchSection = document.getElementById("twitchSection");
+  const twitchGrid = document.getElementById("twitchGrid");
+  const twitchStatus = document.getElementById("twitchStatus");
+  const twitchGamePills = document.getElementById("twitchGamePills");
+  let activeTwitchGame = "Valorant";
+
+  // Load Twitch streams on page load with default game
+  void loadTwitchStreams(activeTwitchGame);
+
+  // Game pill click handler
+  twitchGamePills?.addEventListener("click", (event) => {
+    const pill = event.target.closest(".twitch-pill");
+    if (!pill) return;
+    const game = pill.dataset.game;
+    if (!game || game === activeTwitchGame) return;
+
+    // Update active pill UI
+    twitchGamePills.querySelectorAll(".twitch-pill").forEach((p) => p.classList.remove("active"));
+    pill.classList.add("active");
+    activeTwitchGame = game;
+
+    // Re-fetch
+    void loadTwitchStreams(game);
+  });
+
+  async function loadTwitchStreams(game) {
+    if (twitchStatus) {
+      twitchStatus.textContent = `Loading ${game} streams from Twitch…`;
+      twitchStatus.className = "twitch-loading-state";
+    }
+    if (twitchGrid) twitchGrid.innerHTML = "";
+
+    try {
+      const resp = await fetch(
+        `${API_BASE}/api/streams/twitch?game=${encodeURIComponent(game)}&limit=6`,
+      );
+      const payload = await resp.json();
+
+      if (!payload.configured) {
+        if (twitchStatus) {
+          twitchStatus.textContent = "External stream discovery is not available on this server.";
+          twitchStatus.className = "twitch-unavailable";
+        }
+        return;
+      }
+
+      const items = payload.items || [];
+      if (!items.length) {
+        if (twitchStatus) {
+          twitchStatus.textContent = `No live ${game} streams found on Twitch right now.`;
+          twitchStatus.className = "twitch-unavailable";
+        }
+        return;
+      }
+
+      if (twitchStatus) twitchStatus.textContent = "";
+      if (twitchGrid) {
+        twitchGrid.innerHTML = items.map(renderTwitchCard).join("");
+      }
+    } catch (err) {
+      console.warn("[Twitch] Failed to load external streams:", err.message);
+      if (twitchStatus) {
+        twitchStatus.textContent = "External streams are temporarily unavailable.";
+        twitchStatus.className = "twitch-unavailable";
+      }
+    }
+  }
+
+  /**
+   * Renders a single Twitch stream card.
+   * Opens in a new tab on Twitch — never navigates within GamersHub.
+   */
+  function renderTwitchCard(stream) {
+    const thumbnail = stream.thumbnailUrl || "../assets/img/livestreams/thumbnail.jpg";
+    const avatarImg = stream.profileImageUrl
+      ? `<img class="twitch-channel-avatar" src="${escapeAttribute(stream.profileImageUrl)}" alt="${escapeAttribute(stream.channelName)}" onerror="this.style.display='none'" />`
+      : `<img class="streamer-logo" src="../assets/icons/player-dashboard-icons/user-profile.png" alt="${escapeAttribute(stream.channelName)}" />`;
+
+    return `
+      <a
+        class="stream-card stream-card--twitch"
+        href="${escapeAttribute(stream.twitchUrl)}"
+        target="_blank"
+        rel="noopener noreferrer"
+        title="Watch ${escapeAttribute(stream.channelName)} on Twitch"
+      >
+        <div class="stream-thumb-wrap">
+          <img
+            class="stream-thumb"
+            src="${escapeAttribute(thumbnail)}"
+            alt="${escapeAttribute(stream.title)}"
+            onerror="this.src='../assets/img/livestreams/thumbnail.jpg'"
+          />
+          <span class="badge-twitch-live"><span class="twitch-pulse"></span>LIVE</span>
+          <span class="viewer-chip">${formatCount(stream.viewerCount)} viewers</span>
+        </div>
+        <div class="stream-info">
+          <div class="stream-title">${escapeHtml(stream.title || "Untitled")}</div>
+          <div class="stream-meta">
+            ${avatarImg}
+            <span class="stream-game-tag">${escapeHtml(stream.channelName)}</span>
+            <span class="twitch-open-tag">↗ Twitch</span>
+          </div>
+        </div>
+      </a>
+    `;
+  }
+  // ─────────────────────────────────────────────────────────────────────────
+
   async function loadStreams() {
     try {
       const response = await fetch(`${API_BASE}/api/streams?limit=24`);

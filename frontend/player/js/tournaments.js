@@ -107,6 +107,12 @@
 
       tournaments = payload.items || [];
       renderTournaments(filterTournaments(searchInput?.value || ""));
+
+      // ── IGDB Enhancement: fetch game covers asynchronously ──────────────
+      // This runs AFTER rendering so tournaments appear immediately.
+      // If IGDB fails, cover images gracefully fall back to local assets.
+      void enrichWithIgdbCovers(tournaments);
+      // ────────────────────────────────────────────────────────────────────
     } catch (error) {
       console.error("Tournament loading failed:", error);
       renderEmptyState(
@@ -193,12 +199,13 @@
           <img
             src="${escapeAttribute(resolveThumbnail(tournament.gameName))}"
             alt="${escapeHtml(tournament.title)}"
+            data-igdb-game="${escapeAttribute(tournament.gameName || "")}"
           />
           <span class="trn-row-badge ${badge.className}">${escapeHtml(badge.label)}</span>
         </div>
         <div class="trn-row-body">
           <div class="trn-row-top">
-            <span class="trn-row-game-tag">${escapeHtml(tournament.gameName || "Game")}</span>
+            <span class="trn-row-game-tag" data-igdb-game="${escapeAttribute(tournament.gameName || "")}">${escapeHtml(tournament.gameName || "Game")}</span>
             <span class="trn-row-type">${escapeHtml(metaLabel)}</span>
           </div>
           <h2 class="trn-row-title">${escapeHtml(tournament.title)}</h2>
@@ -270,7 +277,10 @@
     return { className: "trn-badge-open", label: tournament.status || "Ready" };
   }
 
-  function resolveThumbnail(gameName) {
+  function resolveThumbnail(gameName, igdbCover) {
+    // If IGDB cover is available, prefer it (enhancement layer)
+    if (igdbCover) return igdbCover;
+
     const value = String(gameName || "").toLowerCase();
     if (value.includes("valorant")) {
       return "../assets/img/livestreams/valorant-select.png";
@@ -310,4 +320,59 @@
   function escapeAttribute(value) {
     return escapeHtml(value).replace(/`/g, "&#96;");
   }
+
+  // ── IGDB Enhancement ──────────────────────────────────────────────────────
+  // Fetches game cover art from IGDB via our backend proxy after tournaments render.
+  // If IGDB is not configured or fails, this is a silent no-op — it never
+  // breaks or removes existing tournament cards.
+  // The backend caches IGDB results for 6 hours so repeated loads are fast.
+
+  /** In-memory cache of IGDB results for this page session */
+  const igdbCache = new Map();
+
+  async function enrichWithIgdbCovers(items) {
+    const gameNames = [...new Set(items.map((t) => t.gameName).filter(Boolean))];
+    if (!gameNames.length) return;
+
+    await Promise.allSettled(
+      gameNames.map(async (name) => {
+        try {
+          if (igdbCache.has(name)) return; // already fetched
+
+          const resp = await fetch(
+            `${API_BASE}/api/streams/igdb/game?name=${encodeURIComponent(name)}`,
+          );
+          if (!resp.ok) return;
+
+          const payload = await resp.json();
+          if (!payload.configured || !payload.game?.coverUrl) return;
+
+          igdbCache.set(name, payload.game);
+
+          // Update every img that is still showing the local fallback for this game
+          const imgs = document.querySelectorAll(
+            `.trn-row-thumb img[data-igdb-game="${CSS.escape(name)}"]`,
+          );
+          imgs.forEach((img) => {
+            img.src = payload.game.coverUrl;
+            img.classList.add("igdb-cover");
+          });
+
+          // Show genre tags if available
+          if (payload.game.genres?.length) {
+            const tags = document.querySelectorAll(
+              `.trn-row-game-tag[data-igdb-game="${CSS.escape(name)}"]`,
+            );
+            tags.forEach((tag) => {
+              tag.title = payload.game.genres.slice(0, 3).join(", ");
+              tag.classList.add("igdb-enriched");
+            });
+          }
+        } catch {
+          // Silent — IGDB failure never crashes the page
+        }
+      }),
+    );
+  }
+  // ─────────────────────────────────────────────────────────────────────────
 })();

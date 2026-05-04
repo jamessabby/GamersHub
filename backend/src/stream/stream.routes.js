@@ -4,6 +4,13 @@ const streamController = require("./stream.controller");
 const { requireAuth, optionalAuth } = require("../middleware/auth.middleware");
 
 router.get("/", streamController.getStreams);
+
+// ── External API endpoints (Twitch + IGDB) ─────────────────────────────────
+// These must be declared BEFORE /:streamId so they are not captured by it.
+router.get("/twitch", streamController.getTwitchStreams);
+router.get("/igdb/game", streamController.getIgdbGame);
+// ───────────────────────────────────────────────────────────────────────────
+
 router.post("/send-gift", requireAuth, streamController.sendGift);
 router.post("/:streamId/view", streamController.trackView);
 router.get("/:streamId/likes", optionalAuth, streamController.getLikeStatus);

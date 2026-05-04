@@ -500,3 +500,155 @@
 }
 
 
+
+/* ── TWITCH EXTERNAL STREAMS SECTION ───────────────────────────────────── */
+
+.twitch-section {
+  margin-top: 36px;
+  padding-top: 20px;
+  border-top: 1px solid rgba(145, 70, 255, 0.12);
+}
+
+.twitch-section-header {
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.twitch-dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #9146ff;
+  flex-shrink: 0;
+  box-shadow: 0 0 6px rgba(145, 70, 255, 0.7);
+  animation: twitch-pulse 2s ease-in-out infinite;
+}
+
+@keyframes twitch-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.twitch-badge {
+  font-size: 10px;
+  font-weight: 600;
+  color: #9146ff;
+  background: rgba(145, 70, 255, 0.12);
+  border: 1px solid rgba(145, 70, 255, 0.25);
+  border-radius: 4px;
+  padding: 2px 7px;
+  letter-spacing: 0.04em;
+  margin-left: 6px;
+  text-transform: uppercase;
+}
+
+/* Game filter pills */
+.twitch-game-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 2px;
+}
+
+.twitch-pill {
+  background: rgba(145, 70, 255, 0.07);
+  border: 1px solid rgba(145, 70, 255, 0.2);
+  color: rgba(255, 255, 255, 0.55);
+  font-size: 11px;
+  font-weight: 500;
+  border-radius: 999px;
+  padding: 3px 12px;
+  cursor: pointer;
+  transition: background 0.18s, color 0.18s, border-color 0.18s;
+  font-family: inherit;
+}
+
+.twitch-pill:hover {
+  background: rgba(145, 70, 255, 0.18);
+  color: rgba(255, 255, 255, 0.85);
+  border-color: rgba(145, 70, 255, 0.45);
+}
+
+.twitch-pill.active {
+  background: rgba(145, 70, 255, 0.22);
+  color: #c7a7ff;
+  border-color: #9146ff;
+}
+
+/* Loading / status state */
+.twitch-loading-state {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.35);
+  padding: 12px 0 4px;
+}
+
+.twitch-unavailable {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.3);
+  padding: 10px 0;
+  font-style: italic;
+}
+
+/* Twitch stream card — inherits .stream-card base styles */
+.stream-card--twitch {
+  position: relative;
+}
+
+.stream-card--twitch .stream-thumb-wrap::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #9146ff, #6441a5);
+  border-radius: 0 0 4px 4px;
+}
+
+.twitch-channel-avatar {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.twitch-open-tag {
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #9146ff;
+  font-weight: 700;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.badge-twitch-live {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  background: #9146ff;
+  color: #fff;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  padding: 2px 7px;
+  border-radius: 3px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  text-transform: uppercase;
+}
+
+.twitch-pulse {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #fff;
+  animation: twitch-pulse 1.2s ease-in-out infinite;
+}
+
+/* ─────────────────────────────────────────────────────────────────────── */
