@@ -72,7 +72,9 @@
   }
 
   // Fetch registration details
-  fetch(`${API}/tournaments/registration/${encodeURIComponent(publicId)}`)
+  fetch(`${API}/tournaments/registration/${encodeURIComponent(publicId)}`, {
+    headers: { "ngrok-skip-browser-warning": "true" },
+  })
     .then((r) => {
       if (!r.ok) throw new Error("not_found");
       return r.json();
@@ -225,6 +227,7 @@
       `${API}/tournaments/registration/${encodeURIComponent(reg.publicId)}/upload-proof`,
       {
         method: "POST",
+        headers: { "ngrok-skip-browser-warning": "true" },
         body: form,
       },
     )
