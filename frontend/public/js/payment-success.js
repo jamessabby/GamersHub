@@ -1,29 +1,26 @@
-/* payment-success.js — GamersHub
+/* payment-success.js - GamersHub
  * Shown after PayMongo redirects back post-GCash payment.
- * URL: /frontend/public/payment-success.html?ref=<publicId>
- *
- * Flow:
- *  1. Read ?ref= (publicId) from URL
- *  2. Fetch registration details from API
- *  3. Show info + receipt upload form
- *  4. POST receipt image → /api/tournaments/registration/:publicId/upload-proof
- *  5. Show "all done" state
+ * URL: /public/payment-success.html?ref=<publicId>
  */
 
 (function () {
   "use strict";
 
-  // ── Helpers ────────────────────────────────────────
-  const API = "https://reputable-amigo-thermos.ngrok-free.dev/api";
+  const DEFAULT_REMOTE_API_BASE = "https://reputable-amigo-thermos.ngrok-free.dev";
+  const API_BASE = resolveApiBase();
+  const API = `${API_BASE}/api`;
+  const API_HEADERS = API_BASE.includes("ngrok-free")
+    ? { "ngrok-skip-browser-warning": "true" }
+    : {};
 
   function $(id) {
     return document.getElementById(id);
   }
 
   function showCard(id) {
-    ["loadingCard", "errorCard", "successCard"].forEach((c) => {
-      const el = $(c);
-      if (el) el.style.display = c === id ? "" : "none";
+    ["loadingCard", "errorCard", "successCard"].forEach((cardId) => {
+      const el = $(cardId);
+      if (el) el.style.display = cardId === id ? "" : "none";
     });
   }
 
@@ -33,31 +30,63 @@
     showCard("errorCard");
   }
 
-  function formatPeso(amount) {
-    const pesos = Number(amount) / 100;
-    return "₱" + pesos.toFixed(2);
+  function resolveApiBase() {
+    const queryBase = new URLSearchParams(window.location.search).get("apiBase");
+    const candidates = [
+      queryBase,
+      window.GamersHubAuth?.apiBase,
+      window.GAMERSHUB_API_BASE,
+      isLocalHost() ? "http://localhost:3000" : DEFAULT_REMOTE_API_BASE,
+    ];
+
+    for (const candidate of candidates) {
+      const normalized = normalizeApiBase(candidate);
+      if (normalized) return normalized;
+    }
+    return DEFAULT_REMOTE_API_BASE;
   }
 
-  // ── Stars ──────────────────────────────────────────
-  function spawnStars() {
-    const container = document.getElementById("stars");
-    if (!container) return;
-    for (let i = 0; i < 80; i++) {
-      const s = document.createElement("div");
-      s.className = "star";
-      s.style.cssText = `
-        left:${Math.random() * 100}%;
-        top:${Math.random() * 100}%;
-        width:${Math.random() * 2 + 1}px;
-        height:${Math.random() * 2 + 1}px;
-        animation-delay:${Math.random() * 4}s;
-        animation-duration:${2 + Math.random() * 3}s;
-      `;
-      container.appendChild(s);
+  function isLocalHost() {
+    return ["localhost", "127.0.0.1"].includes(window.location.hostname);
+  }
+
+  function normalizeApiBase(value) {
+    if (!value) return "";
+    const trimmed = String(value).trim().replace(/\/+$/, "");
+    if (!trimmed) return "";
+    try {
+      const url = new URL(trimmed);
+      const path = url.pathname.replace(/\/+$/, "").replace(/\/api$/, "");
+      return url.origin + path;
+    } catch {
+      return "";
     }
   }
 
-  // ── Main ───────────────────────────────────────────
+  function formatPeso(amount) {
+    const pesos = Math.max(0, Number(amount) || 0) / 100;
+    return `PHP ${pesos.toFixed(2)}`;
+  }
+
+  function spawnStars() {
+    const container = $("stars");
+    if (!container) return;
+
+    for (let i = 0; i < 80; i++) {
+      const star = document.createElement("div");
+      star.className = "star";
+      star.style.cssText = [
+        `left:${Math.random() * 100}%`,
+        `top:${Math.random() * 100}%`,
+        `width:${Math.random() * 2 + 1}px`,
+        `height:${Math.random() * 2 + 1}px`,
+        `animation-delay:${Math.random() * 4}s`,
+        `animation-duration:${2 + Math.random() * 3}s`,
+      ].join(";");
+      container.appendChild(star);
+    }
+  }
+
   const params = new URLSearchParams(window.location.search);
   const publicId = params.get("ref");
 
@@ -71,25 +100,30 @@
     return;
   }
 
-  // Fetch registration details
   fetch(`${API}/tournaments/registration/${encodeURIComponent(publicId)}`, {
-    headers: { "ngrok-skip-browser-warning": "true" },
+    headers: API_HEADERS,
   })
-    .then((r) => {
-      if (!r.ok) throw new Error("not_found");
-      return r.json();
-    })
+    .then((response) =>
+      response.json().catch(() => ({})).then((data) => {
+        if (!response.ok) {
+          const error = new Error(response.status === 404 ? "not_found" : "fetch_failed");
+          error.status = response.status;
+          error.messageFromServer = data?.message || "";
+          throw error;
+        }
+        return data;
+      }),
+    )
     .then((reg) => {
-      // Populate info box
       const info = $("regInfo");
       if (info) {
         const feeText = reg.feeAmount > 0 ? formatPeso(reg.feeAmount) : "Free";
         info.innerHTML = `
           <div><strong>Team:</strong> ${escHtml(reg.teamName)}</div>
-          <div><strong>Tournament:</strong> ${escHtml(reg.tournamentTitle || "—")}</div>
+          <div><strong>Tournament:</strong> ${escHtml(reg.tournamentTitle || "-")}</div>
           <div><strong>Contact:</strong> ${escHtml(reg.contactEmail)}</div>
           <div><strong>Fee:</strong> ${feeText}</div>
-          <div><strong>Payment status:</strong> <span style="color:#34d399;">${escHtml(reg.paymentStatus || "—")}</span></div>
+          <div><strong>Payment status:</strong> <span style="color:#34d399;">${escHtml(reg.paymentStatus || "-")}</span></div>
         `;
       }
 
@@ -102,15 +136,15 @@
           "Registration not found",
           "We couldn't find a registration with that reference. It may have already been processed.",
         );
-      } else {
-        showError(
-          "Network error",
-          "Could not load registration. Please check your connection and try again.",
-        );
+        return;
       }
+
+      showError(
+        "Network error",
+        `Could not load registration from ${API_BASE}. Make sure ngrok is online and forwarding to localhost:3000.`,
+      );
     });
 
-  // ── Upload flow ────────────────────────────────────
   function initUpload(reg) {
     const uploadZone = $("uploadZone");
     const uploadInner = $("uploadInner");
@@ -119,8 +153,6 @@
     const removeBtn = $("removeBtn");
     const fileInput = $("fileInput");
     const uploadBtn = $("uploadBtn");
-    const uploadBtnText = $("uploadBtnText");
-    const uploadLoader = $("uploadLoader");
     const uploadError = $("uploadError");
     const skipUpload = $("skipUpload");
 
@@ -143,22 +175,23 @@
         showUploadError("Image must be smaller than 8 MB.");
         return;
       }
+
       clearUploadError();
       const reader = new FileReader();
-      reader.onload = (e) => {
-        previewImg.src = e.target.result;
+      reader.onload = (event) => {
+        previewImg.src = event.target.result;
         uploadInner.style.display = "none";
         uploadPreview.style.display = "flex";
       };
       reader.readAsDataURL(file);
 
-      const dt = new DataTransfer();
-      dt.items.add(file);
-      fileInput.files = dt.files;
+      const dataTransfer = new DataTransfer();
+      dataTransfer.items.add(file);
+      fileInput.files = dataTransfer.files;
     }
 
-    uploadZone.addEventListener("click", (e) => {
-      if (e.target === removeBtn || removeBtn.contains(e.target)) return;
+    uploadZone.addEventListener("click", (event) => {
+      if (event.target === removeBtn || removeBtn.contains(event.target)) return;
       fileInput.click();
     });
 
@@ -166,23 +199,23 @@
       if (fileInput.files[0]) applyFile(fileInput.files[0]);
     });
 
-    uploadZone.addEventListener("dragover", (e) => {
-      e.preventDefault();
+    uploadZone.addEventListener("dragover", (event) => {
+      event.preventDefault();
       uploadZone.classList.add("drag-over");
     });
 
-    uploadZone.addEventListener("dragleave", () =>
-      uploadZone.classList.remove("drag-over"),
-    );
-
-    uploadZone.addEventListener("drop", (e) => {
-      e.preventDefault();
+    uploadZone.addEventListener("dragleave", () => {
       uploadZone.classList.remove("drag-over");
-      if (e.dataTransfer.files[0]) applyFile(e.dataTransfer.files[0]);
     });
 
-    removeBtn.addEventListener("click", (e) => {
-      e.stopPropagation();
+    uploadZone.addEventListener("drop", (event) => {
+      event.preventDefault();
+      uploadZone.classList.remove("drag-over");
+      if (event.dataTransfer.files[0]) applyFile(event.dataTransfer.files[0]);
+    });
+
+    removeBtn.addEventListener("click", (event) => {
+      event.stopPropagation();
       fileInput.value = "";
       previewImg.src = "";
       uploadInner.style.display = "";
@@ -200,8 +233,8 @@
       doUpload(file, reg);
     });
 
-    skipUpload.addEventListener("click", (e) => {
-      e.preventDefault();
+    skipUpload.addEventListener("click", (event) => {
+      event.preventDefault();
       showDone(
         "Registration Submitted!",
         `Your registration for "${reg.tournamentTitle || "the tournament"}" has been received. ` +
@@ -217,7 +250,7 @@
     const uploadError = $("uploadError");
 
     uploadBtn.disabled = true;
-    uploadBtnText.textContent = "Uploading…";
+    uploadBtnText.textContent = "Uploading...";
     uploadLoader.classList.remove("d-none");
 
     const form = new FormData();
@@ -227,16 +260,21 @@
       `${API}/tournaments/registration/${encodeURIComponent(reg.publicId)}/upload-proof`,
       {
         method: "POST",
-        headers: { "ngrok-skip-browser-warning": "true" },
+        headers: API_HEADERS,
         body: form,
       },
     )
-      .then((r) => r.json().then((data) => ({ ok: r.ok, data })))
+      .then((response) =>
+        response.json().catch(() => ({})).then((data) => ({
+          ok: response.ok,
+          data,
+        })),
+      )
       .then(({ ok, data }) => {
         if (!ok) throw new Error(data.message || "Upload failed.");
         showDone(
           "Receipt Uploaded!",
-          `Your GCash receipt has been saved. ` +
+          "Your GCash receipt has been saved. " +
             `An admin will review your registration and send your join code to ${reg.contactEmail} once approved.`,
         );
       })

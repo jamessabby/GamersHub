@@ -292,7 +292,7 @@ async function submitRegistration({ tournamentId, teamName, contactName, contact
   if (feeAmount > 0 && secretKey && !secretKey.startsWith("sk_test_REPLACE") && reg) {
     try {
       const baseUrl = (process.env.APP_BASE_URL || "").replace(/\/$/, "");
-      const successUrl = `${baseUrl}/frontend/public/payment-success.html?ref=${reg.publicId}`;
+      const successUrl = `${baseUrl}/public/payment-success.html?ref=${reg.publicId}`;
       const link = await createPaymentLink({
         amount: feeAmount,
         description: `Registration fee - ${tournament?.title || "Tournament"}`,
