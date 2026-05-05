@@ -14,7 +14,7 @@
   "use strict";
 
   // ── Helpers ────────────────────────────────────────
-  const API = "/api";
+  const API = "https://reputable-amigo-thermos.ngrok-free.dev/api";
 
   function $(id) {
     return document.getElementById(id);
@@ -64,7 +64,10 @@
   spawnStars();
 
   if (!publicId) {
-    showError("Missing reference", "No registration reference found in the URL.");
+    showError(
+      "Missing reference",
+      "No registration reference found in the URL.",
+    );
     return;
   }
 
@@ -93,9 +96,15 @@
     })
     .catch((err) => {
       if (err.message === "not_found") {
-        showError("Registration not found", "We couldn't find a registration with that reference. It may have already been processed.");
+        showError(
+          "Registration not found",
+          "We couldn't find a registration with that reference. It may have already been processed.",
+        );
       } else {
-        showError("Network error", "Could not load registration. Please check your connection and try again.");
+        showError(
+          "Network error",
+          "Could not load registration. Please check your connection and try again.",
+        );
       }
     });
 
@@ -160,7 +169,9 @@
       uploadZone.classList.add("drag-over");
     });
 
-    uploadZone.addEventListener("dragleave", () => uploadZone.classList.remove("drag-over"));
+    uploadZone.addEventListener("dragleave", () =>
+      uploadZone.classList.remove("drag-over"),
+    );
 
     uploadZone.addEventListener("drop", (e) => {
       e.preventDefault();
@@ -192,7 +203,7 @@
       showDone(
         "Registration Submitted!",
         `Your registration for "${reg.tournamentTitle || "the tournament"}" has been received. ` +
-          `An admin will review it and send your join code to ${reg.contactEmail} once approved.`
+          `An admin will review it and send your join code to ${reg.contactEmail} once approved.`,
       );
     });
   }
@@ -210,21 +221,25 @@
     const form = new FormData();
     form.append("paymentProof", file);
 
-    fetch(`${API}/tournaments/registration/${encodeURIComponent(reg.publicId)}/upload-proof`, {
-      method: "POST",
-      body: form,
-    })
+    fetch(
+      `${API}/tournaments/registration/${encodeURIComponent(reg.publicId)}/upload-proof`,
+      {
+        method: "POST",
+        body: form,
+      },
+    )
       .then((r) => r.json().then((data) => ({ ok: r.ok, data })))
       .then(({ ok, data }) => {
         if (!ok) throw new Error(data.message || "Upload failed.");
         showDone(
           "Receipt Uploaded!",
           `Your GCash receipt has been saved. ` +
-            `An admin will review your registration and send your join code to ${reg.contactEmail} once approved.`
+            `An admin will review your registration and send your join code to ${reg.contactEmail} once approved.`,
         );
       })
       .catch((err) => {
-        uploadError.textContent = err.message || "Upload failed. Please try again.";
+        uploadError.textContent =
+          err.message || "Upload failed. Please try again.";
         uploadError.style.display = "";
         uploadBtn.disabled = false;
         uploadBtnText.textContent = "Upload Receipt";
