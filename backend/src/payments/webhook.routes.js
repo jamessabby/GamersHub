@@ -11,7 +11,7 @@ router.post(
   express.raw({ type: "*/*" }),
   async (req, res) => {
     const sig = req.headers["paymongo-signature"] || "";
-    const secret = process.env.PAYMONGO_WEBHOOK_SECRET || "";
+    const secrets = getWebhookSecrets();
 
     // req.body is a Buffer when express.raw matched, otherwise undefined.
     if (!req.body || !Buffer.isBuffer(req.body)) {
@@ -21,7 +21,7 @@ router.post(
 
     const rawBody = req.body.toString("utf8");
 
-    if (secret && secret !== "whsec_REPLACE_ME" && !verifyWebhookSignature(rawBody, sig, secret)) {
+    if (secrets.length && !secrets.some((secret) => verifyWebhookSignature(rawBody, sig, secret))) {
       console.warn("PayMongo webhook: signature mismatch.");
       return res.status(401).json({ message: "Invalid webhook signature." });
     }
@@ -74,5 +74,16 @@ router.post(
     res.status(200).json({ received: true });
   }
 );
+
+function getWebhookSecrets() {
+  return [
+    process.env.PAYMONGO_WEBHOOK_SECRET,
+    process.env.PAYMONGO_WEBHOOK_SECRETS,
+  ]
+    .filter(Boolean)
+    .flatMap((value) => String(value).split(/[,\n;]/))
+    .map((value) => value.trim())
+    .filter((value) => value && value !== "whsec_REPLACE_ME");
+}
 
 module.exports = router;

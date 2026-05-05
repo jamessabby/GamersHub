@@ -16,7 +16,9 @@ app.use((req, res, next) => {
 });
 
 // Webhook must be mounted before express.json() — it needs the raw request body for signature verification
-app.use("/api/webhooks", require("./payments/webhook.routes"));
+const webhookRoutes = require("./payments/webhook.routes");
+app.use("/api/webhooks", webhookRoutes);
+app.use("/api/webhook", webhookRoutes);
 
 app.use(express.json({ limit: "25mb" }));
 app.use(express.urlencoded({ extended: true, limit: "25mb" }));

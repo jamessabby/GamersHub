@@ -1,5 +1,5 @@
 const express = require("express");
-const { requireAuth } = require("../middleware/auth.middleware");
+const { requireAuth, requireRole } = require("../middleware/auth.middleware");
 const tournamentController = require("./tournament.controller");
 const registrationUpload = require("./registration.upload");
 
@@ -20,6 +20,9 @@ router.post("/registration/:publicId/upload-proof", registrationUpload.single("p
 
 // Public registration (no auth — organizers register from a social link)
 router.post("/register", registrationUpload.single("paymentProof"), tournamentController.submitRegistration);
+
+// Backward-compatible admin create path for older cached frontend builds.
+router.post("/", requireAuth, requireRole("admin", "superadmin"), tournamentController.createTournament);
 
 // Authenticated player — join by code
 router.post("/join", requireAuth, tournamentController.joinTournamentByCode);
