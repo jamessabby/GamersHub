@@ -20,7 +20,9 @@
   <body>
     <div class="stars" id="stars"></div>
 
-    <nav class="navbar-custom d-flex align-items-center justify-content-between px-4">
+    <nav
+      class="navbar-custom d-flex align-items-center justify-content-between px-4"
+    >
       <a href="../auth/index.html" class="navbar-brand-custom">
         <img
           src="../assets/img/logo.png"
@@ -39,16 +41,27 @@
 
     <div class="reg-layout">
       <!-- Success state (hidden until submission) -->
-      <div class="reg-success-card" id="successCard" style="display:none;">
+      <div class="reg-success-card" id="successCard" style="display: none">
         <div class="success-icon">
           <svg width="40" height="40" viewBox="0 0 24 24" fill="none">
-            <circle cx="12" cy="12" r="10" stroke="url(#sGrad)" stroke-width="1.5"/>
-            <path d="M8 12.5l3 3 5-5" stroke="url(#sGrad)" stroke-width="2"
-                  stroke-linecap="round" stroke-linejoin="round"/>
+            <circle
+              cx="12"
+              cy="12"
+              r="10"
+              stroke="url(#sGrad)"
+              stroke-width="1.5"
+            />
+            <path
+              d="M8 12.5l3 3 5-5"
+              stroke="url(#sGrad)"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
             <defs>
               <linearGradient id="sGrad" x1="2" y1="2" x2="22" y2="22">
-                <stop stop-color="#34d399"/>
-                <stop offset="1" stop-color="#059669"/>
+                <stop stop-color="#34d399" />
+                <stop offset="1" stop-color="#059669" />
               </linearGradient>
             </defs>
           </svg>
@@ -56,30 +69,66 @@
         <h2 class="success-title">Registration Submitted!</h2>
         <p class="success-body" id="successBody">
           Your team has been added to the waitlist. An admin will review your
-          registration and you'll receive an email with your join code once approved.
+          registration and you'll receive an email with your join code once
+          approved.
         </p>
 
         <!-- Pay Now button — shown only for paid tournaments with a PayMongo link -->
-        <div id="payNowSection" style="display:none; margin: 20px 0 8px;">
-          <p style="font-size:13px; color:rgba(255,255,255,0.5); margin:0 0 12px; text-align:center;">
+        <div id="payNowSection" style="display: none; margin: 20px 0 8px">
+          <p
+            style="
+              font-size: 13px;
+              color: rgba(255, 255, 255, 0.5);
+              margin: 0 0 12px;
+              text-align: center;
+            "
+          >
             Complete your payment to finalize your registration:
           </p>
-          <a id="payNowBtn" href="#" target="_blank" rel="noopener noreferrer"
-             class="btn-pay-now">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style="flex-shrink:0;">
-              <rect x="2" y="5" width="20" height="14" rx="3" stroke="currentColor" stroke-width="1.8"/>
-              <path d="M2 10h20" stroke="currentColor" stroke-width="1.8"/>
-              <circle cx="7" cy="15" r="1.2" fill="currentColor"/>
-              <circle cx="11" cy="15" r="1.2" fill="currentColor"/>
+          <a
+            id="payNowBtn"
+            href="#"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="btn-pay-now"
+          >
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              style="flex-shrink: 0"
+            >
+              <rect
+                x="2"
+                y="5"
+                width="20"
+                height="14"
+                rx="3"
+                stroke="currentColor"
+                stroke-width="1.8"
+              />
+              <path d="M2 10h20" stroke="currentColor" stroke-width="1.8" />
+              <circle cx="7" cy="15" r="1.2" fill="currentColor" />
+              <circle cx="11" cy="15" r="1.2" fill="currentColor" />
             </svg>
             Pay Now via GCash / Maya / Card
           </a>
-          <p style="font-size:11px; color:rgba(255,255,255,0.3); margin:10px 0 0; text-align:center;">
+          <p
+            style="
+              font-size: 11px;
+              color: rgba(255, 255, 255, 0.3);
+              margin: 10px 0 0;
+              text-align: center;
+            "
+          >
             Powered by PayMongo · Secure checkout
           </p>
         </div>
 
-        <a href="../auth/index.html" class="btn-back-home" id="backHomeBtn">Back to Home</a>
+        <a href="../auth/index.html" class="btn-back-home" id="backHomeBtn"
+          >Back to Home</a
+        >
       </div>
 
       <!-- Registration form card -->
@@ -90,22 +139,34 @@
         <div class="card-header-area">
           <div class="brand-icon">
             <svg width="24" height="24" viewBox="0 0 28 28" fill="none">
-              <path d="M14 3L4 8v6c0 5.25 4.25 10.15 10 11.35C19.75 24.15 24 19.25 24 14V8L14 3z"
-                stroke="url(#tGrad)" stroke-width="1.6" stroke-linejoin="round"/>
-              <path d="M10 14l3 3 5-5" stroke="url(#tGrad)" stroke-width="1.6"
-                stroke-linecap="round" stroke-linejoin="round"/>
+              <path
+                d="M14 3L4 8v6c0 5.25 4.25 10.15 10 11.35C19.75 24.15 24 19.25 24 14V8L14 3z"
+                stroke="url(#tGrad)"
+                stroke-width="1.6"
+                stroke-linejoin="round"
+              />
+              <path
+                d="M10 14l3 3 5-5"
+                stroke="url(#tGrad)"
+                stroke-width="1.6"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
               <defs>
                 <linearGradient id="tGrad" x1="4" y1="3" x2="24" y2="25">
-                  <stop stop-color="#a78bfa"/>
-                  <stop offset="1" stop-color="#7c3aed"/>
+                  <stop stop-color="#a78bfa" />
+                  <stop offset="1" stop-color="#7c3aed" />
                 </linearGradient>
               </defs>
             </svg>
           </div>
-          <h2 class="card-title">Team <span class="title-accent">Registration</span></h2>
+          <h2 class="card-title">
+            Team <span class="title-accent">Registration</span>
+          </h2>
           <p class="card-subtitle">
-            Register your team for an upcoming GamersHub tournament. Fill in your
-            contact details and upload your payment proof to complete registration.
+            Register your team for an upcoming GamersHub tournament. Fill in
+            your contact details and upload your payment proof to complete
+            registration.
           </p>
         </div>
 
@@ -119,7 +180,9 @@
               <option value="">Loading tournaments...</option>
             </select>
           </div>
-          <p class="section-hint" id="registrationFeeNotice">Select a tournament to see the registration fee.</p>
+          <p class="section-hint" id="registrationFeeNotice">
+            Select a tournament to see the registration fee.
+          </p>
         </div>
 
         <div class="section-divider"></div>
@@ -155,7 +218,9 @@
             />
           </div>
           <div class="form-group-custom">
-            <label class="field-label" for="regContactPhone">PHONE (optional)</label>
+            <label class="field-label" for="regContactPhone"
+              >PHONE (optional)</label
+            >
             <input
               type="tel"
               class="input-field"
@@ -183,7 +248,9 @@
         <p class="section-label">Team Size</p>
 
         <div class="form-group-custom">
-          <label class="field-label" for="regPlayerCount">NUMBER OF PLAYERS</label>
+          <label class="field-label" for="regPlayerCount"
+            >NUMBER OF PLAYERS</label
+          >
           <input
             type="number"
             class="input-field"
@@ -197,17 +264,26 @@
         <div class="section-divider"></div>
 
         <!-- Team participants -->
-        <p class="section-label">Team Participants <span class="section-hint-inline">(optional)</span></p>
+        <p class="section-label">
+          Team Participants <span class="section-hint-inline">(optional)</span>
+        </p>
         <p class="section-hint">
-          Add the GamersHub usernames of your team members. Matched accounts will receive
-          an in-app notification when your registration is approved.
+          Add the GamersHub usernames of your team members. Matched accounts
+          will receive an in-app notification when your registration is
+          approved.
         </p>
 
         <div id="participantList"></div>
 
-        <button class="btn-add-participant" id="addParticipantBtn" type="button">
+        <button
+          class="btn-add-participant"
+          id="addParticipantBtn"
+          type="button"
+        >
           + Add Username
         </button>
+
+        <div class="section-divider"></div>
 
         <!-- Submit -->
         <button class="btn-submit" id="submitBtn" type="button">
@@ -216,8 +292,9 @@
         </button>
 
         <p class="reg-note">
-          By submitting, you agree to GamersHub's tournament rules. Registrations are
-          subject to admin review. You will receive a confirmation email once approved.
+          By submitting, you agree to GamersHub's tournament rules.
+          Registrations are subject to admin review. You will receive a
+          confirmation email once approved.
         </p>
       </div>
     </div>
