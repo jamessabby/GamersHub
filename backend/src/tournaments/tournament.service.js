@@ -291,10 +291,13 @@ async function submitRegistration({ tournamentId, teamName, contactName, contact
   const secretKey = process.env.PAYMONGO_SECRET_KEY || "";
   if (feeAmount > 0 && secretKey && !secretKey.startsWith("sk_test_REPLACE") && reg) {
     try {
+      const baseUrl = (process.env.APP_BASE_URL || "").replace(/\/$/, "");
+      const successUrl = `${baseUrl}/frontend/public/payment-success.html?ref=${reg.publicId}`;
       const link = await createPaymentLink({
         amount: feeAmount,
         description: `Registration fee - ${tournament?.title || "Tournament"}`,
         remarks: String(teamName).trim(),
+        redirectSuccess: successUrl,
       });
       await tournamentRepo.updateRegistrationPaymongoLink(reg.registrationId, link.linkId);
       checkoutUrl = link.checkoutUrl;
@@ -482,6 +485,26 @@ function normalizeRegistrationFeeAmount({ registrationFeeAmount, registrationFee
   return Math.round(pesos * 100);
 }
 
+async function getRegistrationByPublicId(publicId) {
+  if (!publicId) {
+    const e = new Error("publicId is required.");
+    e.statusCode = 400;
+    throw e;
+  }
+  const reg = await tournamentRepo.findRegistrationByPublicId(publicId);
+  return reg || null;
+}
+
+
+async function updateProofByPublicId({ publicId, paymentProofUrl }) {
+  if (!publicId) return null;
+  const reg = await tournamentRepo.findRegistrationByPublicId(publicId);
+  if (!reg) return null;
+  await tournamentRepo.updateRegistrationProof(reg.registrationId, paymentProofUrl);
+  return { ...reg, paymentProofUrl };
+}
+
+
 module.exports = {
   listTournaments,
   endTournament,
@@ -497,6 +520,8 @@ module.exports = {
   saveMatchStats,
   listRegistrations,
   submitRegistration,
+  getRegistrationByPublicId,
+  updateProofByPublicId,
   approveRegistration,
   rejectRegistration,
   confirmRegistrationPayment,

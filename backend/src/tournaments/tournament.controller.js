@@ -263,8 +263,27 @@ async function getTournamentSummary(req, res) {
   }
 }
 
+async function uploadProofByPublicId(req, res) {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ message: "No file uploaded." });
+    }
+    const paymentProofUrl = `/uploads/payment-proofs/${req.file.filename}`;
+    const updated = await tournamentService.updateProofByPublicId({
+      publicId: req.params.publicId,
+      paymentProofUrl,
+    });
+    if (!updated) return res.status(404).json({ message: "Registration not found." });
+    res.status(200).json({ message: "Receipt uploaded successfully.", paymentProofUrl });
+  } catch (error) {
+    res.status(error.statusCode || 500).json({ message: error.message || "Upload failed." });
+  }
+}
+
 module.exports = {
   listTournaments,
+  getRegistrationByPublicId,
+  uploadProofByPublicId,
   endTournament,
   getSchedule,
   getLeaderboard,
@@ -285,3 +304,13 @@ module.exports = {
   joinTournamentByCode,
   getTournamentSummary,
 };
+
+async function getRegistrationByPublicId(req, res) {
+  try {
+    const reg = await tournamentService.getRegistrationByPublicId(req.params.publicId);
+    if (!reg) return res.status(404).json({ message: "Registration not found." });
+    res.status(200).json(reg);
+  } catch (error) {
+    res.status(error.statusCode || 500).json({ message: error.message || "Failed to load registration." });
+  }
+}

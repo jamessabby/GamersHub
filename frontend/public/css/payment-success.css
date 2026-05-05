@@ -1,0 +1,245 @@
+/* ── PAYMENT SUCCESS PAGE ── */
+
+.ps-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(139, 92, 246, 0.18);
+  border-radius: 20px;
+  padding: 2.5rem 2rem;
+  max-width: 480px;
+  width: 100%;
+  margin: 3rem auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  position: relative;
+  z-index: 1;
+}
+
+/* Loading */
+.ps-spinner {
+  width: 48px;
+  height: 48px;
+  border: 3px solid rgba(139, 92, 246, 0.2);
+  border-top-color: #a78bfa;
+  border-radius: 50%;
+  animation: ps-spin 0.8s linear infinite;
+  margin-bottom: 1.25rem;
+}
+
+@keyframes ps-spin {
+  to { transform: rotate(360deg); }
+}
+
+.ps-loading-text {
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 0.9rem;
+}
+
+/* Icons */
+.ps-icon {
+  margin-bottom: 1.25rem;
+}
+
+/* Titles & body */
+.ps-title {
+  font-family: "Syne", sans-serif;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 0.5rem;
+}
+
+.ps-body {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.9rem;
+  line-height: 1.6;
+  margin-bottom: 0;
+}
+
+/* Registration info box */
+.ps-reg-info {
+  background: rgba(139, 92, 246, 0.08);
+  border: 1px solid rgba(139, 92, 246, 0.2);
+  border-radius: 10px;
+  padding: 0.85rem 1.2rem;
+  width: 100%;
+  text-align: left;
+  margin-top: 0.75rem;
+  font-size: 0.875rem;
+  color: rgba(255, 255, 255, 0.75);
+  line-height: 1.7;
+}
+
+.ps-reg-info strong {
+  color: #c4b5fd;
+}
+
+/* Divider */
+.ps-divider {
+  width: 100%;
+  height: 1px;
+  background: rgba(139, 92, 246, 0.15);
+  margin: 1.5rem 0;
+}
+
+/* Upload label */
+.ps-upload-label {
+  font-family: "Syne", sans-serif;
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: #e2e0ff;
+  margin-bottom: 0.25rem;
+}
+
+.ps-upload-hint {
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.4);
+  margin-bottom: 1rem;
+}
+
+/* Upload zone */
+.ps-upload-zone {
+  width: 100%;
+  border: 2px dashed rgba(139, 92, 246, 0.3);
+  border-radius: 12px;
+  padding: 1.5rem;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+  background: rgba(139, 92, 246, 0.04);
+  min-height: 130px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ps-upload-zone:hover,
+.ps-upload-zone.drag-over {
+  border-color: #a78bfa;
+  background: rgba(139, 92, 246, 0.1);
+}
+
+.ps-upload-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 0.875rem;
+}
+
+.ps-upload-sub {
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.3);
+}
+
+.ps-upload-preview {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+}
+
+.ps-upload-preview img {
+  max-height: 180px;
+  max-width: 100%;
+  border-radius: 8px;
+  object-fit: contain;
+  border: 1px solid rgba(139, 92, 246, 0.25);
+}
+
+.ps-remove-btn {
+  background: rgba(248, 113, 113, 0.1);
+  border: 1px solid rgba(248, 113, 113, 0.3);
+  color: #f87171;
+  padding: 0.3rem 0.85rem;
+  border-radius: 6px;
+  font-size: 0.78rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.ps-remove-btn:hover {
+  background: rgba(248, 113, 113, 0.2);
+}
+
+/* Error message */
+.ps-error-msg {
+  width: 100%;
+  background: rgba(248, 113, 113, 0.1);
+  border: 1px solid rgba(248, 113, 113, 0.3);
+  color: #f87171;
+  border-radius: 8px;
+  padding: 0.6rem 0.9rem;
+  font-size: 0.82rem;
+  text-align: left;
+  margin-top: 0.75rem;
+}
+
+/* Buttons */
+.ps-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.7rem 1.75rem;
+  border-radius: 10px;
+  font-family: "Syne", sans-serif;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  text-decoration: none;
+  transition: opacity 0.2s, transform 0.15s;
+  border: none;
+  width: 100%;
+}
+
+.ps-btn:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+.ps-btn--primary {
+  background: linear-gradient(135deg, #7c3aed, #a78bfa);
+  color: #fff;
+}
+
+.ps-btn--primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.ps-btn--secondary {
+  background: rgba(139, 92, 246, 0.12);
+  border: 1px solid rgba(139, 92, 246, 0.3);
+  color: #c4b5fd;
+}
+
+.ps-btn-loader {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: ps-spin 0.7s linear infinite;
+}
+
+/* Skip link */
+.ps-skip-link {
+  margin-top: 0.75rem;
+  font-size: 0.78rem;
+}
+
+.ps-skip-link a {
+  color: rgba(255, 255, 255, 0.35);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.ps-skip-link a:hover {
+  color: rgba(255, 255, 255, 0.6);
+}

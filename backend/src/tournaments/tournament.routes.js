@@ -12,6 +12,12 @@ router.get("/:tournamentId/leaderboard", tournamentController.getLeaderboard);
 router.get("/:tournamentId/summary", tournamentController.getTournamentSummary);
 router.get("/:tournamentId/matches/:matchId/stats", tournamentController.getMatchStats);
 
+// Public — get registration by publicId (for payment-success page)
+router.get("/registration/:publicId", tournamentController.getRegistrationByPublicId);
+
+// Public — upload payment proof after PayMongo redirect
+router.post("/registration/:publicId/upload-proof", registrationUpload.single("paymentProof"), tournamentController.uploadProofByPublicId);
+
 // Public registration (no auth — organizers register from a social link)
 router.post("/register", registrationUpload.single("paymentProof"), tournamentController.submitRegistration);
 

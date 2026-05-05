@@ -781,6 +781,21 @@ async function updateTournamentStatus({ tournamentId, status, isActive }) {
   return result.recordset[0] || null;
 }
 
+async function updateRegistrationProof(registrationId, paymentProofUrl) {
+  await poolConnect;
+  await pool
+    .request()
+    .input("registrationId", sql.Int, registrationId)
+    .input("paymentProofUrl", sql.NVarChar(1000), paymentProofUrl || null)
+    .query(`
+      UPDATE dbo.TOURNAMENT_REGISTRATION
+      SET PAYMENT_PROOF_URL = @paymentProofUrl,
+          UPDATED_AT        = SYSUTCDATETIME()
+      WHERE REGISTRATION_ID = @registrationId
+    `);
+}
+
+
 module.exports = {
   listTournaments,
   findTournamentById,
@@ -807,6 +822,7 @@ module.exports = {
   createRegistrationParticipants,
   listParticipantsByRegistrationId,
   updateRegistrationPaymongoLink,
+  updateRegistrationProof,
   markRegistrationPaid,
   updateTournamentStatus,
 };

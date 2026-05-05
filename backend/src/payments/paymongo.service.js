@@ -7,22 +7,23 @@ function authHeader() {
   return "Basic " + Buffer.from(`${key}:`).toString("base64");
 }
 
-async function createPaymentLink({ amount, description, remarks }) {
+async function createPaymentLink({ amount, description, remarks, redirectSuccess }) {
+  const attributes = {
+    amount: Number(amount),
+    description: String(description || "Tournament Registration Fee"),
+    remarks: String(remarks || ""),
+  };
+  if (redirectSuccess) {
+    attributes.redirect = { success: redirectSuccess };
+  }
+
   const res = await fetch(`${PAYMONGO_BASE}/links`, {
     method: "POST",
     headers: {
       Authorization: authHeader(),
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({
-      data: {
-        attributes: {
-          amount: Number(amount),
-          description: String(description || "Tournament Registration Fee"),
-          remarks: String(remarks || ""),
-        },
-      },
-    }),
+    body: JSON.stringify({ data: { attributes } }),
   });
 
   const body = await res.json();

@@ -138,11 +138,18 @@
     const feeAmount = getSelectedFeeAmount();
     if (!tournamentSel.value) {
       registrationFeeNotice.textContent = "Select a tournament to see the registration fee.";
+      registrationFeeNotice.style.color = "";
       return;
     }
-    registrationFeeNotice.textContent = feeAmount > 0
-      ? `Registration fee: ${formatPesoAmount(feeAmount)}. You will be redirected to PayMongo after submitting.`
-      : "Registration fee: Free. No payment is required for this tournament.";
+    if (feeAmount > 0) {
+      registrationFeeNotice.innerHTML =
+        `<strong style="color:#a78bfa;">Registration fee: ${formatPesoAmount(feeAmount)}</strong>` +
+        ` &mdash; After submitting you will get a <strong>Pay via GCash / Maya / Card</strong> button powered by PayMongo.`;
+      registrationFeeNotice.style.color = "rgba(255,255,255,0.6)";
+    } else {
+      registrationFeeNotice.textContent = "Registration fee: Free. No payment is required for this tournament.";
+      registrationFeeNotice.style.color = "";
+    }
   }
 
   function getSelectedFeeAmount() {
@@ -307,21 +314,36 @@
       const feeAmount = Number(data.registration?.feeAmount ?? getSelectedFeeAmount()) || 0;
       const feeText = formatPesoAmount(feeAmount);
 
+      // Hide form, show success card
+      regCard.style.display = "none";
+      successCard.style.display = "";
+
       if (data.checkoutUrl) {
+        // Paid tournament with PayMongo link — show prominent Pay Now button
         successBody.textContent =
           `Your team "${teamName}" has been registered for ${tourName}. ` +
-          `Registration fee: ${feeText}. You'll be redirected to complete your payment now. ` +
+          `Registration fee: ${feeText}. Click the button below to complete your payment. ` +
           `Once approved, your join code will be sent to ${email}.`;
-        regCard.style.display = "none";
-        successCard.style.display = "";
-        // Short pause so the user reads the message, then redirect
-        setTimeout(() => { window.location.href = data.checkoutUrl; }, 2500);
+
+        const payNowSection = document.getElementById("payNowSection");
+        const payNowBtn = document.getElementById("payNowBtn");
+        if (payNowSection && payNowBtn) {
+          payNowBtn.href = data.checkoutUrl;
+          payNowSection.style.display = "";
+        }
+
+        // Also update back home button label
+        const backHomeBtn = document.getElementById("backHomeBtn");
+        if (backHomeBtn) {
+          backHomeBtn.textContent = "Back to Home (pay later)";
+          backHomeBtn.style.opacity = "0.5";
+          backHomeBtn.style.fontSize = "12px";
+        }
       } else {
+        // Free tournament or no PayMongo configured
         successBody.textContent =
           `Your team "${teamName}" has been registered for ${tourName}. ` +
           `Registration fee: ${feeText}. An admin will review your registration and send your join code to ${email} once approved.`;
-        regCard.style.display = "none";
-        successCard.style.display = "";
       }
     } catch {
       showError("Network error. Please check your connection and try again.");
