@@ -209,39 +209,6 @@
           + Add Username
         </button>
 
-        <div class="section-divider"></div>
-
-        <!-- Payment proof -->
-        <p class="section-label">Payment</p>
-        <p class="section-hint">
-          Upload a screenshot of your payment (GCash, Maya, bank transfer). Max 8&nbsp;MB.
-          Accepted formats: JPG, PNG, WebP.
-        </p>
-
-        <div class="upload-zone" id="uploadZone">
-          <input
-            type="file"
-            id="regPaymentProof"
-            accept="image/jpeg,image/png,image/webp"
-            class="upload-file-input"
-            aria-label="Upload payment proof"
-          />
-          <div class="upload-inner" id="uploadInner">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none"
-                 stroke="rgba(139,92,246,0.5)" stroke-width="1.5">
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-              <polyline points="17 8 12 3 7 8"/>
-              <line x1="12" y1="3" x2="12" y2="15"/>
-            </svg>
-            <p class="upload-label">Click or drag to upload payment proof</p>
-            <p class="upload-hint">Optional - you can also provide it later</p>
-          </div>
-          <div class="upload-preview" id="uploadPreview">
-            <img id="previewImg" alt="Payment proof preview" />
-            <button class="upload-remove" id="removeProof" type="button">✕ Remove</button>
-          </div>
-        </div>
-
         <!-- Submit -->
         <button class="btn-submit" id="submitBtn" type="button">
           <span class="btn-text">Submit Registration</span>
