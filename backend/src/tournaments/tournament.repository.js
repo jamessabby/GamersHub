@@ -12,6 +12,7 @@ async function listTournaments() {
       CONVERT(varchar(10), t.END_DATE, 23) AS endDate,
       t.STATUS AS status,
       CAST(t.IS_ACTIVE AS bit) AS isActive,
+      COALESCE(t.REGISTRATION_FEE_AMOUNT, 0) AS registrationFeeAmount,
       COUNT(m.MATCH_ID) AS matchCount,
       COUNT(
         CASE
@@ -44,7 +45,8 @@ async function listTournaments() {
       t.START_DATE,
       t.END_DATE,
       t.STATUS,
-      t.IS_ACTIVE
+      t.IS_ACTIVE,
+      t.REGISTRATION_FEE_AMOUNT
     ORDER BY
       CASE WHEN t.IS_ACTIVE = 1 THEN 0 ELSE 1 END,
       t.START_DATE,
@@ -67,7 +69,8 @@ async function findTournamentById(tournamentId) {
         CONVERT(varchar(10), START_DATE, 23) AS startDate,
         CONVERT(varchar(10), END_DATE, 23) AS endDate,
         STATUS AS status,
-        CAST(IS_ACTIVE AS bit) AS isActive
+        CAST(IS_ACTIVE AS bit) AS isActive,
+        COALESCE(REGISTRATION_FEE_AMOUNT, 0) AS registrationFeeAmount
       FROM dbo.TOURNAMENT
       WHERE TOURNAMENT_ID = @tournamentId
     `);
@@ -170,7 +173,7 @@ async function listLeaderboardByTournamentId(tournamentId) {
   return result.recordset;
 }
 
-async function createTournament({ title, gameName, startDate, endDate, status, isActive }) {
+async function createTournament({ title, gameName, startDate, endDate, status, isActive, registrationFeeAmount = 0 }) {
   await poolConnect;
 
   const result = await pool
@@ -181,8 +184,9 @@ async function createTournament({ title, gameName, startDate, endDate, status, i
     .input("endDate", sql.Date, endDate || null)
     .input("status", sql.NVarChar(50), status || "Pending")
     .input("isActive", sql.Bit, isActive ? 1 : 0)
+    .input("registrationFeeAmount", sql.Int, registrationFeeAmount || 0)
     .query(`
-      INSERT INTO dbo.TOURNAMENT (TITLE, GAME_NAME, START_DATE, END_DATE, STATUS, IS_ACTIVE)
+      INSERT INTO dbo.TOURNAMENT (TITLE, GAME_NAME, START_DATE, END_DATE, STATUS, IS_ACTIVE, REGISTRATION_FEE_AMOUNT)
       OUTPUT
         INSERTED.TOURNAMENT_ID AS tournamentId,
         INSERTED.TITLE AS title,
@@ -190,8 +194,9 @@ async function createTournament({ title, gameName, startDate, endDate, status, i
         CONVERT(varchar(10), INSERTED.START_DATE, 23) AS startDate,
         CONVERT(varchar(10), INSERTED.END_DATE, 23) AS endDate,
         INSERTED.STATUS AS status,
-        CAST(INSERTED.IS_ACTIVE AS bit) AS isActive
-      VALUES (@title, @gameName, @startDate, @endDate, @status, @isActive)
+        CAST(INSERTED.IS_ACTIVE AS bit) AS isActive,
+        INSERTED.REGISTRATION_FEE_AMOUNT AS registrationFeeAmount
+      VALUES (@title, @gameName, @startDate, @endDate, @status, @isActive, @registrationFeeAmount)
     `);
 
   return result.recordset[0] || null;
@@ -449,6 +454,7 @@ async function listRegistrations({ tournamentId = null, status = null } = {}) {
         r.STATUS            AS status,
         r.REJECTION_REASON  AS rejectionReason,
         r.PAYMENT_STATUS    AS paymentStatus,
+        r.FEE_AMOUNT        AS feeAmount,
         r.PAYMENT_PROOF_URL AS paymentProofUrl,
         r.JOIN_CODE         AS joinCode,
         r.JOIN_CODE_USED    AS joinCodeUsed,
@@ -483,6 +489,7 @@ async function findRegistrationByPublicId(publicId) {
         r.STATUS            AS status,
         r.REJECTION_REASON  AS rejectionReason,
         r.PAYMENT_STATUS    AS paymentStatus,
+        r.FEE_AMOUNT        AS feeAmount,
         r.PAYMENT_PROOF_URL AS paymentProofUrl,
         r.JOIN_CODE         AS joinCode,
         r.JOIN_CODE_USED    AS joinCodeUsed,
@@ -496,7 +503,7 @@ async function findRegistrationByPublicId(publicId) {
   return result.recordset[0] || null;
 }
 
-async function createRegistration({ tournamentId, teamName, contactName, contactEmail, contactPhone, rosterNotes, paymentProofUrl }) {
+async function createRegistration({ tournamentId, teamName, contactName, contactEmail, contactPhone, rosterNotes, paymentProofUrl, feeAmount = 0, paymentStatus = "unpaid" }) {
   await poolConnect;
   const result = await pool
     .request()
@@ -507,18 +514,22 @@ async function createRegistration({ tournamentId, teamName, contactName, contact
     .input("contactPhone", sql.NVarChar(50), contactPhone || null)
     .input("rosterNotes", sql.NVarChar(sql.MAX), rosterNotes || null)
     .input("paymentProofUrl", sql.NVarChar(1000), paymentProofUrl || null)
+    .input("feeAmount", sql.Int, feeAmount || 0)
+    .input("paymentStatus", sql.NVarChar(20), paymentStatus || "unpaid")
     .query(`
       INSERT INTO dbo.TOURNAMENT_REGISTRATION
-        (TOURNAMENT_ID, TEAM_NAME, CONTACT_NAME, CONTACT_EMAIL, CONTACT_PHONE, ROSTER_NOTES, PAYMENT_PROOF_URL)
+        (TOURNAMENT_ID, TEAM_NAME, CONTACT_NAME, CONTACT_EMAIL, CONTACT_PHONE, ROSTER_NOTES, PAYMENT_PROOF_URL, FEE_AMOUNT, PAYMENT_STATUS)
       OUTPUT
         INSERTED.REGISTRATION_ID AS registrationId,
         INSERTED.PUBLIC_ID       AS publicId,
         INSERTED.TOURNAMENT_ID   AS tournamentId,
         INSERTED.TEAM_NAME       AS teamName,
         INSERTED.STATUS          AS status,
+        INSERTED.FEE_AMOUNT      AS feeAmount,
+        INSERTED.PAYMENT_STATUS  AS paymentStatus,
         INSERTED.CREATED_AT      AS createdAt
       VALUES
-        (@tournamentId, @teamName, @contactName, @contactEmail, @contactPhone, @rosterNotes, @paymentProofUrl)
+        (@tournamentId, @teamName, @contactName, @contactEmail, @contactPhone, @rosterNotes, @paymentProofUrl, @feeAmount, @paymentStatus)
     `);
   return result.recordset[0] || null;
 }
@@ -537,7 +548,8 @@ async function updateRegistrationStatus({ registrationId, status, rejectionReaso
       SET
         STATUS           = @status,
         REJECTION_REASON = @rejectionReason,
-        JOIN_CODE        = COALESCE(@joinCode, JOIN_CODE),
+        JOIN_CODE        = CASE WHEN @status = 'rejected' THEN NULL ELSE COALESCE(@joinCode, JOIN_CODE) END,
+        JOIN_CODE_USED   = CASE WHEN @status = 'rejected' THEN 0 ELSE JOIN_CODE_USED END,
         REVIEWED_BY      = @reviewedBy,
         REVIEWED_AT      = SYSUTCDATETIME(),
         UPDATED_AT       = SYSUTCDATETIME()
@@ -584,7 +596,8 @@ async function findRegistrationByJoinCode(joinCode) {
         r.TEAM_NAME       AS teamName,
         r.STATUS          AS status,
         r.JOIN_CODE       AS joinCode,
-        r.JOIN_CODE_USED  AS joinCodeUsed
+        r.JOIN_CODE_USED  AS joinCodeUsed,
+        r.FEE_AMOUNT      AS feeAmount
       FROM dbo.TOURNAMENT_REGISTRATION r
       INNER JOIN dbo.TOURNAMENT t ON t.TOURNAMENT_ID = r.TOURNAMENT_ID
       WHERE r.JOIN_CODE = @joinCode
@@ -607,7 +620,7 @@ async function updateRegistrationPaymongoLink(registrationId, linkId) {
 
 async function markRegistrationPaid(paymongoLinkId) {
   await poolConnect;
-  await pool
+  const result = await pool
     .request()
     .input("linkId", sql.NVarChar(255), paymongoLinkId)
     .query(`
@@ -616,18 +629,72 @@ async function markRegistrationPaid(paymongoLinkId) {
       WHERE PAYMONGO_LINK_ID = @linkId
         AND PAYMENT_STATUS != 'paid'
     `);
+  return result.rowsAffected?.[0] || 0;
 }
 
-async function markJoinCodeUsed(registrationId) {
+async function consumeJoinCode(registrationId) {
   await poolConnect;
-  await pool
+  const result = await pool
     .request()
     .input("registrationId", sql.Int, registrationId)
     .query(`
       UPDATE dbo.TOURNAMENT_REGISTRATION
       SET JOIN_CODE_USED = 1, UPDATED_AT = SYSUTCDATETIME()
       WHERE REGISTRATION_ID = @registrationId
+        AND JOIN_CODE_USED = 0
     `);
+  return (result.rowsAffected?.[0] || 0) > 0;
+}
+
+async function consumeJoinCodeAndAddTeam({ registrationId, tournamentId, teamName }) {
+  await poolConnect;
+  const transaction = new sql.Transaction(pool);
+
+  await transaction.begin();
+  try {
+    const consumeResult = await new sql.Request(transaction)
+      .input("registrationId", sql.Int, registrationId)
+      .query(`
+        UPDATE dbo.TOURNAMENT_REGISTRATION
+        SET JOIN_CODE_USED = 1, UPDATED_AT = SYSUTCDATETIME()
+        WHERE REGISTRATION_ID = @registrationId
+          AND JOIN_CODE_USED = 0
+      `);
+
+    if ((consumeResult.rowsAffected?.[0] || 0) !== 1) {
+      await transaction.rollback();
+      return { joined: false };
+    }
+
+    const teamResult = await new sql.Request(transaction)
+      .input("teamName", sql.NVarChar(100), teamName)
+      .query(`
+        INSERT INTO dbo.TEAM (TEAM_NAME)
+        OUTPUT INSERTED.TEAM_ID AS teamId, INSERTED.TEAM_NAME AS teamName
+        VALUES (@teamName)
+      `);
+    const team = teamResult.recordset[0];
+
+    await new sql.Request(transaction)
+      .input("tournamentId", sql.Int, tournamentId)
+      .input("teamId", sql.Int, team.teamId)
+      .query(`
+        IF NOT EXISTS (
+          SELECT 1 FROM dbo.TOURNAMENT_TEAM
+          WHERE TOURNAMENT_ID = @tournamentId AND TEAM_ID = @teamId
+        )
+          INSERT INTO dbo.TOURNAMENT_TEAM (TOURNAMENT_ID, TEAM_ID)
+          VALUES (@tournamentId, @teamId);
+      `);
+
+    await transaction.commit();
+    return { joined: true, team };
+  } catch (error) {
+    try {
+      await transaction.rollback();
+    } catch {}
+    throw error;
+  }
 }
 
 // ── REGISTRATION PARTICIPANTS ─────────────────────────────────────────────────
@@ -705,7 +772,8 @@ async function updateTournamentStatus({ tournamentId, status, isActive }) {
         CONVERT(varchar(10), START_DATE, 23) AS startDate,
         CONVERT(varchar(10), END_DATE,   23) AS endDate,
         STATUS        AS status,
-        CAST(IS_ACTIVE AS bit) AS isActive
+        CAST(IS_ACTIVE AS bit) AS isActive,
+        COALESCE(REGISTRATION_FEE_AMOUNT, 0) AS registrationFeeAmount
       FROM dbo.TOURNAMENT
       WHERE TOURNAMENT_ID = @tournamentId;
     `);
@@ -734,7 +802,8 @@ module.exports = {
   updateRegistrationStatus,
   updateRegistrationPayment,
   findRegistrationByJoinCode,
-  markJoinCodeUsed,
+  consumeJoinCode,
+  consumeJoinCodeAndAddTeam,
   createRegistrationParticipants,
   listParticipantsByRegistrationId,
   updateRegistrationPaymongoLink,

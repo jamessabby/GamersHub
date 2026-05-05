@@ -257,7 +257,7 @@
             <div class="console-activity-avatar">${escapeHtml(item.actorRole ? item.actorRole[0].toUpperCase() : "?")}</div>
             <div class="console-activity-body">
               <div>
-                <span class="console-activity-user">User #${item.actorUserId || "—"}</span>
+                <span class="console-activity-user">User #${item.actorUserId || "-"}</span>
                 <span class="console-activity-desc">${escapeHtml(formatActionType(item.actionType))}</span>
               </div>
               <span class="console-activity-time">${formatDate(item.createdAt)}</span>
@@ -274,7 +274,7 @@
           <h2>Recent Activity</h2>
           <div class="console-activity-list">${activityItems}</div>
           <div style="margin-top:12px;">
-            <a class="console-btn" href="${auth.buildAppUrl("admin/users.html")}">Open user directory →</a>
+            <a class="console-btn" href="${auth.buildAppUrl("admin/users.html")}">Open user directory -></a>
           </div>
         </section>
         <div style="display:grid;gap:18px;">
@@ -317,10 +317,10 @@
             </div>
           </td>
           <td>${escapeHtml(user.email)}</td>
-          <td>${escapeHtml(user.school || "—")}</td>
+          <td>${escapeHtml(user.school || "-")}</td>
           <td><span class="console-pill ${escapeHtml(user.role)}">${escapeHtml(user.role)}</span></td>
           <td><span class="console-kicker">${escapeHtml(user.authProvider || "local")}</span></td>
-          <td><span class="console-kicker">${user.mfaEnrolled ? "✓ Enabled" : "Pending"}</span></td>
+          <td><span class="console-kicker">${user.mfaEnrolled ? "Enabled" : "Pending"}</span></td>
           <td>
             ${
               allowRoleEdits
@@ -340,7 +340,7 @@
             class="console-input console-search-input"
             id="userSearchInput"
             type="search"
-            placeholder="Search by username or email…"
+            placeholder="Search by username or email..."
             value="${escapeAttribute(searchQuery)}"
           />
         </div>
@@ -471,7 +471,7 @@
           </div>
         </section>
         <section class="console-panel">
-          <h2>New registrations — last ${analytics.rangeDays} days</h2>
+          <h2>New registrations - last ${analytics.rangeDays} days</h2>
           ${
             analytics.registrations.length
               ? `<div class="analytics-bar-chart">${barRows}</div>`
@@ -520,7 +520,7 @@
             <div class="ga4-pending-msg">
               <span class="ga4-clock">⏳</span>
               GA4 data collection is active. Live metrics appear here once Google Analytics
-              has processed at least 24–48 hours of traffic data.
+              has processed at least 24-48 hours of traffic data.
               <br /><br />
               Meanwhile, you can view real-time data directly in the
               <a href="https://analytics.google.com" target="_blank" rel="noopener noreferrer" class="ga4-link">GA4 dashboard</a>.
@@ -529,7 +529,7 @@
         </div>
         <div class="ga4-tag-status">
           <span class="ga4-tag-dot ${window._gaTagInstalled ? 'active' : ''}"></span>
-          <span>GA tag: <strong>${window._gaTagInstalled ? 'Active on this page' : 'Installed — tracking visitors'}</strong></span>
+          <span>GA tag: <strong>${window._gaTagInstalled ? 'Active on this page' : 'Installed - tracking visitors'}</strong></span>
           <span class="ga4-measurement-id">Property ID: G-VS145NZZS9</span>
         </div>
       </section>
@@ -558,15 +558,16 @@
         return `
         <tr>
           <td>${escapeHtml(tournament.title)}</td>
-          <td>${escapeHtml(tournament.gameName || "—")}</td>
+          <td>${escapeHtml(tournament.gameName || "-")}</td>
           <td><span style="${statusColor}">${escapeHtml(tournament.status)}</span></td>
+          <td>${formatPesoAmount(tournament.registrationFeeAmount)}</td>
           <td>${tournament.teamCount ?? 0}</td>
           <td>${tournament.matchCount ?? 0}</td>
           <td>
             <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
               ${!isCompleted
                 ? `<button class="console-btn warn" data-end-tournament-id="${tournament.tournamentId}" style="white-space:nowrap;">End Tournament</button>`
-                : '<span class="console-kicker" style="color:#4ade80;">✓ Completed</span>'}
+                : '<span class="console-kicker" style="color:#4ade80;">Completed</span>'}
               <a class="console-btn" href="${escapeAttribute(summaryUrl)}" target="_blank" style="white-space:nowrap;">View Summary</a>
             </div>
           </td>
@@ -610,6 +611,10 @@
             <option value="Completed">Completed</option>
           </select>
           <div style="display:flex;flex-direction:column;gap:4px;flex:1 1 160px;">
+            <label style="color:#94a3b8;font-size:0.82rem;">Registration fee (PHP)</label>
+            <input class="console-input" type="number" name="registrationFeePesos" min="0" step="0.01" value="0" />
+          </div>
+          <div style="display:flex;flex-direction:column;gap:4px;flex:1 1 160px;">
             <label style="color:#94a3b8;font-size:0.82rem;">Start date</label>
             <input class="console-input" type="date" name="startDate" />
           </div>
@@ -617,10 +622,14 @@
             <label style="color:#94a3b8;font-size:0.82rem;">End date</label>
             <input class="console-input" type="date" name="endDate" />
           </div>
-          <div id="teamsList" style="width:100%;display:flex;flex-direction:column;gap:8px;">
-            <span style="color:#94a3b8;font-size:0.85rem;">Participating teams</span>
+          <div style="width:100%;display:flex;align-items:center;justify-content:space-between;gap:10px;">
+            <span style="color:#94a3b8;font-size:0.85rem;">Manual teams (optional)</span>
+            <button type="button" class="console-btn" id="toggleManualTeamsBtn">Show manual teams</button>
           </div>
-          <button type="button" class="console-btn" id="addTeamBtn">+ Add Team</button>
+          <div id="manualTeamsSection" style="width:100%;display:none;flex-direction:column;gap:8px;">
+            <div id="teamsList" style="width:100%;display:flex;flex-direction:column;gap:8px;"></div>
+            <button type="button" class="console-btn" id="addTeamBtn" style="align-self:flex-start;">+ Add Team</button>
+          </div>
           <label style="display:flex;align-items:center;gap:6px;color:#cbd5e1;font-size:0.9rem;width:100%;">
             <input type="checkbox" name="isActive" checked style="width:16px;height:16px;" />
             Mark as active
@@ -633,17 +642,17 @@
         <h2>Tournament overview <span class="console-kicker">${tournaments.items.length} total</span></h2>
         <div class="console-table-wrap">
           <table class="console-table">
-            <thead><tr><th>Title</th><th>Game</th><th>Status</th><th>Teams</th><th>Matches</th><th>Actions</th></tr></thead>
-            <tbody>${tournamentRows || '<tr><td colspan="5" style="color:#64748b;">No tournaments yet.</td></tr>'}</tbody>
+            <thead><tr><th>Title</th><th>Game</th><th>Status</th><th>Fee</th><th>Teams</th><th>Matches</th><th>Actions</th></tr></thead>
+            <tbody>${tournamentRows || '<tr><td colspan="7" style="color:#64748b;">No tournaments yet.</td></tr>'}</tbody>
           </table>
         </div>
       </section>
 
       <div class="console-panel" style="margin-top:18px;padding:14px 18px;">
         <p style="margin:0;color:#94a3b8;font-size:0.88rem;">
-          Manage streams → <a href="${auth.buildAppUrl("admin/streams.html")}" style="color:#60a5fa;">Streams</a> &nbsp;·&nbsp;
-          Edit leaderboards → <a href="${auth.buildAppUrl("admin/leaderboard.html")}" style="color:#60a5fa;">Leaderboard</a> &nbsp;·&nbsp;
-          Manage matches → <a href="${auth.buildAppUrl("admin/schedule.html")}" style="color:#60a5fa;">Schedule</a>
+          Manage streams -> <a href="${auth.buildAppUrl("admin/streams.html")}" style="color:#60a5fa;">Streams</a> &nbsp;|&nbsp;
+          Edit leaderboards -> <a href="${auth.buildAppUrl("admin/leaderboard.html")}" style="color:#60a5fa;">Leaderboard</a> &nbsp;|&nbsp;
+          Manage matches -> <a href="${auth.buildAppUrl("admin/schedule.html")}" style="color:#60a5fa;">Schedule</a>
         </p>
       </div>
     `;
@@ -759,7 +768,7 @@
         const s = button.dataset;
         const panel = document.getElementById("editStreamPanel");
         document.getElementById("editStreamId").value = s.editStreamId;
-        document.getElementById("editStreamLabel").textContent = `— Stream #${s.editStreamId}`;
+        document.getElementById("editStreamLabel").textContent = `- Stream #${s.editStreamId}`;
         document.getElementById("editStreamTitle").value = s.editTitle || "";
         document.getElementById("editStreamUrl").value = s.editUrl || "";
         document.getElementById("editStreamThumb").value = s.editThumb || "";
@@ -823,7 +832,7 @@
       const tournamentId = document.getElementById("lbEditorTournamentSelect")?.value;
       if (!tournamentId) { setFlash("Select a tournament first.", true); return; }
       const lbContent = document.getElementById("lbEditorContent");
-      lbContent.innerHTML = "<p style=\"color:#94a3b8;font-size:0.88rem;\">Loading…</p>";
+      lbContent.innerHTML = "<p style=\"color:#94a3b8;font-size:0.88rem;\">Loading...</p>";
       try {
         const [teamsResult, entriesResult] = await Promise.all([
           fetchJson(`${auth.apiBase}/api/admin/tournaments/${tournamentId}/teams`),
@@ -862,7 +871,7 @@
             const row = btn.closest("tr");
             const wins = Math.max(0, Number(row.querySelector(".lb-wins-input")?.value) || 0);
             const losses = Math.max(0, Number(row.querySelector(".lb-losses-input")?.value) || 0);
-            btn.disabled = true; btn.textContent = "Saving…";
+            btn.disabled = true; btn.textContent = "Saving...";
             try {
               await fetchJson(`${auth.apiBase}/api/admin/tournaments/${btn.dataset.tournamentId}/leaderboard/${btn.dataset.teamId}`, {
                 method: "PUT",
@@ -870,7 +879,7 @@
                 body: JSON.stringify({ wins, losses }),
               });
               setFlash("Leaderboard entry saved.");
-              btn.textContent = "Saved ✓";
+              btn.textContent = "Saved";
               setTimeout(() => { btn.disabled = false; btn.textContent = "Save"; }, 2000);
             } catch (error) {
               setFlash(error.message || "Failed to save entry.", true);
@@ -896,7 +905,7 @@
       const tournamentId = document.getElementById("schEditorTournamentSelect")?.value;
       if (!tournamentId) { setFlash("Select a tournament first.", true); return; }
       const schContent = document.getElementById("schEditorContent");
-      schContent.innerHTML = "<p style=\"color:#94a3b8;font-size:0.88rem;\">Loading…</p>";
+      schContent.innerHTML = "<p style=\"color:#94a3b8;font-size:0.88rem;\">Loading...</p>";
       try {
         const [scheduleResult, teamsResult] = await Promise.all([
           fetchJson(`${auth.apiBase}/api/admin/tournaments/${tournamentId}/matches`),
@@ -914,9 +923,9 @@
               <tbody>${matches.map((m) => `
                 <tr>
                   <td style="font-size:0.85rem;">${escapeHtml(m.teamAName || "")}</td>
-                  <td><input class="console-input sch-score-a" type="number" min="0" value="${m.teamAScore ?? ""}" placeholder="—" style="width:66px;padding:5px;" /></td>
+                  <td><input class="console-input sch-score-a" type="number" min="0" value="${m.teamAScore ?? ""}" placeholder="-" style="width:66px;padding:5px;" /></td>
                   <td style="font-size:0.85rem;">${escapeHtml(m.teamBName || "")}</td>
-                  <td><input class="console-input sch-score-b" type="number" min="0" value="${m.teamBScore ?? ""}" placeholder="—" style="width:66px;padding:5px;" /></td>
+                  <td><input class="console-input sch-score-b" type="number" min="0" value="${m.teamBScore ?? ""}" placeholder="-" style="width:66px;padding:5px;" /></td>
                   <td><input class="console-input sch-date" type="date" value="${m.matchDate || ""}" style="width:135px;padding:5px;" /></td>
                   <td><input class="console-input sch-time" type="time" value="${m.matchTime ? m.matchTime.slice(0, 5) : ""}" style="width:105px;padding:5px;" /></td>
                   <td><button class="console-btn primary sch-update-btn" data-match-id="${m.matchId}" data-tournament-id="${tournamentId}">Save</button></td>
@@ -943,7 +952,7 @@
             const scoreB = row.querySelector(".sch-score-b")?.value;
             const mDate = row.querySelector(".sch-date")?.value || null;
             const mTime = row.querySelector(".sch-time")?.value;
-            btn.disabled = true; btn.textContent = "Saving…";
+            btn.disabled = true; btn.textContent = "Saving...";
             try {
               await fetchJson(`${auth.apiBase}/api/admin/tournaments/${btn.dataset.tournamentId}/matches/${btn.dataset.matchId}`, {
                 method: "PUT",
@@ -956,7 +965,7 @@
                 }),
               });
               setFlash("Match updated.");
-              btn.textContent = "Saved ✓";
+              btn.textContent = "Saved";
               setTimeout(() => { btn.disabled = false; btn.textContent = "Save"; }, 2000);
             } catch (error) {
               setFlash(error.message || "Failed to update match.", true);
@@ -970,7 +979,7 @@
           const form = event.currentTarget;
           const data = new FormData(form);
           const submitBtn = form.querySelector("button[type=submit]");
-          submitBtn.disabled = true; submitBtn.textContent = "Adding…";
+          submitBtn.disabled = true; submitBtn.textContent = "Adding...";
           try {
             const mTime = data.get("matchTime");
             await fetchJson(`${auth.apiBase}/api/admin/tournaments/${tournamentId}/matches`, {
@@ -1004,6 +1013,14 @@
       btn.textContent = isHidden ? "Hide form" : "Show form";
     });
 
+    document.getElementById("toggleManualTeamsBtn")?.addEventListener("click", () => {
+      const section = document.getElementById("manualTeamsSection");
+      const btn = document.getElementById("toggleManualTeamsBtn");
+      const isHidden = section.style.display === "none";
+      section.style.display = isHidden ? "flex" : "none";
+      btn.textContent = isHidden ? "Hide manual teams" : "Show manual teams";
+    });
+
     document.getElementById("addTeamBtn")?.addEventListener("click", () => {
       const teamsList = document.getElementById("teamsList");
       const row = document.createElement("div");
@@ -1012,7 +1029,7 @@
       row.innerHTML = `
         <input class="console-input" type="text" data-team-name placeholder="Team name *" style="flex:1;" />
         <input class="console-input" type="number" data-team-seed placeholder="Seed (optional)" min="1" style="flex:0 0 140px;" />
-        <button type="button" class="console-btn danger" style="flex:0 0 auto;padding:8px 10px;">✕</button>
+        <button type="button" class="console-btn danger" style="flex:0 0 auto;padding:8px 10px;">x</button>
       `;
       row.querySelector(".console-btn.danger").addEventListener("click", () => row.remove());
       teamsList.appendChild(row);
@@ -1044,14 +1061,19 @@
             status: data.get("status") || "Pending",
             startDate: data.get("startDate") || null,
             endDate: data.get("endDate") || null,
+            registrationFeePesos: data.get("registrationFeePesos") || "0",
             isActive: data.get("isActive") === "on",
             teams,
           }),
         });
-        setFlash(`Tournament created successfully. ${teams.length} team(s) registered.`);
+        setFlash(`Tournament created successfully. ${teams.length} manual team(s) registered.`);
         form.reset();
         form.style.display = "none";
         document.getElementById("toggleTournamentForm").textContent = "Show form";
+        const manualTeamsSection = document.getElementById("manualTeamsSection");
+        if (manualTeamsSection) manualTeamsSection.style.display = "none";
+        const manualTeamsBtn = document.getElementById("toggleManualTeamsBtn");
+        if (manualTeamsBtn) manualTeamsBtn.textContent = "Show manual teams";
         await renderTournamentsPage();
       } catch (error) {
         setFlash(error.message || "Failed to create tournament.", true);
@@ -1080,7 +1102,7 @@
           ${stream.tournamentId ? `<span style="font-size:10px;color:#f59e0b;margin-left:4px;">TRN</span>` : ""}
         </td>
         <td>${escapeHtml(stream.authorName)}</td>
-        <td>${escapeHtml(stream.gameName || "—")}</td>
+        <td>${escapeHtml(stream.gameName || "-")}</td>
         <td>${stream.isLive ? '<span style="color:#4ade80;">Live</span>' : '<span style="color:#64748b;">Off</span>'}</td>
         <td>${stream.viewerCount}</td>
         <td>${stream.likeCount}</td>
@@ -1298,7 +1320,7 @@
         const s = button.dataset;
         const panel = document.getElementById("editStreamPanel");
         document.getElementById("editStreamId").value = s.editStreamId;
-        document.getElementById("editStreamLabel").textContent = `— Stream #${s.editStreamId}`;
+        document.getElementById("editStreamLabel").textContent = `- Stream #${s.editStreamId}`;
         document.getElementById("editStreamTitle").value = s.editTitle || "";
         document.getElementById("editStreamUrl").value = s.editUrl || "";
         document.getElementById("editStreamThumb").value = s.editThumb || "";
@@ -1358,7 +1380,7 @@
       <section class="console-panel">
         <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:16px;">
           <select class="console-input" id="lbTournamentSelect" style="flex:1 1 280px;">
-            <option value="">Select a tournament…</option>
+            <option value="">Select a tournament...</option>
             ${tournaments.items.map((t) => `<option value="${t.tournamentId}">${escapeHtml(t.title)}</option>`).join("")}
           </select>
           <button class="console-btn primary" id="loadLbBtn">Load Leaderboard</button>
@@ -1371,7 +1393,7 @@
       const tournamentId = document.getElementById("lbTournamentSelect")?.value;
       if (!tournamentId) { setFlash("Select a tournament first.", true); return; }
       const lbContent = document.getElementById("lbContent");
-      lbContent.innerHTML = "<p style=\"color:#94a3b8;font-size:0.88rem;\">Loading…</p>";
+      lbContent.innerHTML = "<p style=\"color:#94a3b8;font-size:0.88rem;\">Loading...</p>";
       try {
         const [teamsResult, entriesResult] = await Promise.all([
           fetchJson(`${auth.apiBase}/api/admin/tournaments/${tournamentId}/teams`),
@@ -1410,7 +1432,7 @@
             const row = btn.closest("tr");
             const wins = Math.max(0, Number(row.querySelector(".lb-wins-input")?.value) || 0);
             const losses = Math.max(0, Number(row.querySelector(".lb-losses-input")?.value) || 0);
-            btn.disabled = true; btn.textContent = "Saving…";
+            btn.disabled = true; btn.textContent = "Saving...";
             try {
               await fetchJson(`${auth.apiBase}/api/admin/tournaments/${btn.dataset.tournamentId}/leaderboard/${btn.dataset.teamId}`, {
                 method: "PUT",
@@ -1418,7 +1440,7 @@
                 body: JSON.stringify({ wins, losses }),
               });
               setFlash("Leaderboard entry saved.");
-              btn.textContent = "Saved ✓";
+              btn.textContent = "Saved";
               setTimeout(() => { btn.disabled = false; btn.textContent = "Save"; }, 2000);
             } catch (error) {
               setFlash(error.message || "Failed to save entry.", true);
@@ -1440,7 +1462,7 @@
       <section class="console-panel">
         <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:16px;">
           <select class="console-input" id="schTournamentSelect" style="flex:1 1 280px;">
-            <option value="">Select a tournament…</option>
+            <option value="">Select a tournament...</option>
             ${tournaments.items.map((t) => `<option value="${t.tournamentId}">${escapeHtml(t.title)}</option>`).join("")}
           </select>
           <button class="console-btn primary" id="loadSchBtn">Load Schedule</button>
@@ -1453,7 +1475,7 @@
       const tournamentId = document.getElementById("schTournamentSelect")?.value;
       if (!tournamentId) { setFlash("Select a tournament first.", true); return; }
       const schContent = document.getElementById("schContent");
-      schContent.innerHTML = "<p style=\"color:#94a3b8;font-size:0.88rem;\">Loading…</p>";
+      schContent.innerHTML = "<p style=\"color:#94a3b8;font-size:0.88rem;\">Loading...</p>";
       try {
         const [scheduleResult, teamsResult] = await Promise.all([
           fetchJson(`${auth.apiBase}/api/admin/tournaments/${tournamentId}/matches`),
@@ -1471,9 +1493,9 @@
               <tbody>${matches.map((m) => `
                 <tr>
                   <td style="font-size:0.85rem;">${escapeHtml(m.teamAName || "")}</td>
-                  <td><input class="console-input sch-score-a" type="number" min="0" value="${m.teamAScore ?? ""}" placeholder="—" style="width:66px;padding:5px;" /></td>
+                  <td><input class="console-input sch-score-a" type="number" min="0" value="${m.teamAScore ?? ""}" placeholder="-" style="width:66px;padding:5px;" /></td>
                   <td style="font-size:0.85rem;">${escapeHtml(m.teamBName || "")}</td>
-                  <td><input class="console-input sch-score-b" type="number" min="0" value="${m.teamBScore ?? ""}" placeholder="—" style="width:66px;padding:5px;" /></td>
+                  <td><input class="console-input sch-score-b" type="number" min="0" value="${m.teamBScore ?? ""}" placeholder="-" style="width:66px;padding:5px;" /></td>
                   <td><input class="console-input sch-date" type="date" value="${m.matchDate || ""}" style="width:135px;padding:5px;" /></td>
                   <td><input class="console-input sch-time" type="time" value="${m.matchTime ? m.matchTime.slice(0, 5) : ""}" style="width:105px;padding:5px;" /></td>
                   <td>
@@ -1493,7 +1515,7 @@
           <div id="matchStatsPanel" style="display:none;margin-bottom:18px;">
             <div class="console-panel">
               <div class="console-panel-header">
-                <h2>Match Stats — <span id="matchStatsLabel"></span></h2>
+                <h2>Match Stats - <span id="matchStatsLabel"></span></h2>
                 <button class="console-btn" id="closeMatchStatsBtn">Close</button>
               </div>
               <p style="margin:0 0 12px;color:#94a3b8;font-size:0.84rem;">
@@ -1629,7 +1651,7 @@
             const teamOpts = activeStatsTeams.map((t) => `<option value="${t.id}">${escapeHtml(t.name)}</option>`).join("");
             if (label) label.textContent = `${escapeHtml(btn.dataset.teamAName)} vs ${escapeHtml(btn.dataset.teamBName)}`;
 
-            btn.disabled = true; btn.textContent = "Loading…";
+            btn.disabled = true; btn.textContent = "Loading...";
             try {
               const existing = await fetchJson(`${auth.apiBase}/api/admin/tournaments/${tournamentId}/matches/${matchId}/stats`);
               const kdaRows = schContent.querySelector("#kdaRows");
@@ -1710,7 +1732,7 @@
               statValue,
             });
           }
-          saveBtn.disabled = true; saveBtn.textContent = "Saving…";
+          saveBtn.disabled = true; saveBtn.textContent = "Saving...";
           try {
             await fetchJson(`${auth.apiBase}/api/admin/tournaments/${tournamentId}/matches/${activeStatsMatchId}/stats`, {
               method: "PUT",
@@ -1718,7 +1740,7 @@
               body: JSON.stringify({ stats }),
             });
             setFlash(`${stats.length} stat row(s) saved.`);
-            saveBtn.textContent = "Saved ✓";
+            saveBtn.textContent = "Saved";
             setTimeout(() => { saveBtn.disabled = false; saveBtn.textContent = "Save Stats"; }, 2000);
           } catch (error) {
             setFlash(error.message || "Failed to save stats.", true);
@@ -1733,7 +1755,7 @@
             const scoreB = row.querySelector(".sch-score-b")?.value;
             const mDate = row.querySelector(".sch-date")?.value || null;
             const mTime = row.querySelector(".sch-time")?.value;
-            btn.disabled = true; btn.textContent = "Saving…";
+            btn.disabled = true; btn.textContent = "Saving...";
             try {
               await fetchJson(`${auth.apiBase}/api/admin/tournaments/${btn.dataset.tournamentId}/matches/${btn.dataset.matchId}`, {
                 method: "PUT",
@@ -1746,7 +1768,7 @@
                 }),
               });
               setFlash("Match updated.");
-              btn.textContent = "Saved ✓";
+              btn.textContent = "Saved";
               setTimeout(() => { btn.disabled = false; btn.textContent = "Save"; }, 2000);
             } catch (error) {
               setFlash(error.message || "Failed to update match.", true);
@@ -1760,7 +1782,7 @@
           const form = event.currentTarget;
           const data = new FormData(form);
           const submitBtn = form.querySelector("button[type=submit]");
-          submitBtn.disabled = true; submitBtn.textContent = "Adding…";
+          submitBtn.disabled = true; submitBtn.textContent = "Adding...";
           try {
             const mTime = data.get("matchTime");
             await fetchJson(`${auth.apiBase}/api/admin/tournaments/${tournamentId}/matches`, {
@@ -1797,10 +1819,10 @@
     const eventRows = items.map((ev) => `
       <tr data-event-id="${ev.eventId}">
         <td>${escapeHtml(ev.title)}</td>
-        <td>${escapeHtml(ev.category || "—")}</td>
-        <td>${escapeHtml(ev.eventDate || "—")}</td>
-        <td>${escapeHtml(ev.eventTime ? ev.eventTime.slice(0, 5) : "—")}</td>
-        <td>${escapeHtml(ev.venue || "—")}</td>
+        <td>${escapeHtml(ev.category || "-")}</td>
+        <td>${escapeHtml(ev.eventDate || "-")}</td>
+        <td>${escapeHtml(ev.eventTime ? ev.eventTime.slice(0, 5) : "-")}</td>
+        <td>${escapeHtml(ev.venue || "-")}</td>
         <td>${ev.isPublished ? '<span style="color:#4ade80;">Published</span>' : '<span style="color:#64748b;">Draft</span>'}</td>
         <td>
           <div style="display:flex;gap:6px;flex-wrap:wrap;">
@@ -1934,7 +1956,7 @@
       button.addEventListener("click", () => {
         const d = button.dataset;
         document.getElementById("editEventId").value = d.evId;
-        document.getElementById("editEventLabel").textContent = `— Event #${d.evId}`;
+        document.getElementById("editEventLabel").textContent = `- Event #${d.evId}`;
         document.getElementById("editEventTitle").value = d.evTitle || "";
         document.getElementById("editEventCat").value = d.evCat || "";
         document.getElementById("editEventDesc").value = d.evDesc || "";
@@ -2014,7 +2036,7 @@
         approved: 'style="color:#4ade80;"',
         rejected: 'style="color:#f87171;"',
       };
-      return `<span ${map[s] || ""}>${escapeHtml(s || "—")}</span>`;
+      return `<span ${map[s] || ""}>${escapeHtml(s || "-")}</span>`;
     }
 
     function paymentBadge(s) {
@@ -2023,7 +2045,7 @@
         paid: 'style="color:#4ade80;"',
         refunded: 'style="color:#f87171;"',
       };
-      return `<span ${map[s] || ""}>${escapeHtml(s || "—")}</span>`;
+      return `<span ${map[s] || ""}>${escapeHtml(s || "-")}</span>`;
     }
 
     const filterOptions = ["", "pending", "approved", "rejected"]
@@ -2032,6 +2054,8 @@
 
     const regRows = regs.map((r) => {
       const tourTitle = tournamentMap[r.tournamentId] || `#${r.tournamentId}`;
+      const feeAmount = Math.max(0, Number(r.feeAmount) || 0);
+      const canApprove = feeAmount === 0 || r.paymentStatus === "paid";
       return `
         <tr data-reg-id="${escapeAttribute(r.publicId)}">
           <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${escapeAttribute(r.teamName)}">${escapeHtml(r.teamName)}</td>
@@ -2040,21 +2064,22 @@
           <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(r.contactEmail)}</td>
           <td>${statusBadge(r.status)}</td>
           <td>${paymentBadge(r.paymentStatus)}</td>
+          <td>${formatPesoAmount(feeAmount)}</td>
           <td>${r.paymentProofUrl
             ? `<a href="${escapeAttribute(auth.apiBase + r.paymentProofUrl)}" target="_blank" rel="noopener" style="color:#a78bfa;font-size:0.82rem;">View proof</a>`
-            : '<span style="color:#64748b;font-size:0.82rem;">—</span>'}</td>
-          <td>${escapeHtml(r.rosterNotes || "—")}</td>
+            : '<span style="color:#64748b;font-size:0.82rem;">-</span>'}</td>
+          <td>${escapeHtml(r.rosterNotes || "-")}</td>
           <td>${r.joinCode
             ? `<code style="background:rgba(167,139,250,0.12);padding:2px 7px;border-radius:5px;font-size:0.82rem;color:#c4b5fd;">${escapeHtml(r.joinCode)}</code>`
-            : '<span style="color:#64748b;">—</span>'}</td>
+            : '<span style="color:#64748b;">-</span>'}</td>
           <td>${formatDate(r.createdAt)}</td>
           <td>
             <div style="display:flex;gap:6px;flex-wrap:wrap;">
               ${r.status === "pending" ? `
-                <button class="console-btn reg-approve-btn" data-reg-id="${escapeAttribute(r.publicId)}" data-team="${escapeAttribute(r.teamName)}">Approve</button>
+                <button class="console-btn reg-approve-btn" data-reg-id="${escapeAttribute(r.publicId)}" data-team="${escapeAttribute(r.teamName)}" ${canApprove ? "" : 'disabled title="Payment must be paid before approval"'}>Approve</button>
                 <button class="console-btn danger reg-reject-btn" data-reg-id="${escapeAttribute(r.publicId)}" data-team="${escapeAttribute(r.teamName)}" style="background:rgba(239,68,68,0.18);">Reject</button>
               ` : ""}
-              ${r.status === "approved" && r.paymentStatus !== "paid" ? `
+              ${feeAmount > 0 && r.paymentStatus !== "paid" ? `
                 <button class="console-btn reg-payment-btn" data-reg-id="${escapeAttribute(r.publicId)}" data-team="${escapeAttribute(r.teamName)}" style="background:rgba(74,222,128,0.12);color:#4ade80;border-color:rgba(74,222,128,0.25);">Confirm Payment</button>
               ` : ""}
             </div>
@@ -2099,6 +2124,7 @@
                 <th>Email</th>
                 <th>Status</th>
                 <th>Payment</th>
+                <th>Fee</th>
                 <th>Proof</th>
                 <th>Players</th>
                 <th>Join Code</th>
@@ -2106,7 +2132,7 @@
                 <th>Actions</th>
               </tr>
             </thead>
-            <tbody>${regRows || '<tr><td colspan="11" style="color:#64748b;">No registrations found.</td></tr>'}</tbody>
+            <tbody>${regRows || '<tr><td colspan="12" style="color:#64748b;">No registrations found.</td></tr>'}</tbody>
           </table>
         </div>
       </section>
@@ -2121,7 +2147,7 @@
     content.querySelectorAll(".reg-approve-btn").forEach((btn) => {
       btn.addEventListener("click", async () => {
         if (!confirm(`Approve registration for "${btn.dataset.team}"? A join code will be sent to their email.`)) return;
-        btn.disabled = true; btn.textContent = "Approving…";
+        btn.disabled = true; btn.textContent = "Approving...";
         try {
           await fetchJson(`${auth.apiBase}/api/admin/registrations/${btn.dataset.regId}/approve`, { method: "PUT" });
           setFlash(`Registration for "${btn.dataset.team}" approved. Join code sent via email.`);
@@ -2133,7 +2159,7 @@
       });
     });
 
-    // Reject — open modal
+    // Reject - open modal
     let pendingRejectId = null;
     let pendingRejectTeam = null;
 
@@ -2155,7 +2181,7 @@
     document.getElementById("confirmRejectBtn")?.addEventListener("click", async () => {
       const reason = document.getElementById("rejectReason").value.trim() || null;
       const confirmBtn = document.getElementById("confirmRejectBtn");
-      confirmBtn.disabled = true; confirmBtn.textContent = "Rejecting…";
+      confirmBtn.disabled = true; confirmBtn.textContent = "Rejecting...";
       try {
         await fetchJson(`${auth.apiBase}/api/admin/registrations/${pendingRejectId}/reject`, {
           method: "PUT",
@@ -2175,7 +2201,7 @@
     content.querySelectorAll(".reg-payment-btn").forEach((btn) => {
       btn.addEventListener("click", async () => {
         if (!confirm(`Mark payment as confirmed for "${btn.dataset.team}"?`)) return;
-        btn.disabled = true; btn.textContent = "Confirming…";
+        btn.disabled = true; btn.textContent = "Confirming...";
         try {
           await fetchJson(`${auth.apiBase}/api/admin/registrations/${btn.dataset.regId}/payment`, { method: "PUT" });
           setFlash(`Payment confirmed for "${btn.dataset.team}".`);
@@ -2208,8 +2234,8 @@
       <section class="console-panel">
         <h2>Profile Information</h2>
         <p style="color:#94a3b8;font-size:0.88rem;margin-top:0;margin-bottom:18px;">
-          Username: <strong style="color:#e2e8f0;">${escapeHtml(profile.username || session.username || "—")}</strong>
-          &nbsp;·&nbsp; Role: <span class="console-pill ${escapeHtml(profile.role || session.role)}">${escapeHtml(profile.role || session.role || "admin")}</span>
+          Username: <strong style="color:#e2e8f0;">${escapeHtml(profile.username || session.username || "-")}</strong>
+          &nbsp;|&nbsp; Role: <span class="console-pill ${escapeHtml(profile.role || session.role)}">${escapeHtml(profile.role || session.role || "admin")}</span>
         </p>
         <form class="console-form" id="adminProfileForm">
           <div style="display:flex;flex-direction:column;gap:4px;flex:1 1 200px;">
@@ -2226,11 +2252,11 @@
           </div>
           <div style="display:flex;flex-direction:column;gap:4px;flex:1 1 220px;">
             <label style="color:#94a3b8;font-size:0.82rem;">School / University</label>
-            <input class="console-input" id="profileSchool" value="${escapeAttribute(profile.school || "")}" placeholder="e.g. De La Salle University – Dasmariñas" />
+            <input class="console-input" id="profileSchool" value="${escapeAttribute(profile.school || "")}" placeholder="e.g. De La Salle University - Dasmariñas" />
           </div>
           <div style="display:flex;flex-direction:column;gap:4px;flex:1 1 180px;">
             <label style="color:#94a3b8;font-size:0.82rem;">Course / Year</label>
-            <input class="console-input" id="profileCourseYear" value="${escapeAttribute(profile.courseYear || "")}" placeholder="e.g. BSIT — 3rd Year" />
+            <input class="console-input" id="profileCourseYear" value="${escapeAttribute(profile.courseYear || "")}" placeholder="e.g. BSIT - 3rd Year" />
           </div>
           <div style="display:flex;flex-direction:column;gap:4px;flex:1 1 180px;">
             <label style="color:#94a3b8;font-size:0.82rem;">Phone number</label>
@@ -2269,7 +2295,7 @@
           }),
         });
         setFlash(`Profile updated. Display name: ${updated.displayName || updated.username}.`);
-        submitBtn.textContent = "Saved ✓";
+        submitBtn.textContent = "Saved";
         setTimeout(() => { submitBtn.disabled = false; submitBtn.textContent = "Save Profile"; }, 2500);
       } catch (error) {
         setFlash(error.message || "Failed to save profile.", true);
@@ -2342,10 +2368,10 @@
       .map((item) => `
         <tr>
           <td>${escapeHtml(item.actionType)}</td>
-          <td>${item.actorUserId || "—"}</td>
+          <td>${item.actorUserId || "-"}</td>
           <td>${escapeHtml(item.actorRole || "system")}</td>
           <td>${escapeHtml(item.entityType)}</td>
-          <td>${escapeHtml(item.entityId || "—")}</td>
+          <td>${escapeHtml(item.entityId || "-")}</td>
           <td>${formatDate(item.createdAt)}</td>
         </tr>
       `)
@@ -2479,9 +2505,9 @@
   }
 
   function formatDate(value) {
-    if (!value) return "—";
+    if (!value) return "-";
     const date = new Date(value);
-    if (Number.isNaN(date.getTime())) return "—";
+    if (Number.isNaN(date.getTime())) return "-";
     const diffMs = Date.now() - date.getTime();
     const diffSec = Math.floor(diffMs / 1000);
     if (diffSec < 60) return "Just now";
@@ -2492,6 +2518,15 @@
     const diffDay = Math.floor(diffHr / 24);
     if (diffDay < 7) return `${diffDay}d ago`;
     return `${date.toLocaleDateString()} ${date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`;
+  }
+
+  function formatPesoAmount(amount) {
+    const centavos = Math.max(0, Number(amount) || 0);
+    if (centavos === 0) return "Free";
+    return `PHP ${(centavos / 100).toLocaleString(undefined, {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })}`;
   }
 
   function formatActionType(actionType) {

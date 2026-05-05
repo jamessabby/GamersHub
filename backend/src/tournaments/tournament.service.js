@@ -71,6 +71,7 @@ async function getTournamentOrThrow(tournamentId) {
 
 function mapTournament(tournament) {
   const status = String(tournament.status || "").trim();
+  const registrationFeeAmount = Math.max(0, Number(tournament.registrationFeeAmount) || 0);
 
   return {
     tournamentId: Number(tournament.tournamentId),
@@ -87,16 +88,19 @@ function mapTournament(tournament) {
         ? undefined
         : Number(tournament.completedMatchCount) || 0,
     teamCount: tournament.teamCount == null ? undefined : Number(tournament.teamCount) || 0,
+    registrationFeeAmount,
+    registrationFeePesos: registrationFeeAmount / 100,
   };
 }
 
-async function createTournament({ title, gameName, startDate, endDate, status, isActive, teams }) {
+async function createTournament({ title, gameName, startDate, endDate, status, isActive, teams, registrationFeeAmount, registrationFeePesos }) {
   const trimmedTitle = String(title || "").trim();
   if (!trimmedTitle) {
     const error = new Error("Tournament title is required.");
     error.statusCode = 400;
     throw error;
   }
+  const feeAmount = normalizeRegistrationFeeAmount({ registrationFeeAmount, registrationFeePesos });
 
   const tournament = await tournamentRepo.createTournament({
     title: trimmedTitle,
@@ -105,6 +109,7 @@ async function createTournament({ title, gameName, startDate, endDate, status, i
     endDate: endDate || null,
     status: String(status || "Pending").trim(),
     isActive: isActive !== false,
+    registrationFeeAmount: feeAmount,
   });
 
   if (!tournament) {
@@ -200,7 +205,7 @@ async function updateMatch({ matchId, teamAScore, teamBScore, matchDate, matchTi
   });
 }
 
-// ── MATCH STATS ──────────────────���───────────────────────────────────────────
+// MATCH STATS
 
 async function getMatchStats(matchId) {
   return tournamentRepo.listMatchStats(parsePositiveInt(matchId));
@@ -228,7 +233,7 @@ async function saveMatchStats({ actor, matchId, stats }) {
   return tournamentRepo.replaceMatchStats(mid, stats, actor.userId);
 }
 
-// ── TOURNAMENT REGISTRATION ───────────────────────────────────────────────────
+// TOURNAMENT REGISTRATION
 
 async function listRegistrations({ tournamentId, status }) {
   const rows = await tournamentRepo.listRegistrations({
@@ -250,7 +255,8 @@ async function submitRegistration({ tournamentId, teamName, contactName, contact
     e.statusCode = 400;
     throw e;
   }
-  await getTournamentOrThrow(tournamentId);
+  const tournament = await getTournamentOrThrow(tournamentId);
+  const feeAmount = Math.max(0, Number(tournament.registrationFeeAmount) || 0);
   const reg = await tournamentRepo.createRegistration({
     tournamentId: Number(tournamentId),
     teamName: String(teamName).trim(),
@@ -259,26 +265,35 @@ async function submitRegistration({ tournamentId, teamName, contactName, contact
     contactPhone: contactPhone ? String(contactPhone).trim() : null,
     rosterNotes: rosterNotes ? String(rosterNotes).trim() : null,
     paymentProofUrl: paymentProofUrl || null,
+    feeAmount,
+    paymentStatus: feeAmount > 0 ? "unpaid" : "paid",
   });
 
-  const usernameList = Array.isArray(participants)
-    ? participants
-    : (typeof participants === "string" ? JSON.parse(participants) : []);
+  let usernameList = [];
+  if (Array.isArray(participants)) {
+    usernameList = participants;
+  } else if (typeof participants === "string" && participants.trim()) {
+    try {
+      usernameList = JSON.parse(participants);
+    } catch {
+      const e = new Error("Participants must be a JSON array of usernames.");
+      e.statusCode = 400;
+      throw e;
+    }
+  }
   const cleaned = usernameList.map((u) => String(u || "").trim()).filter(Boolean);
   if (cleaned.length && reg) {
     await tournamentRepo.createRegistrationParticipants(reg.registrationId, cleaned);
   }
 
-  // Create PayMongo payment link if key is configured
+  // Create PayMongo payment link if key is configured and the tournament has a fee.
   let checkoutUrl = null;
   const secretKey = process.env.PAYMONGO_SECRET_KEY || "";
-  if (secretKey && !secretKey.startsWith("sk_test_REPLACE") && reg) {
+  if (feeAmount > 0 && secretKey && !secretKey.startsWith("sk_test_REPLACE") && reg) {
     try {
-      const fee = Number(process.env.PAYMONGO_REGISTRATION_FEE) || 10000;
-      const tournament = await tournamentRepo.findTournamentById(Number(tournamentId));
       const link = await createPaymentLink({
-        amount: fee,
-        description: `Registration fee – ${tournament?.title || "Tournament"}`,
+        amount: feeAmount,
+        description: `Registration fee - ${tournament?.title || "Tournament"}`,
         remarks: String(teamName).trim(),
       });
       await tournamentRepo.updateRegistrationPaymongoLink(reg.registrationId, link.linkId);
@@ -288,7 +303,7 @@ async function submitRegistration({ tournamentId, teamName, contactName, contact
     }
   }
 
-  return { ...reg, checkoutUrl };
+  return { ...reg, feeAmount, checkoutUrl };
 }
 
 async function approveRegistration({ actor, registrationId }) {
@@ -300,6 +315,12 @@ async function approveRegistration({ actor, registrationId }) {
   }
   if (reg.status === "approved") {
     const e = new Error("Registration is already approved.");
+    e.statusCode = 409;
+    throw e;
+  }
+  const feeAmount = Math.max(0, Number(reg.feeAmount) || 0);
+  if (feeAmount > 0 && reg.paymentStatus !== "paid") {
+    const e = new Error("Payment must be marked paid before this registration can be approved.");
     e.statusCode = 409;
     throw e;
   }
@@ -406,10 +427,16 @@ async function joinTournamentByCode({ tournamentId, joinCode }) {
     throw e;
   }
 
-  await tournamentRepo.markJoinCodeUsed(reg.registrationId);
-
-  const team = await tournamentRepo.createTeam({ teamName: reg.teamName });
-  await tournamentRepo.addTournamentTeam({ tournamentId: reg.tournamentId, teamId: team.teamId });
+  const joinResult = await tournamentRepo.consumeJoinCodeAndAddTeam({
+    registrationId: reg.registrationId,
+    tournamentId: reg.tournamentId,
+    teamName: reg.teamName,
+  });
+  if (!joinResult?.joined) {
+    const e = new Error("This join code has already been used.");
+    e.statusCode = 409;
+    throw e;
+  }
 
   return {
     message: `Team "${reg.teamName}" has joined the tournament.`,
@@ -431,6 +458,28 @@ function parsePositiveInt(value) {
     throw error;
   }
   return parsed;
+}
+
+function normalizeRegistrationFeeAmount({ registrationFeeAmount, registrationFeePesos }) {
+  if (registrationFeeAmount != null && registrationFeeAmount !== "") {
+    const parsed = Number(registrationFeeAmount);
+    if (!Number.isFinite(parsed) || parsed < 0) {
+      const error = new Error("Registration fee must be zero or greater.");
+      error.statusCode = 400;
+      throw error;
+    }
+    return Math.round(parsed);
+  }
+
+  const pesos = registrationFeePesos == null || registrationFeePesos === ""
+    ? 0
+    : Number(registrationFeePesos);
+  if (!Number.isFinite(pesos) || pesos < 0) {
+    const error = new Error("Registration fee must be zero or greater.");
+    error.statusCode = 400;
+    throw error;
+  }
+  return Math.round(pesos * 100);
 }
 
 module.exports = {

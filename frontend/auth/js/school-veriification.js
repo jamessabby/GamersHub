@@ -77,8 +77,8 @@
   }
 
   function validateDepartment(value) {
-    if (!value) return "Department is required.";
-    if (value.length < 3) return "Department is too short.";
+    if (!value) return "School is required.";
+    if (value.length < 3) return "School name is too short.";
     return null;
   }
 

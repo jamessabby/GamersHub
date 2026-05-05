@@ -65,7 +65,7 @@
     if (!code) { joinError.textContent = "Please enter a join code."; return; }
 
     joinBtn.disabled = true;
-    joinBtn.textContent = "Joining…";
+    joinBtn.textContent = "Joining...";
     try {
       const res = await fetch(`${API_BASE}/api/tournaments/join`, {
         method: "POST",
@@ -323,7 +323,7 @@
 
   // ── IGDB Enhancement ──────────────────────────────────────────────────────
   // Fetches game cover art from IGDB via our backend proxy after tournaments render.
-  // If IGDB is not configured or fails, this is a silent no-op — it never
+  // If IGDB is not configured or fails, this is a silent no-op - it never
   // breaks or removes existing tournament cards.
   // The backend caches IGDB results for 6 hours so repeated loads are fast.
 
@@ -369,7 +369,7 @@
             });
           }
         } catch {
-          // Silent — IGDB failure never crashes the page
+          // Silent - IGDB failure never crashes the page
         }
       }),
     );

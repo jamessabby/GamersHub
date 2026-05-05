@@ -871,7 +871,11 @@
       .split(/[\s-]+/)
       .filter(Boolean)
       .slice(0, 4)
-      .map((part) => part[0].toUpperCase())
+      .map((part, index, parts) => (
+        parts.length === 1 && /^[A-Z0-9]{2,6}$/.test(part)
+          ? part
+          : part[0].toUpperCase()
+      ))
       .join("");
   }
 

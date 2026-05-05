@@ -45,6 +45,8 @@ async function createTournament(req, res) {
       status: req.body.status,
       isActive: req.body.isActive,
       teams: req.body.teams || [],
+      registrationFeeAmount: req.body.registrationFeeAmount,
+      registrationFeePesos: req.body.registrationFeePesos,
     });
     res.status(201).json(payload);
   } catch (error) {

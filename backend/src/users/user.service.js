@@ -580,6 +580,9 @@ function buildSchoolTag(school) {
   if (!words.length) {
     return "";
   }
+  if (words.length === 1 && /^[A-Z0-9]{2,6}$/.test(words[0])) {
+    return words[0];
+  }
 
   return words.map((word) => word[0].toUpperCase()).join("");
 }

@@ -6,6 +6,7 @@
 
   const $ = (id) => document.getElementById(id);
   const tournamentSel = $("regTournament");
+  const registrationFeeNotice = $("registrationFeeNotice");
   const teamNameInput = $("regTeamName");
   const contactNameInput = $("regContactName");
   const contactEmailInput = $("regContactEmail");
@@ -24,6 +25,7 @@
   const regCard = $("regCard");
   const successCard = $("successCard");
   const successBody = $("successBody");
+  const tournamentFees = new Map();
 
   // ── Participant list ───────────────────────────────
   function addParticipantRow(value = "") {
@@ -45,6 +47,7 @@
   }
 
   addParticipantBtn.addEventListener("click", () => addParticipantRow());
+  tournamentSel.addEventListener("change", updateRegistrationFeeNotice);
 
   // ── Stars ──────────────────────────────────────────
   function spawnStars() {
@@ -88,23 +91,30 @@
       const res = await fetch(`${API_BASE}/api/tournaments`);
       const data = await res.json();
       const list = Array.isArray(data) ? data : (data.items || []);
-      const active = list.filter((t) => t.isActive || t.status === "ongoing" || t.status === "upcoming");
+      const active = list.filter((t) => {
+        const status = String(t.status || "").toLowerCase();
+        return t.isActive || status === "ongoing" || status === "upcoming" || status.includes("open") || status.includes("register");
+      });
 
       tournamentSel.innerHTML = "";
+      tournamentFees.clear();
       if (!active.length) {
         tournamentSel.innerHTML = '<option value="">No open tournaments right now</option>';
+        updateRegistrationFeeNotice();
         return;
       }
 
       const placeholder = document.createElement("option");
       placeholder.value = "";
-      placeholder.textContent = "Select a tournament…";
+      placeholder.textContent = "Select a tournament...";
       tournamentSel.appendChild(placeholder);
 
       active.forEach((t) => {
         const opt = document.createElement("option");
         opt.value = t.tournamentId;
-        opt.textContent = `${t.title}${t.gameName ? ` — ${t.gameName}` : ""}`;
+        opt.dataset.feeAmount = String(Math.max(0, Number(t.registrationFeeAmount) || 0));
+        tournamentFees.set(String(t.tournamentId), Math.max(0, Number(t.registrationFeeAmount) || 0));
+        opt.textContent = `${t.title}${t.gameName ? ` - ${t.gameName}` : ""}`;
         tournamentSel.appendChild(opt);
       });
 
@@ -115,10 +125,42 @@
         const match = Array.from(tournamentSel.options).find((o) => o.value === preId);
         if (match) tournamentSel.value = preId;
       }
+      updateRegistrationFeeNotice();
     } catch {
       tournamentSel.innerHTML = '<option value="">Failed to load tournaments</option>';
+      updateRegistrationFeeNotice();
       showError(`Could not reach the backend at ${API_BASE}. For the Vercel demo, open this page once with ?apiBase=https://YOUR-NGROK-URL.`);
     }
+  }
+
+  function updateRegistrationFeeNotice() {
+    if (!registrationFeeNotice) return;
+    const feeAmount = getSelectedFeeAmount();
+    if (!tournamentSel.value) {
+      registrationFeeNotice.textContent = "Select a tournament to see the registration fee.";
+      return;
+    }
+    registrationFeeNotice.textContent = feeAmount > 0
+      ? `Registration fee: ${formatPesoAmount(feeAmount)}. You will be redirected to PayMongo after submitting.`
+      : "Registration fee: Free. No payment is required for this tournament.";
+  }
+
+  function getSelectedFeeAmount() {
+    const selected = tournamentSel.selectedOptions[0];
+    const fromOption = selected?.dataset.feeAmount;
+    if (fromOption != null && fromOption !== "") {
+      return Math.max(0, Number(fromOption) || 0);
+    }
+    return Math.max(0, Number(tournamentFees.get(String(tournamentSel.value))) || 0);
+  }
+
+  function formatPesoAmount(amount) {
+    const centavos = Math.max(0, Number(amount) || 0);
+    if (centavos === 0) return "Free";
+    return `PHP ${(centavos / 100).toLocaleString(undefined, {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })}`;
   }
 
   // ── File upload ────────────────────────────────────
@@ -227,7 +269,7 @@
     const loader = $("submitLoader");
 
     submitBtn.disabled = true;
-    btnText.textContent = "Submitting…";
+    btnText.textContent = "Submitting...";
     loader.classList.remove("d-none");
 
     const fd = new FormData();
@@ -262,11 +304,13 @@
       const tourName = tournamentSel.options[tournamentSel.selectedIndex]?.text || "the tournament";
       const teamName = teamNameInput.value.trim();
       const email = contactEmailInput.value.trim();
+      const feeAmount = Number(data.registration?.feeAmount ?? getSelectedFeeAmount()) || 0;
+      const feeText = formatPesoAmount(feeAmount);
 
       if (data.checkoutUrl) {
         successBody.textContent =
           `Your team "${teamName}" has been registered for ${tourName}. ` +
-          `You'll be redirected to complete your payment now. ` +
+          `Registration fee: ${feeText}. You'll be redirected to complete your payment now. ` +
           `Once approved, your join code will be sent to ${email}.`;
         regCard.style.display = "none";
         successCard.style.display = "";
@@ -275,7 +319,7 @@
       } else {
         successBody.textContent =
           `Your team "${teamName}" has been registered for ${tourName}. ` +
-          `An admin will review your registration and send your join code to ${email} once approved.`;
+          `Registration fee: ${feeText}. An admin will review your registration and send your join code to ${email} once approved.`;
         regCard.style.display = "none";
         successCard.style.display = "";
       }

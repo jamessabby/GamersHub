@@ -41,10 +41,13 @@ router.post(
         // Payload structure: event.data.attributes.data.id = "link_xxx"
         const linkId = event?.data?.attributes?.data?.id;
         if (linkId) {
-          console.log("PayMongo link.payment.paid — marking paid for linkId:", linkId);
-          await tournamentRepo.markRegistrationPaid(linkId);
+          console.log("PayMongo link.payment.paid - marking paid for linkId:", linkId);
+          const updatedCount = await tournamentRepo.markRegistrationPaid(linkId);
+          if (!updatedCount) {
+            console.warn("PayMongo link.payment.paid - no unpaid registration matched linkId:", linkId);
+          }
         } else {
-          console.warn("PayMongo link.payment.paid — no linkId found in payload:", JSON.stringify(event?.data?.attributes?.data));
+          console.warn("PayMongo link.payment.paid - no linkId found in payload:", JSON.stringify(event?.data?.attributes?.data));
         }
 
       } else if (eventType === "payment.paid") {
@@ -52,19 +55,22 @@ router.post(
         const source = event?.data?.attributes?.data?.attributes?.source;
         const linkId = source?.type === "payment_link" ? source.resource_id : null;
         if (linkId) {
-          console.log("PayMongo payment.paid — marking paid for linkId:", linkId);
-          await tournamentRepo.markRegistrationPaid(linkId);
+          console.log("PayMongo payment.paid - marking paid for linkId:", linkId);
+          const updatedCount = await tournamentRepo.markRegistrationPaid(linkId);
+          if (!updatedCount) {
+            console.warn("PayMongo payment.paid - no unpaid registration matched linkId:", linkId);
+          }
         } else {
-          console.log("PayMongo payment.paid — not from a payment_link, skipping.");
+          console.log("PayMongo payment.paid - not from a payment_link, skipping.");
         }
       } else {
-        console.log("PayMongo webhook — unhandled event type, ignoring.");
+        console.log("PayMongo webhook - unhandled event type, ignoring.");
       }
     } catch (err) {
       console.error("Webhook processing error:", err);
     }
 
-    // Always 200 — PayMongo retries on non-2xx
+    // Always 200 - PayMongo retries on non-2xx
     res.status(200).json({ received: true });
   }
 );
