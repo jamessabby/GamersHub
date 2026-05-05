@@ -1,5 +1,5 @@
 const path = require("path");
-require("dotenv").config({ path: path.resolve(__dirname, "..", ".env") });
+require("dotenv").config({ path: path.resolve(__dirname, "..", ".env"), override: true });
 
 const express = require("express");
 const app = express();
@@ -34,15 +34,13 @@ app.use("/api/streams", streamRoutes);
 
 app.use("/api/events", require("./events/event.routes"));
 
-// ── Public config endpoint: exposes non-secret keys to frontend ────────────
-// Tenor API key is safe to expose to authenticated users — it's a public
-// client key, not a server secret. We still serve it from the backend so
-// it isn't hardcoded in frontend source files.
-app.get("/api/config/tenor", (_req, res) => {
-  const key = process.env.TENOR_API_KEY || "";
+// Public config endpoint for browser-side integrations.
+// GIPHY API keys are public client keys, not server secrets. We still serve
+// this from the backend so environment-specific values stay out of source.
+app.get("/api/config/giphy", (_req, res) => {
+  const key = process.env.GIPHY_API_KEY || "";
   res.json({ key, configured: Boolean(key) });
 });
-// ───────────────────────────────────────────────────────────────────────────
 
 const { poolConnect: authPoolConnect } = require("./config/db.auth");
 const { poolConnect: feedPoolConnect } = require("./config/db.feed");

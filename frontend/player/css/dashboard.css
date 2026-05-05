@@ -1720,8 +1720,8 @@ body::before {
   object-fit: cover;
 }
 
-/* ── Tenor GIF Picker ── */
-.tenor-picker {
+/* GIPHY GIF Picker */
+.giphy-picker {
   border-radius: 12px;
   border: 1px solid rgba(139, 92, 246, 0.18);
   background: #1a1730;
@@ -1732,7 +1732,7 @@ body::before {
   position: relative;
 }
 
-.tenor-search-row {
+.giphy-search-row {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -1740,7 +1740,7 @@ body::before {
   border-bottom: 1px solid rgba(139, 92, 246, 0.12);
 }
 
-.tenor-search-input {
+.giphy-search-input {
   flex: 1;
   height: 34px;
   border-radius: 8px;
@@ -1753,16 +1753,16 @@ body::before {
   font-family: "DM Sans", sans-serif;
 }
 
-.tenor-search-input::placeholder {
+.giphy-search-input::placeholder {
   color: rgba(255, 255, 255, 0.3);
 }
 
-.tenor-search-input:focus {
+.giphy-search-input:focus {
   border-color: rgba(139, 92, 246, 0.45);
   background: rgba(255, 255, 255, 0.09);
 }
 
-.tenor-brand {
+.giphy-brand {
   font-size: 9px;
   color: rgba(255, 255, 255, 0.25);
   font-weight: 600;
@@ -1772,7 +1772,7 @@ body::before {
   flex-shrink: 0;
 }
 
-.tenor-grid {
+.giphy-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 3px;
@@ -1781,7 +1781,7 @@ body::before {
   overflow-y: auto;
 }
 
-.tenor-gif-item {
+.giphy-gif-item {
   background: none;
   border: none;
   padding: 0;
@@ -1792,19 +1792,19 @@ body::before {
   transition: opacity 0.15s, transform 0.15s;
 }
 
-.tenor-gif-item:hover {
+.giphy-gif-item:hover {
   opacity: 0.85;
   transform: scale(0.97);
 }
 
-.tenor-gif-item img {
+.giphy-gif-item img {
   width: 100%;
   height: 100%;
   object-fit: cover;
   display: block;
 }
 
-.tenor-loading {
+.giphy-loading {
   padding: 20px;
   text-align: center;
   color: rgba(255, 255, 255, 0.35);
@@ -1812,7 +1812,7 @@ body::before {
   grid-column: 1 / -1;
 }
 
-.tenor-unconfigured {
+.giphy-unconfigured {
   color: rgba(255, 255, 255, 0.25);
   font-style: italic;
 }

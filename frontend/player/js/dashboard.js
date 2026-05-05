@@ -1,11 +1,13 @@
 (() => {
-  const API_BASE = window.GamersHubAuth?.apiBase || `http://${window.location.hostname || "localhost"}:3000`;
+  const API_BASE =
+    window.GamersHubAuth?.apiBase ||
+    `http://${window.location.hostname || "localhost"}:3000`;
 
-  // ── Tenor GIF Picker state ──────────────────────────────────────────────
-  // TENOR_API_KEY is injected from backend via /api/config/tenor
+  // ── GIPHY GIF Picker state ──────────────────────────────────────────────
+  // GIPHY_API_KEY is injected from backend via /api/config/giphy
   // so we never expose it in frontend source code.
-  let TENOR_KEY = null;
-  let tenorKeyFetched = false;
+  let GIPHY_KEY = null;
+  let giphyKeyFetched = false;
   // activeGifPicker tracks which postId currently has the picker open
   let activeGifPicker = null;
   // pendingGifs: postId → { url, previewUrl, title } | null
@@ -14,9 +16,18 @@
   const auth = window.GamersHubAuth;
   const session = auth?.getSession?.() || {};
   const REACTION_META = {
-    like: { label: "Like", icon: "../assets/icons/player-dashboard-icons/like-react.png" },
-    love: { label: "Love", icon: "../assets/icons/player-dashboard-icons/heart-react.png" },
-    wow: { label: "Wow", icon: "../assets/icons/player-dashboard-icons/wow-react.png" },
+    like: {
+      label: "Like",
+      icon: "../assets/icons/player-dashboard-icons/like-react.png",
+    },
+    love: {
+      label: "Love",
+      icon: "../assets/icons/player-dashboard-icons/heart-react.png",
+    },
+    wow: {
+      label: "Wow",
+      icon: "../assets/icons/player-dashboard-icons/wow-react.png",
+    },
   };
   const FEED_POLL_INTERVAL_MS = 5000;
   const FRIEND_POLL_INTERVAL_MS = 8000;
@@ -54,9 +65,13 @@
   const reactionSummaryCache = new Map();
   const commentsLoadedPosts = new Set();
 
-  window.addEventListener("scroll", () => {
-    topNav?.classList.toggle("scrolled", window.scrollY > 8);
-  }, { passive: true });
+  window.addEventListener(
+    "scroll",
+    () => {
+      topNav?.classList.toggle("scrolled", window.scrollY > 8);
+    },
+    { passive: true },
+  );
 
   document.addEventListener("keydown", (event) => {
     if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "k") {
@@ -66,7 +81,10 @@
   });
 
   document.addEventListener("click", (event) => {
-    if (!event.target.closest(".post-reaction-picker") && !event.target.closest("[data-post-action='react-toggle']")) {
+    if (
+      !event.target.closest(".post-reaction-picker") &&
+      !event.target.closest("[data-post-action='react-toggle']")
+    ) {
       closeAllReactionPickers();
     }
   });
@@ -146,11 +164,18 @@
   });
 
   feedList?.addEventListener("click", (event) => {
-    const commentDeleteBtn = event.target.closest("[data-comment-action='delete']");
+    const commentDeleteBtn = event.target.closest(
+      "[data-comment-action='delete']",
+    );
     if (commentDeleteBtn) {
       const commentId = Number(commentDeleteBtn.dataset.commentId);
       const postId = Number(commentDeleteBtn.dataset.postId);
-      if (Number.isInteger(commentId) && commentId > 0 && Number.isInteger(postId) && postId > 0) {
+      if (
+        Number.isInteger(commentId) &&
+        commentId > 0 &&
+        Number.isInteger(postId) &&
+        postId > 0
+      ) {
         void deleteComment(commentId, postId);
       }
       return;
@@ -218,7 +243,9 @@
   startLivePolling();
   void checkProfileCompleteness();
 
-  const profileCompleteBanner = document.getElementById("profileCompleteBanner");
+  const profileCompleteBanner = document.getElementById(
+    "profileCompleteBanner",
+  );
   const pcbDismiss = document.getElementById("pcbDismiss");
   const pcbMissingFields = document.getElementById("pcbMissingFields");
   const PCB_DISMISS_KEY = `gh_pcb_dismissed_${session.userId || ""}`;
@@ -247,7 +274,9 @@
     }
 
     try {
-      const response = await fetch(`${API_BASE}/api/users/profile/${session.userId}`);
+      const response = await fetch(
+        `${API_BASE}/api/users/profile/${session.userId}`,
+      );
       if (!response.ok) {
         return;
       }
@@ -273,15 +302,22 @@
     }
   }
 
-  async function loadFeed({ preserveState = false, silent = false, items = null } = {}) {
+  async function loadFeed({
+    preserveState = false,
+    silent = false,
+    items = null,
+  } = {}) {
     try {
-      const nextItems = items || await fetchFeedItems();
+      const nextItems = items || (await fetchFeedItems());
       await renderFetchedFeed(nextItems, { preserveState });
     } catch (error) {
       console.error("Feed loading failed:", error);
       if (!silent) {
         renderFeed([]);
-        setComposerStatus("Feed is offline right now. Please check the backend service.", true);
+        setComposerStatus(
+          "Feed is offline right now. Please check the backend service.",
+          true,
+        );
       }
     }
   }
@@ -308,13 +344,21 @@
   }
 
   async function hydrateFeedEngagement(items) {
-    await Promise.all(items.map(async (post) => {
-      try {
-        applyReactionSummary(post.postId, await fetchReactionSummary(post.postId));
-      } catch (error) {
-        console.error(`Failed to hydrate reactions for post ${post.postId}:`, error);
-      }
-    }));
+    await Promise.all(
+      items.map(async (post) => {
+        try {
+          applyReactionSummary(
+            post.postId,
+            await fetchReactionSummary(post.postId),
+          );
+        } catch (error) {
+          console.error(
+            `Failed to hydrate reactions for post ${post.postId}:`,
+            error,
+          );
+        }
+      }),
+    );
   }
 
   async function refreshLiveDashboard({ forceFeed = false } = {}) {
@@ -342,21 +386,33 @@
   }
 
   async function refreshRenderedEngagement() {
-    const postIds = Array.from(feedList?.querySelectorAll("[data-post-id]") || [])
+    const postIds = Array.from(
+      feedList?.querySelectorAll("[data-post-id]") || [],
+    )
       .map((node) => Number(node.dataset.postId))
-      .filter ((postId) => Number.isInteger(postId) && postId > 0);
+      .filter((postId) => Number.isInteger(postId) && postId > 0);
 
-    await Promise.all(postIds.map(async (postId) => {
-      try {
-        applyReactionSummary(postId, await fetchReactionSummary(postId));
-        const commentsSection = findPostCard(postId)?.querySelector("[data-post-comments-section]");
-        if (commentsSection && !commentsSection.classList.contains("hidden")) {
-          await loadComments(postId, { silent: true });
+    await Promise.all(
+      postIds.map(async (postId) => {
+        try {
+          applyReactionSummary(postId, await fetchReactionSummary(postId));
+          const commentsSection = findPostCard(postId)?.querySelector(
+            "[data-post-comments-section]",
+          );
+          if (
+            commentsSection &&
+            !commentsSection.classList.contains("hidden")
+          ) {
+            await loadComments(postId, { silent: true });
+          }
+        } catch (error) {
+          console.error(
+            `Failed to refresh engagement for post ${postId}:`,
+            error,
+          );
         }
-      } catch (error) {
-        console.error(`Failed to refresh engagement for post ${postId}:`, error);
-      }
-    }));
+      }),
+    );
   }
 
   function startLivePolling() {
@@ -413,7 +469,9 @@
     }
 
     try {
-      const response = await fetch(`${API_BASE}/api/users/${session.userId}/friends`);
+      const response = await fetch(
+        `${API_BASE}/api/users/${session.userId}/friends`,
+      );
       const payload = await response.json();
       if (!response.ok) {
         throw new Error(payload.message || "Failed to load friends.");
@@ -452,17 +510,23 @@
 
   async function sendFriendRequest(targetUserId) {
     if (!session.userId) {
-      setFriendSearchStatus("Please log in again before sending a request.", true);
+      setFriendSearchStatus(
+        "Please log in again before sending a request.",
+        true,
+      );
       return;
     }
 
     try {
       setFriendSearchStatus("Sending friend request...", false);
-      const response = await fetch(`${API_BASE}/api/users/${session.userId}/friends/requests`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ targetUserId: Number(targetUserId) }),
-      });
+      const response = await fetch(
+        `${API_BASE}/api/users/${session.userId}/friends/requests`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ targetUserId: Number(targetUserId) }),
+        },
+      );
       const payload = await response.json();
       if (!response.ok) {
         throw new Error(payload.message || "Failed to send friend request.");
@@ -508,7 +572,9 @@
       }
     } catch (error) {
       console.error("Friend request response failed:", error);
-      renderIncomingPlaceholder(error.message || "Failed to update friend request.");
+      renderIncomingPlaceholder(
+        error.message || "Failed to update friend request.",
+      );
     }
   }
 
@@ -521,7 +587,10 @@
     }
 
     if (!content && !selectedMediaFile) {
-      setComposerStatus("Write something or attach a photo or video first.", true);
+      setComposerStatus(
+        "Write something or attach a photo or video first.",
+        true,
+      );
       return;
     }
 
@@ -554,7 +623,10 @@
     } catch (error) {
       console.error("Post creation failed:", error);
       setComposerBusy(false, error.message || "Post creation failed.", true);
-      window.GamersHubAuth?.toast(error.message || "Post creation failed. Please try again.", "error");
+      window.GamersHubAuth?.toast(
+        error.message || "Post creation failed. Please try again.",
+        "error",
+      );
     }
   }
 
@@ -565,18 +637,22 @@
 
     const currentSummary = reactionSummaryCache.get(postId);
     try {
-      const response = currentSummary?.viewerReaction === reactionType
-        ? await fetch(`${API_BASE}/api/reactions/posts/${postId}?userId=${encodeURIComponent(session.userId)}`, {
-          method: "DELETE",
-        })
-        : await fetch(`${API_BASE}/api/reactions/posts/${postId}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            userId: session.userId,
-            reactionType,
-          }),
-        });
+      const response =
+        currentSummary?.viewerReaction === reactionType
+          ? await fetch(
+              `${API_BASE}/api/reactions/posts/${postId}?userId=${encodeURIComponent(session.userId)}`,
+              {
+                method: "DELETE",
+              },
+            )
+          : await fetch(`${API_BASE}/api/reactions/posts/${postId}`, {
+              method: "PUT",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                userId: session.userId,
+                reactionType,
+              }),
+            });
       const payload = await response.json();
       if (!response.ok) {
         throw new Error(payload.message || "Failed to update reaction.");
@@ -591,8 +667,12 @@
   }
 
   async function toggleComments(postCard, postId) {
-    const commentsSection = postCard.querySelector("[data-post-comments-section]");
-    const commentsInput = commentsSection?.querySelector("[data-comment-input]");
+    const commentsSection = postCard.querySelector(
+      "[data-post-comments-section]",
+    );
+    const commentsInput = commentsSection?.querySelector(
+      "[data-comment-input]",
+    );
     if (!commentsSection) {
       return;
     }
@@ -624,7 +704,9 @@
     }
 
     try {
-      const response = await fetch(`${API_BASE}/api/reactions/posts/${postId}/comments?limit=20`);
+      const response = await fetch(
+        `${API_BASE}/api/reactions/posts/${postId}/comments?limit=20`,
+      );
       const payload = await response.json();
       if (!response.ok) {
         throw new Error(payload.message || "Failed to load comments.");
@@ -634,7 +716,8 @@
       renderComments(postId, payload.items || []);
     } catch (error) {
       console.error(`Failed to load comments for post ${postId}:`, error);
-      commentsStatus.textContent = error.message || "Comments are unavailable right now.";
+      commentsStatus.textContent =
+        error.message || "Comments are unavailable right now.";
       commentsStatus.classList.add("is-error");
     }
   }
@@ -648,7 +731,11 @@
     const gif = pendingGifs.get(postId) || null;
 
     if (!message && !gif) {
-      updateCommentStatus(postId, "Write a comment or add a GIF before sending.", true);
+      updateCommentStatus(
+        postId,
+        "Write a comment or add a GIF before sending.",
+        true,
+      );
       return;
     }
 
@@ -656,15 +743,18 @@
     updateCommentStatus(postId, "Sending comment...", false);
 
     try {
-      const response = await fetch(`${API_BASE}/api/reactions/posts/${postId}/comments`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          userId: session.userId,
-          message,
-          gifUrl: gif ? gif.url : null,
-        }),
-      });
+      const response = await fetch(
+        `${API_BASE}/api/reactions/posts/${postId}/comments`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            userId: session.userId,
+            message,
+            gifUrl: gif ? gif.url : null,
+          }),
+        },
+      );
       const payload = await response.json();
       if (!response.ok) {
         throw new Error(payload.message || "Failed to create comment.");
@@ -680,7 +770,11 @@
       updateCommentStatus(postId, "Comment posted.", false);
     } catch (error) {
       console.error("Comment creation failed:", error);
-      updateCommentStatus(postId, error.message || "Failed to create comment.", true);
+      updateCommentStatus(
+        postId,
+        error.message || "Failed to create comment.",
+        true,
+      );
     } finally {
       input.disabled = false;
       input.focus();
@@ -787,10 +881,14 @@
             <img class="action-icon" src="../assets/icons/player-dashboard-icons/share.svg" alt="" />
             <span>Share</span>
           </button>
-          ${Number(post.userId) === Number(session.userId) ? `
+          ${
+            Number(post.userId) === Number(session.userId)
+              ? `
           <button type="button" class="post-action-btn post-action-delete" data-post-action="delete-post">
             <span>Delete</span>
-          </button>` : ""}
+          </button>`
+              : ""
+          }
         </div>
 
         <section class="post-comments hidden" data-post-comments-section>
@@ -815,12 +913,12 @@
             </div>
             <button type="submit" class="post-comment-submit">Send</button>
           </form>
-          <div class="tenor-picker hidden" data-tenor-picker>
-            <div class="tenor-search-row">
-              <input type="text" class="tenor-search-input" data-tenor-search placeholder="Search GIFs…" />
-              <span class="tenor-brand">via Tenor</span>
+          <div class="giphy-picker hidden" data-giphy-picker>
+            <div class="giphy-search-row">
+              <input type="text" class="giphy-search-input" data-giphy-search placeholder="Search GIFs…" />
+              <span class="giphy-brand">via GIPHY</span>
             </div>
-            <div class="tenor-grid" data-tenor-grid></div>
+            <div class="giphy-grid" data-giphy-grid></div>
           </div>
         </section>
       </article>
@@ -828,7 +926,9 @@
   }
 
   function renderReactionPicker(postId) {
-    return Object.entries(REACTION_META).map(([reactionType, meta]) => `
+    return Object.entries(REACTION_META)
+      .map(
+        ([reactionType, meta]) => `
       <button
         type="button"
         class="post-reaction-option"
@@ -839,7 +939,9 @@
         <img src="${escapeAttribute(meta.icon)}" alt="" />
         <span>${escapeHtml(meta.label)}</span>
       </button>
-    `).join("");
+    `,
+      )
+      .join("");
   }
 
   function renderMedia(post) {
@@ -893,20 +995,30 @@
     }
 
     const iconsWrap = postCard.querySelector("[data-post-summary-icons]");
-    const commentCountNode = postCard.querySelector("[data-post-comment-count-inline]");
-    const commentButtonLabel = postCard.querySelector("[data-post-comment-button-label]");
+    const commentCountNode = postCard.querySelector(
+      "[data-post-comment-count-inline]",
+    );
+    const commentButtonLabel = postCard.querySelector(
+      "[data-post-comment-button-label]",
+    );
     const reactLabel = postCard.querySelector("[data-post-react-label]");
-    const reactButton = postCard.querySelector("[data-post-action='react-toggle']");
+    const reactButton = postCard.querySelector(
+      "[data-post-action='react-toggle']",
+    );
     const picker = postCard.querySelector("[data-post-reaction-picker]");
 
     if (iconsWrap) {
       iconsWrap.innerHTML = buildReactionIconsMarkup(summary.counts);
     }
     if (commentCountNode) {
-      commentCountNode.textContent = formatCommentCountLabel(summary.commentCount);
+      commentCountNode.textContent = formatCommentCountLabel(
+        summary.commentCount,
+      );
     }
     if (commentButtonLabel) {
-      commentButtonLabel.textContent = formatCommentButtonLabel(summary.commentCount);
+      commentButtonLabel.textContent = formatCommentButtonLabel(
+        summary.commentCount,
+      );
     }
     if (reactLabel) {
       reactLabel.textContent = summary.viewerReaction
@@ -916,13 +1028,21 @@
 
     reactButton?.classList.toggle("liked", Boolean(summary.viewerReaction));
     picker?.querySelectorAll("[data-reaction-type]").forEach((button) => {
-      button.classList.toggle("is-active", button.dataset.reactionType === summary.viewerReaction);
+      button.classList.toggle(
+        "is-active",
+        button.dataset.reactionType === summary.viewerReaction,
+      );
     });
   }
 
   function buildReactionIconsMarkup(counts = {}) {
-    const orderedTypes = ["like", "love", "wow"].filter((type) => Number(counts[type]) > 0);
-    const total = orderedTypes.reduce((sum, type) => sum + (Number(counts[type]) || 0), 0);
+    const orderedTypes = ["like", "love", "wow"].filter(
+      (type) => Number(counts[type]) > 0,
+    );
+    const total = orderedTypes.reduce(
+      (sum, type) => sum + (Number(counts[type]) || 0),
+      0,
+    );
     if (!orderedTypes.length) {
       return `<span class="reaction-count" data-post-total-reactions>0 reactions</span>`;
     }
@@ -945,17 +1065,23 @@
   }
 
   function closeAllReactionPickers() {
-    feedList?.querySelectorAll("[data-post-reaction-picker]").forEach((picker) => {
-      picker.classList.add("hidden");
-    });
+    feedList
+      ?.querySelectorAll("[data-post-reaction-picker]")
+      .forEach((picker) => {
+        picker.classList.add("hidden");
+      });
   }
 
   function findPostCard(postId) {
-    return feedList?.querySelector(`[data-post-id="${String(postId)}"]`) || null;
+    return (
+      feedList?.querySelector(`[data-post-id="${String(postId)}"]`) || null
+    );
   }
 
   function captureFeedUiState() {
-    return Array.from(feedList?.querySelectorAll("[data-post-comments-section]") || [])
+    return Array.from(
+      feedList?.querySelectorAll("[data-post-comments-section]") || [],
+    )
       .filter((section) => !section.classList.contains("hidden"))
       .map((section) => {
         const postCard = section.closest("[data-post-id]");
@@ -971,27 +1097,34 @@
   }
 
   async function restoreFeedUiState(entries) {
-    await Promise.all(entries.map(async (entry) => {
-      const postCard = findPostCard(entry.postId);
-      const commentsSection = postCard?.querySelector("[data-post-comments-section]");
-      const input = commentsSection?.querySelector("[data-comment-input]");
+    await Promise.all(
+      entries.map(async (entry) => {
+        const postCard = findPostCard(entry.postId);
+        const commentsSection = postCard?.querySelector(
+          "[data-post-comments-section]",
+        );
+        const input = commentsSection?.querySelector("[data-comment-input]");
 
-      if (!postCard || !commentsSection) {
-        return;
-      }
+        if (!postCard || !commentsSection) {
+          return;
+        }
 
-      commentsSection.classList.remove("hidden");
-      if (input) {
-        input.value = entry.commentDraft || "";
-      }
+        commentsSection.classList.remove("hidden");
+        if (input) {
+          input.value = entry.commentDraft || "";
+        }
 
-      await loadComments(entry.postId, { silent: true });
-    }));
+        await loadComments(entry.postId, { silent: true });
+      }),
+    );
   }
 
   function buildFeedSnapshot(items) {
     return items
-      .map((item) => `${item.postId}:${item.createdAt || ""}:${item.content || ""}`)
+      .map(
+        (item) =>
+          `${item.postId}:${item.createdAt || ""}:${item.content || ""}`,
+      )
       .join("|");
   }
 
@@ -1078,7 +1211,9 @@
     }
 
     try {
-      const response = await fetch(`${API_BASE}/api/feed/${postId}`, { method: "DELETE" });
+      const response = await fetch(`${API_BASE}/api/feed/${postId}`, {
+        method: "DELETE",
+      });
       const payload = await response.json();
       if (!response.ok) {
         throw new Error(payload.message || "Failed to delete post.");
@@ -1113,7 +1248,11 @@
       }
     } catch (error) {
       console.error("Comment deletion failed:", error);
-      updateCommentStatus(postId, error.message || "Failed to delete comment.", true);
+      updateCommentStatus(
+        postId,
+        error.message || "Failed to delete comment.",
+        true,
+      );
     }
   }
 
@@ -1140,7 +1279,10 @@
       return;
     }
 
-    setFriendSearchStatus(`Found ${items.length} player${items.length === 1 ? "" : "s"}.`, false);
+    setFriendSearchStatus(
+      `Found ${items.length} player${items.length === 1 ? "" : "s"}.`,
+      false,
+    );
     friendSearchResults.innerHTML = items.map(renderSearchResultItem).join("");
   }
 
@@ -1209,7 +1351,9 @@
       return;
     }
 
-    friendRequestsList.innerHTML = items.map(renderIncomingRequestItem).join("");
+    friendRequestsList.innerHTML = items
+      .map(renderIncomingRequestItem)
+      .join("");
   }
 
   function renderIncomingRequestItem(friend) {
@@ -1248,7 +1392,9 @@
       return;
     }
 
-    dashboardFriendsList.innerHTML = items.map(renderAcceptedFriendItem).join("");
+    dashboardFriendsList.innerHTML = items
+      .map(renderAcceptedFriendItem)
+      .join("");
   }
 
   function renderAcceptedFriendItem(friend) {
@@ -1384,7 +1530,8 @@
       return;
     }
 
-    const sizeLimitBytes = mediaType === "video" ? 12 * 1024 * 1024 : 5 * 1024 * 1024;
+    const sizeLimitBytes =
+      mediaType === "video" ? 12 * 1024 * 1024 : 5 * 1024 * 1024;
     if (file.size > sizeLimitBytes) {
       setComposerStatus(
         mediaType === "video"
@@ -1408,17 +1555,26 @@
       attachPhotoBtn?.classList.toggle("is-active", mediaType === "image");
       attachVideoBtn?.classList.toggle("is-active", mediaType === "video");
       if (mediaPreviewLabel) {
-        mediaPreviewLabel.textContent = mediaType === "video" ? "Selected video" : "Selected photo";
+        mediaPreviewLabel.textContent =
+          mediaType === "video" ? "Selected video" : "Selected photo";
       }
       if (mediaPreviewName) {
         mediaPreviewName.textContent = selectedMediaName;
       }
-      renderComposerMediaPreview(mediaType, selectedMediaPreviewUrl, selectedMediaName, file.size);
+      renderComposerMediaPreview(
+        mediaType,
+        selectedMediaPreviewUrl,
+        selectedMediaName,
+        file.size,
+      );
       setComposerStatus(`${selectedMediaName} is ready to post.`, false);
       syncComposerControls();
     } catch (error) {
       console.error("Media selection failed:", error);
-      setComposerStatus("That file could not be loaded. Please try another one.", true);
+      setComposerStatus(
+        "That file could not be loaded. Please try another one.",
+        true,
+      );
       resetMediaComposer();
     }
   }
@@ -1456,7 +1612,10 @@
     const shouldShowPost = hasText || hasMediaSelection;
 
     createPostBtn?.classList.toggle("hidden", !shouldShowPost);
-    createPostStatus?.classList.toggle("is-visible", Boolean(createPostStatus?.textContent.trim()) && shouldShowPost);
+    createPostStatus?.classList.toggle(
+      "is-visible",
+      Boolean(createPostStatus?.textContent.trim()) && shouldShowPost,
+    );
   }
 
   function clearSelectedFileInput(mediaType) {
@@ -1472,7 +1631,12 @@
     }
   }
 
-  function renderComposerMediaPreview(mediaType = "", previewUrl = "", fileName = "", fileSize = 0) {
+  function renderComposerMediaPreview(
+    mediaType = "",
+    previewUrl = "",
+    fileName = "",
+    fileSize = 0,
+  ) {
     if (!mediaPreviewVisual) {
       return;
     }
@@ -1490,13 +1654,14 @@
       `;
     }
 
-    mediaPreviewVisual.innerHTML = mediaType === "video"
-      ? `
+    mediaPreviewVisual.innerHTML =
+      mediaType === "video"
+        ? `
         <video muted playsinline preload="metadata">
           <source src="${escapeAttribute(previewUrl)}" />
         </video>
       `
-      : `<img src="${escapeAttribute(previewUrl)}" alt="${escapeAttribute(fileName || "Selected media")}" />`;
+        : `<img src="${escapeAttribute(previewUrl)}" alt="${escapeAttribute(fileName || "Selected media")}" />`;
   }
 
   function formatFileSize(bytes) {
@@ -1511,7 +1676,9 @@
     if (!value) {
       return "1 hr";
     }
-    return String(value).startsWith("Post #") ? "Recently posted" : String(value);
+    return String(value).startsWith("Post #")
+      ? "Recently posted"
+      : String(value);
   }
 
   function formatReactionCountLabel(value) {
@@ -1542,122 +1709,157 @@
     return escapeHtml(value).replace(/`/g, "&#96;");
   }
 
-  // ── Tenor GIF Picker ──────────────────────────────────────────────────────
+  // ── GIPHY GIF Picker ──────────────────────────────────────────────────────
 
   /**
-   * Fetches the Tenor API key from our backend so it is never exposed
-   * in frontend source. Returns null if not configured.
+   * Fetches the GIPHY API key from our backend. Returns null if not configured.
    */
-  async function getTenorKey() {
-    if (tenorKeyFetched) return TENOR_KEY;
-    tenorKeyFetched = true;
+  async function getGiphyKey() {
+    if (giphyKeyFetched) return GIPHY_KEY;
+    giphyKeyFetched = true;
     try {
-      const resp = await fetch(`${API_BASE}/api/config/tenor`);
-      if (!resp.ok) return null;
+      const resp = await fetch(`${API_BASE}/api/config/giphy`);
+      if (!resp.ok) {
+        console.warn(
+          `[GIF] /api/config/giphy returned HTTP ${resp.status}. Check backend is running at ${API_BASE}`,
+        );
+        // Don't cache a failure — allow retry on next click
+        giphyKeyFetched = false;
+        return null;
+      }
       const data = await resp.json();
-      TENOR_KEY = data.key || null;
-    } catch {
-      TENOR_KEY = null;
+      if (!data.configured || !data.key) {
+        console.warn(
+          `[GIF] Backend reports GIPHY not configured. Add GIPHY_API_KEY to backend/.env and restart the server.`,
+        );
+        // Don't cache — allow retry after env fix + restart
+        giphyKeyFetched = false;
+      }
+      GIPHY_KEY = data.key || null;
+    } catch (err) {
+      console.warn(
+        `[GIF] Failed to reach ${API_BASE}/api/config/giphy:`,
+        err.message,
+        `\nIf using ngrok, update window.GAMERSHUB_API_BASE in frontend/shared/js/auth-state.js`,
+      );
+      // Don't cache a network error — allow retry
+      giphyKeyFetched = false;
+      GIPHY_KEY = null;
     }
-    return TENOR_KEY;
+    return GIPHY_KEY;
   }
 
   /**
-   * Searches Tenor for GIFs matching `query`.
+   * Searches GIPHY for GIFs matching `query`.
    * Returns an array of { url, previewUrl, title } objects.
    */
-  async function searchTenor(query) {
-    const key = await getTenorKey();
+  async function searchGiphy(query) {
+    const key = await getGiphyKey();
     if (!key) return [];
     try {
       const params = new URLSearchParams({
+        api_key: key,
         q: query || "gaming",
-        key,
-        limit: 16,
-        media_filter: "gif,tinygif",
-        contentfilter: "medium",
-        locale: "en_US",
+        limit: "16",
+        rating: "pg-13",
+        lang: "en",
       });
-      const resp = await fetch(`https://tenor.googleapis.com/v2/search?${params}`);
+      const resp = await fetch(
+        `https://api.giphy.com/v1/gifs/search?${params}`,
+      );
       if (!resp.ok) return [];
       const data = await resp.json();
-      return (data.results || []).map((r) => ({
-        url: r.media_formats?.gif?.url || "",
-        previewUrl: r.media_formats?.tinygif?.url || r.media_formats?.gif?.url || "",
-        title: r.content_description || "GIF",
-      })).filter((g) => g.url);
+      return (data.data || [])
+        .map((gif) => ({
+          url: gif.images?.original?.url || gif.images?.fixed_width?.url || "",
+          previewUrl:
+            gif.images?.fixed_width_small?.url ||
+            gif.images?.preview_gif?.url ||
+            gif.images?.original?.url ||
+            "",
+          title: gif.title || "GIF",
+        }))
+        .filter((g) => g.url);
     } catch {
       return [];
     }
   }
 
   /**
-   * Opens the Tenor picker for a given postId and loads trending GIFs.
+   * Opens the GIPHY picker for a given postId and loads default GIF results.
    */
-  async function openTenorPicker(postId, postCard) {
+  async function openGiphyPicker(postId, postCard) {
     // Close any previously open picker
     if (activeGifPicker && activeGifPicker !== postId) {
-      closeTenorPicker(activeGifPicker);
+      closeGiphyPicker(activeGifPicker);
     }
 
     activeGifPicker = postId;
-    const picker = postCard.querySelector("[data-tenor-picker]");
-    const grid = postCard.querySelector("[data-tenor-grid]");
-    const searchInput = postCard.querySelector("[data-tenor-search]");
+    const picker = postCard.querySelector("[data-giphy-picker]");
+    const grid = postCard.querySelector("[data-giphy-grid]");
+    const searchInput = postCard.querySelector("[data-giphy-search]");
     if (!picker || !grid) return;
 
     picker.classList.remove("hidden");
-    grid.innerHTML = `<div class="tenor-loading">Loading GIFs…</div>`;
+    grid.innerHTML = `<div class="giphy-loading">Loading GIFs…</div>`;
 
-    const key = await getTenorKey();
+    const key = await getGiphyKey();
     if (!key) {
-      grid.innerHTML = `<div class="tenor-loading tenor-unconfigured">GIF picker is not configured on this server.</div>`;
+      grid.innerHTML = `<div class="giphy-loading giphy-unconfigured">GIF picker is not configured. Check browser console (F12) for details.</div>`;
       return;
     }
 
-    const gifs = await searchTenor(searchInput?.value?.trim() || "gaming esports");
-    renderTenorGrid(postId, postCard, gifs);
+    const gifs = await searchGiphy(
+      searchInput?.value?.trim() || "gaming esports",
+    );
+    renderGiphyGrid(postId, postCard, gifs);
 
-    // Wire up search
+    // Replace the previous handler each time because feed cards can re-render.
     let debounceTimer = null;
-    searchInput?.addEventListener("input", () => {
-      clearTimeout(debounceTimer);
-      debounceTimer = setTimeout(async () => {
-        const q = searchInput.value.trim();
-        grid.innerHTML = `<div class="tenor-loading">Searching…</div>`;
-        const results = await searchTenor(q || "gaming esports");
-        renderTenorGrid(postId, postCard, results);
-      }, 400);
-    }, { once: false });
+    if (searchInput) {
+      searchInput.oninput = () => {
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(async () => {
+          const q = searchInput.value.trim();
+          grid.innerHTML = `<div class="giphy-loading">Searching…</div>`;
+          const results = await searchGiphy(q || "gaming esports");
+          renderGiphyGrid(postId, postCard, results);
+        }, 400);
+      };
+    }
   }
 
-  function closeTenorPicker(postId) {
+  function closeGiphyPicker(postId) {
     if (!postId) return;
     const postCard = findPostCard(postId);
-    const picker = postCard?.querySelector("[data-tenor-picker]");
+    const picker = postCard?.querySelector("[data-giphy-picker]");
     if (picker) picker.classList.add("hidden");
     if (activeGifPicker === postId) activeGifPicker = null;
   }
 
-  function renderTenorGrid(postId, postCard, gifs) {
-    const grid = postCard.querySelector("[data-tenor-grid]");
+  function renderGiphyGrid(postId, postCard, gifs) {
+    const grid = postCard.querySelector("[data-giphy-grid]");
     if (!grid) return;
     if (!gifs.length) {
-      grid.innerHTML = `<div class="tenor-loading">No GIFs found. Try a different search.</div>`;
+      grid.innerHTML = `<div class="giphy-loading">No GIFs found. Try a different search.</div>`;
       return;
     }
-    grid.innerHTML = gifs.map((gif, i) => `
+    grid.innerHTML = gifs
+      .map(
+        (gif, i) => `
       <button
         type="button"
-        class="tenor-gif-item"
+        class="giphy-gif-item"
         data-gif-index="${i}"
         title="${escapeAttribute(gif.title)}"
       >
         <img src="${escapeAttribute(gif.previewUrl)}" alt="${escapeAttribute(gif.title)}" loading="lazy" />
       </button>
-    `).join("");
+    `,
+      )
+      .join("");
 
-    grid.querySelectorAll(".tenor-gif-item").forEach((btn) => {
+    grid.querySelectorAll(".giphy-gif-item").forEach((btn) => {
       btn.addEventListener("click", () => {
         const idx = Number(btn.dataset.gifIndex);
         selectGif(postId, postCard, gifs[idx]);
@@ -1666,8 +1868,12 @@
   }
 
   function selectGif(postId, postCard, gif) {
+    if (!gif?.url) {
+      return;
+    }
+
     pendingGifs.set(postId, gif);
-    closeTenorPicker(postId);
+    closeGiphyPicker(postId);
 
     // Show preview above the input
     const preview = postCard.querySelector("[data-gif-preview]");
@@ -1695,11 +1901,11 @@
       const postCard = gifToggle.closest("[data-post-id]");
       const postId = Number(postCard?.dataset?.postId);
       if (!postId) return;
-      const picker = postCard.querySelector("[data-tenor-picker]");
+      const picker = postCard.querySelector("[data-giphy-picker]");
       if (picker?.classList.contains("hidden")) {
-        void openTenorPicker(postId, postCard);
+        void openGiphyPicker(postId, postCard);
       } else {
-        closeTenorPicker(postId);
+        closeGiphyPicker(postId);
       }
       return;
     }
@@ -1714,11 +1920,14 @@
     }
 
     // Click outside picker — close it
-    if (activeGifPicker && !e.target.closest("[data-tenor-picker]") && !e.target.closest("[data-gif-toggle]")) {
-      closeTenorPicker(activeGifPicker);
+    if (
+      activeGifPicker &&
+      !e.target.closest("[data-giphy-picker]") &&
+      !e.target.closest("[data-gif-toggle]")
+    ) {
+      closeGiphyPicker(activeGifPicker);
     }
   });
 
   // ─────────────────────────────────────────────────────────────────────────
 })();
-  

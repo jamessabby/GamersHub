@@ -105,7 +105,8 @@ async function countCommentsByPostId(postId) {
 async function listCommentsByPostId(postId, limit = 20) {
   await poolConnect;
 
-  const safeLimit = Number.isInteger(limit) && limit > 0 ? Math.min(limit, 50) : 20;
+  const safeLimit =
+    Number.isInteger(limit) && limit > 0 ? Math.min(limit, 50) : 20;
   const result = await pool
     .request()
     .input("postId", sql.Int, postId)
@@ -163,12 +164,14 @@ async function createComment({ postId, userId, message, gifUrl }) {
 async function findCommentById(commentId) {
   await poolConnect;
 
-  const result = await pool.request().input("commentId", sql.Int, commentId).query(`
+  const result = await pool.request().input("commentId", sql.Int, commentId)
+    .query(`
     SELECT
       COMMENT_ID AS commentId,
       POST_ID AS postId,
       USER_ID AS userId,
       MESSAGE AS message,
+      GIF_URL AS gifUrl,
       CREATED_AT AS createdAt
     FROM dbo.POST_COMMENT
     WHERE COMMENT_ID = @commentId
@@ -180,7 +183,8 @@ async function findCommentById(commentId) {
 async function deleteCommentById(commentId) {
   await poolConnect;
 
-  const result = await pool.request().input("commentId", sql.Int, commentId).query(`
+  const result = await pool.request().input("commentId", sql.Int, commentId)
+    .query(`
     DELETE FROM dbo.POST_COMMENT
     OUTPUT DELETED.COMMENT_ID AS commentId, DELETED.POST_ID AS postId, DELETED.USER_ID AS userId
     WHERE COMMENT_ID = @commentId

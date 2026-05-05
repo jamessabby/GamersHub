@@ -1,6 +1,17 @@
-// ── DEMO CONFIG ── Update this URL each time you restart ngrok ───────────────
-window.GAMERSHUB_API_BASE = "https://reputable-amigo-thermos.ngrok-free.dev"; // e.g. "https://xxxx.ngrok-free.app"
-// ─────────────────────────  ────────────────────────────────────────────────────
+// ══════════════════════════════════════════════════════════════════════════════
+// ██  DEMO CONFIG — MUST UPDATE EVERY TIME NGROK RESTARTS  ████████████████████
+// ══════════════════════════════════════════════════════════════════════════════
+// Set this to your current ngrok HTTPS URL (no trailing slash).
+// After restarting ngrok, paste the new URL here and hard-refresh the browser.
+// If this URL is wrong/stale, ALL API calls (login, posts, GIF picker) will fail.
+//
+// How to find your ngrok URL:
+//   • Run: ngrok http 3000
+//   • Copy the "Forwarding" https line, e.g. https://xxxx.ngrok-free.app
+//   • Paste it below (replace the existing value)
+//
+window.GAMERSHUB_API_BASE = "https://reputable-amigo-thermos.ngrok-free.dev";
+// ══════════════════════════════════════════════════════════════════════════════
 
 (() => {
   const SESSION_KEY = "gh_session";
@@ -348,6 +359,54 @@ window.GAMERSHUB_API_BASE = "https://reputable-amigo-thermos.ngrok-free.dev"; //
   }
 
   patchFetch();
+
+  // ── Startup API reachability check ────────────────────────────────────────
+  // Fires once on page load. Logs a clear error if the backend is unreachable,
+  // so a stale ngrok URL is immediately obvious in the browser console.
+  (function checkApiReachability() {
+    const base = API_BASE;
+    fetch(base + "/api/config/giphy")
+      .then(function (r) {
+        if (!r.ok) {
+          console.warn(
+            "[GamersHub] Backend responded HTTP " +
+              r.status +
+              " at " +
+              base +
+              ". Is the server running?",
+          );
+        } else {
+          r.json()
+            .then(function (d) {
+              if (!d.configured) {
+                console.warn(
+                  "[GamersHub] Backend OK at " +
+                    base +
+                    " but GIPHY_API_KEY is missing. Add it to backend/.env and restart.",
+                );
+              } else {
+                console.info(
+                  "[GamersHub] Backend OK ✓ — GIPHY configured ✓ — API base: " +
+                    base,
+                );
+              }
+            })
+            .catch(function () {});
+        }
+      })
+      .catch(function (err) {
+        console.error(
+          "[GamersHub] ⚠️  Cannot reach backend at: " +
+            base +
+            "\n" +
+            "  → If using ngrok, update window.GAMERSHUB_API_BASE in frontend/shared/js/auth-state.js\n" +
+            "  → Then hard-refresh (Ctrl+Shift+R / Cmd+Shift+R)\n" +
+            "  Error: " +
+            err.message,
+        );
+      });
+  })();
+  // ──────────────────────────────────────────────────────────────────────────
 
   // ── Toast notification system ──────────────────────────────────────────────
   (function injectToastStyles() {
