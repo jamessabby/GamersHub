@@ -1,0 +1,375 @@
+html[data-gh-theme="light"] {
+  color-scheme: light;
+}
+
+.gh-theme-toggle {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 38px;
+  height: 38px;
+  border: 1px solid rgba(167, 139, 250, 0.3);
+  border-radius: 50%;
+  background: rgba(139, 92, 246, 0.12);
+  color: #ddd6fe;
+  cursor: pointer;
+  transition:
+    transform 0.18s ease,
+    background 0.18s ease,
+    border-color 0.18s ease,
+    color 0.18s ease,
+    box-shadow 0.18s ease;
+}
+
+.gh-theme-toggle:hover {
+  transform: translateY(-1px);
+  background: rgba(139, 92, 246, 0.2);
+  border-color: rgba(196, 181, 253, 0.48);
+  color: #ffffff;
+}
+
+.gh-theme-toggle__icon {
+  grid-area: 1 / 1;
+  display: grid;
+  place-items: center;
+  transition:
+    opacity 0.18s ease,
+    transform 0.18s ease;
+}
+
+.gh-theme-toggle__sun {
+  opacity: 1;
+  transform: scale(1) rotate(0deg);
+}
+
+.gh-theme-toggle__moon {
+  opacity: 0;
+  transform: scale(0.68) rotate(-18deg);
+}
+
+.gh-theme-toggle.is-light .gh-theme-toggle__sun {
+  opacity: 0;
+  transform: scale(0.68) rotate(18deg);
+}
+
+.gh-theme-toggle.is-light .gh-theme-toggle__moon {
+  opacity: 1;
+  transform: scale(1) rotate(0deg);
+}
+
+.gh-theme-toggle--fixed {
+  position: fixed;
+  right: 18px;
+  bottom: 18px;
+  z-index: 1000;
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.22);
+}
+
+html[data-gh-theme="light"] body {
+  background:
+    radial-gradient(circle at top left, rgba(124, 58, 237, 0.12), transparent 34%),
+    radial-gradient(circle at top right, rgba(14, 165, 233, 0.12), transparent 30%),
+    linear-gradient(180deg, #f7f7ff 0%, #eef2ff 48%, #ffffff 100%) !important;
+  color: #1f2340 !important;
+}
+
+html[data-gh-theme="light"] body::before {
+  background:
+    radial-gradient(ellipse 80% 60% at 72% 40%, rgba(124, 58, 237, 0.11) 0%, transparent 62%),
+    radial-gradient(ellipse 60% 50% at 20% 60%, rgba(14, 165, 233, 0.1) 0%, transparent 58%),
+    radial-gradient(ellipse 100% 80% at 50% 110%, rgba(167, 139, 250, 0.18) 0%, transparent 60%) !important;
+}
+
+html[data-gh-theme="light"] body::after {
+  background: radial-gradient(ellipse 100% 100% at 50% 50%, transparent 52%, rgba(124, 58, 237, 0.08) 100%) !important;
+}
+
+html[data-gh-theme="light"] .gh-theme-toggle {
+  background: rgba(255, 255, 255, 0.82);
+  border-color: rgba(124, 58, 237, 0.24);
+  color: #5b21b6;
+  box-shadow: 0 10px 22px rgba(124, 58, 237, 0.12);
+}
+
+html[data-gh-theme="light"] .gh-theme-toggle:hover {
+  background: #ffffff;
+  border-color: rgba(124, 58, 237, 0.42);
+  color: #4c1d95;
+}
+
+html[data-gh-theme="light"] .top-nav,
+html[data-gh-theme="light"] .left-sidebar,
+html[data-gh-theme="light"] .right-sidebar,
+html[data-gh-theme="light"] .dashboard-friends-sidebar,
+html[data-gh-theme="light"] .console-sidebar,
+html[data-gh-theme="light"] .gh-navbar,
+html[data-gh-theme="light"] .lo-nav,
+html[data-gh-theme="light"] .auth-nav {
+  background: rgba(255, 255, 255, 0.82) !important;
+  border-color: rgba(124, 58, 237, 0.14) !important;
+  box-shadow: 0 12px 36px rgba(79, 70, 229, 0.08) !important;
+}
+
+html[data-gh-theme="light"] .top-nav.scrolled {
+  box-shadow: 0 10px 26px rgba(79, 70, 229, 0.12) !important;
+}
+
+html[data-gh-theme="light"] .gh-hero,
+html[data-gh-theme="light"] .lm-page,
+html[data-gh-theme="light"] .lm-hero,
+html[data-gh-theme="light"] .lm-section,
+html[data-gh-theme="light"] .lm-cta {
+  background: transparent !important;
+  color: #1f2340 !important;
+}
+
+html[data-gh-theme="light"] .gh-hero::before,
+html[data-gh-theme="light"] .lm-hero::before,
+html[data-gh-theme="light"] .lm-cta::before {
+  background: radial-gradient(ellipse at center, rgba(124, 58, 237, 0.12), transparent 64%) !important;
+}
+
+html[data-gh-theme="light"] .lm-section--alt {
+  background: rgba(255, 255, 255, 0.48) !important;
+}
+
+html[data-gh-theme="light"] .create-post-card,
+html[data-gh-theme="light"] .post-card,
+html[data-gh-theme="light"] .profile-card,
+html[data-gh-theme="light"] .profile-social-card,
+html[data-gh-theme="light"] .profile-posts-card,
+html[data-gh-theme="light"] .nav-notifications-panel,
+html[data-gh-theme="light"] .dashboard-empty-card,
+html[data-gh-theme="light"] .gh-empty-card,
+html[data-gh-theme="light"] .console-panel,
+html[data-gh-theme="light"] .console-card,
+html[data-gh-theme="light"] .console-stat-card,
+html[data-gh-theme="light"] .console-table-card,
+html[data-gh-theme="light"] .form-card,
+html[data-gh-theme="light"] .registration-card,
+html[data-gh-theme="light"] .success-card,
+html[data-gh-theme="light"] .auth-card,
+html[data-gh-theme="light"] .login-card,
+html[data-gh-theme="light"] .register-card,
+html[data-gh-theme="light"] .mfa-card,
+html[data-gh-theme="light"] .sv-card,
+html[data-gh-theme="light"] .lo-card,
+html[data-gh-theme="light"] .stream-card,
+html[data-gh-theme="light"] .event-card,
+html[data-gh-theme="light"] .tournament-card,
+html[data-gh-theme="light"] .schedule-card,
+html[data-gh-theme="light"] .leaderboard-card {
+  background: rgba(255, 255, 255, 0.82) !important;
+  border-color: rgba(124, 58, 237, 0.14) !important;
+  box-shadow:
+    0 18px 44px rgba(79, 70, 229, 0.1),
+    0 0 0 1px rgba(255, 255, 255, 0.66) inset !important;
+}
+
+html[data-gh-theme="light"] .lm-problem-card,
+html[data-gh-theme="light"] .lm-feature-card,
+html[data-gh-theme="light"] .lm-role-card,
+html[data-gh-theme="light"] .lm-cta-inner {
+  background: rgba(255, 255, 255, 0.78) !important;
+  border-color: rgba(124, 58, 237, 0.14) !important;
+  box-shadow: 0 16px 36px rgba(79, 70, 229, 0.08) !important;
+}
+
+html[data-gh-theme="light"] .sidebar-link,
+html[data-gh-theme="light"] .nav-account,
+html[data-gh-theme="light"] .nav-bell,
+html[data-gh-theme="light"] .cp-action-btn,
+html[data-gh-theme="light"] .post-action-btn,
+html[data-gh-theme="light"] .friend-item,
+html[data-gh-theme="light"] .friend-search-shell,
+html[data-gh-theme="light"] .notification-item,
+html[data-gh-theme="light"] .console-nav a,
+html[data-gh-theme="light"] .console-chip,
+html[data-gh-theme="light"] .console-sidebar-footer a,
+html[data-gh-theme="light"] .console-sidebar-footer button,
+html[data-gh-theme="light"] .social-btn,
+html[data-gh-theme="light"] .profile-edit-toggle,
+html[data-gh-theme="light"] .profile-action-btn,
+html[data-gh-theme="light"] .profile-school-tag,
+html[data-gh-theme="light"] .post-school-tag,
+html[data-gh-theme="light"] .friend-school-tag {
+  background: rgba(124, 58, 237, 0.07) !important;
+  border-color: rgba(124, 58, 237, 0.16) !important;
+  color: #3b3663 !important;
+}
+
+html[data-gh-theme="light"] .sidebar-link:hover,
+html[data-gh-theme="light"] .sidebar-link.active,
+html[data-gh-theme="light"] .nav-account:hover,
+html[data-gh-theme="light"] .nav-bell:hover,
+html[data-gh-theme="light"] .nav-bell.is-open,
+html[data-gh-theme="light"] .cp-action-btn:hover,
+html[data-gh-theme="light"] .cp-action-btn.is-active,
+html[data-gh-theme="light"] .post-action-btn:hover,
+html[data-gh-theme="light"] .friend-item-profile-link:hover,
+html[data-gh-theme="light"] .console-nav a:hover,
+html[data-gh-theme="light"] .console-nav a.is-active,
+html[data-gh-theme="light"] .social-btn:hover {
+  background: rgba(124, 58, 237, 0.13) !important;
+  border-color: rgba(124, 58, 237, 0.28) !important;
+  color: #4c1d95 !important;
+}
+
+html[data-gh-theme="light"] .search-input,
+html[data-gh-theme="light"] .friends-search-input,
+html[data-gh-theme="light"] .cp-input-area,
+html[data-gh-theme="light"] .post-comment-input,
+html[data-gh-theme="light"] .giphy-search-input,
+html[data-gh-theme="light"] .console-input,
+html[data-gh-theme="light"] .console-select,
+html[data-gh-theme="light"] .input-field,
+html[data-gh-theme="light"] input,
+html[data-gh-theme="light"] textarea,
+html[data-gh-theme="light"] select {
+  background: rgba(255, 255, 255, 0.92) !important;
+  border-color: rgba(124, 58, 237, 0.18) !important;
+  color: #1f2340 !important;
+}
+
+html[data-gh-theme="light"] .search-input::placeholder,
+html[data-gh-theme="light"] .friends-search-input::placeholder,
+html[data-gh-theme="light"] .post-comment-input::placeholder,
+html[data-gh-theme="light"] .input-field::placeholder,
+html[data-gh-theme="light"] input::placeholder,
+html[data-gh-theme="light"] textarea::placeholder {
+  color: rgba(31, 35, 64, 0.48) !important;
+}
+
+html[data-gh-theme="light"] .cp-file-preview,
+html[data-gh-theme="light"] .post-comments,
+html[data-gh-theme="light"] .giphy-picker,
+html[data-gh-theme="light"] .profile-public-banner,
+html[data-gh-theme="light"] .profile-complete-banner,
+html[data-gh-theme="light"] .notification-empty-state,
+html[data-gh-theme="light"] .post-link-card,
+html[data-gh-theme="light"] .console-table,
+html[data-gh-theme="light"] table {
+  background: rgba(246, 247, 255, 0.78) !important;
+  border-color: rgba(124, 58, 237, 0.14) !important;
+}
+
+html[data-gh-theme="light"] .post-image-wrap,
+html[data-gh-theme="light"] .post-video-wrap {
+  background: rgba(238, 242, 255, 0.92) !important;
+}
+
+html[data-gh-theme="light"] .nav-link-item,
+html[data-gh-theme="light"] .gh-nav-link,
+html[data-gh-theme="light"] .sidebar-brand-name,
+html[data-gh-theme="light"] .friends-title,
+html[data-gh-theme="light"] .post-author,
+html[data-gh-theme="light"] .post-comment-author,
+html[data-gh-theme="light"] .profile-page-title,
+html[data-gh-theme="light"] .profile-username,
+html[data-gh-theme="light"] .profile-section-label,
+html[data-gh-theme="light"] .profile-subsection-title,
+html[data-gh-theme="light"] .notifications-panel-title-text,
+html[data-gh-theme="light"] .gh-empty-title,
+html[data-gh-theme="light"] .dashboard-empty-title,
+html[data-gh-theme="light"] .console-topbar h1,
+html[data-gh-theme="light"] .gh-headline,
+html[data-gh-theme="light"] .lm-headline,
+html[data-gh-theme="light"] .lm-section-title,
+html[data-gh-theme="light"] .lm-feature-title,
+html[data-gh-theme="light"] .lm-role-title,
+html[data-gh-theme="light"] .lm-cta-title,
+html[data-gh-theme="light"] h1,
+html[data-gh-theme="light"] h2,
+html[data-gh-theme="light"] h3,
+html[data-gh-theme="light"] h4,
+html[data-gh-theme="light"] strong {
+  color: #17142c !important;
+}
+
+html[data-gh-theme="light"] .gh-headline,
+html[data-gh-theme="light"] .lm-headline {
+  background: linear-gradient(135deg, #17142c 20%, #5b21b6 72%, #7c3aed 100%) !important;
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+}
+
+html[data-gh-theme="light"] .post-text,
+html[data-gh-theme="light"] .gh-subtext,
+html[data-gh-theme="light"] .lm-hero-sub,
+html[data-gh-theme="light"] .lm-section-desc,
+html[data-gh-theme="light"] .lm-problem-text,
+html[data-gh-theme="light"] .lm-feature-text,
+html[data-gh-theme="light"] .lm-role-desc,
+html[data-gh-theme="light"] .lm-scope-list li,
+html[data-gh-theme="light"] .lm-cta-sub,
+html[data-gh-theme="light"] .post-comment-message,
+html[data-gh-theme="light"] .profile-realname,
+html[data-gh-theme="light"] .profile-info-value,
+html[data-gh-theme="light"] .friend-name,
+html[data-gh-theme="light"] .notification-item-title,
+html[data-gh-theme="light"] .console-card strong,
+html[data-gh-theme="light"] p,
+html[data-gh-theme="light"] li,
+html[data-gh-theme="light"] td,
+html[data-gh-theme="light"] th,
+html[data-gh-theme="light"] label {
+  color: #2b2f52 !important;
+}
+
+html[data-gh-theme="light"] .post-time,
+html[data-gh-theme="light"] .post-comment-time,
+html[data-gh-theme="light"] .reaction-count,
+html[data-gh-theme="light"] .post-comment-total,
+html[data-gh-theme="light"] .cp-status,
+html[data-gh-theme="light"] .friend-status,
+html[data-gh-theme="light"] .friend-username,
+html[data-gh-theme="light"] .profile-page-subtitle,
+html[data-gh-theme="light"] .profile-posts-subtitle,
+html[data-gh-theme="light"] .profile-info-label,
+html[data-gh-theme="light"] .notification-item-body,
+html[data-gh-theme="light"] .notification-item-time,
+html[data-gh-theme="light"] .console-topbar p,
+html[data-gh-theme="light"] small,
+html[data-gh-theme="light"] .muted {
+  color: rgba(43, 47, 82, 0.66) !important;
+}
+
+html[data-gh-theme="light"] .cp-submit-btn,
+html[data-gh-theme="light"] .gh-empty-button,
+html[data-gh-theme="light"] .console-btn.primary,
+html[data-gh-theme="light"] .submit-btn,
+html[data-gh-theme="light"] .primary-btn,
+html[data-gh-theme="light"] button[type="submit"] {
+  background: linear-gradient(135deg, #6d28d9, #8b5cf6) !important;
+  border-color: rgba(124, 58, 237, 0.28) !important;
+  color: #ffffff !important;
+}
+
+html[data-gh-theme="light"] .bell-badge,
+html[data-gh-theme="light"] .sidebar-link.active::before {
+  background: #7c3aed !important;
+}
+
+html[data-gh-theme="light"] .profile-avatar-img,
+html[data-gh-theme="light"] .nav-avatar,
+html[data-gh-theme="light"] .cp-avatar,
+html[data-gh-theme="light"] .post-avatar,
+html[data-gh-theme="light"] .friend-avatar,
+html[data-gh-theme="light"] .post-comment-avatar {
+  border-color: rgba(124, 58, 237, 0.22) !important;
+  background: rgba(124, 58, 237, 0.1) !important;
+}
+
+@media (max-width: 768px) {
+  .gh-theme-toggle {
+    width: 34px;
+    height: 34px;
+  }
+
+  .gh-theme-toggle--fixed {
+    right: 14px;
+    bottom: 14px;
+  }
+}

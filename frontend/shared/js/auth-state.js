@@ -14,12 +14,19 @@ window.GAMERSHUB_API_BASE = "https://reputable-amigo-thermos.ngrok-free.dev";
 // ══════════════════════════════════════════════════════════════════════════════
 
 (() => {
+  const AUTH_STATE_SCRIPT_SRC = document.currentScript?.src || "";
   const SESSION_KEY = "gh_session";
   const PENDING_MFA_KEY = "gh_pending_mfa";
   const API_BASE_KEY = "gh_api_base";
   const PROFILE_CACHE_KEY = "gh_profile_cache";
   const PROFILE_UI_STORAGE_KEY = "gh_profile_ui";
+  const THEME_KEY = "gh_theme";
+  const THEME_STYLESHEET_ID = "gh-theme-mode-stylesheet";
   const API_BASE = resolveApiBase();
+
+  applyStoredTheme();
+  ensureThemeStylesheet();
+  installThemeToggleWhenReady();
 
   function getSession() {
     try {
@@ -219,6 +226,128 @@ window.GAMERSHUB_API_BASE = "https://reputable-amigo-thermos.ngrok-free.dev";
 
   function buildProfileUiKey(userId) {
     return `${PROFILE_UI_STORAGE_KEY}_${userId}`;
+  }
+
+  function getThemePreference() {
+    try {
+      const savedTheme = localStorage.getItem(THEME_KEY);
+      return savedTheme === "light" || savedTheme === "dark"
+        ? savedTheme
+        : "dark";
+    } catch {
+      return "dark";
+    }
+  }
+
+  function setThemePreference(theme) {
+    const nextTheme = theme === "light" ? "light" : "dark";
+    try {
+      localStorage.setItem(THEME_KEY, nextTheme);
+    } catch {
+      // storage unavailable
+    }
+
+    document.documentElement.dataset.ghTheme = nextTheme;
+    updateThemeToggleState();
+    window.dispatchEvent(
+      new CustomEvent("gh:theme-updated", { detail: { theme: nextTheme } }),
+    );
+    return nextTheme;
+  }
+
+  function toggleThemePreference() {
+    return setThemePreference(getThemePreference() === "light" ? "dark" : "light");
+  }
+
+  function applyStoredTheme() {
+    document.documentElement.dataset.ghTheme = getThemePreference();
+  }
+
+  function ensureThemeStylesheet() {
+    if (document.getElementById(THEME_STYLESHEET_ID)) {
+      return;
+    }
+
+    const link = document.createElement("link");
+    link.id = THEME_STYLESHEET_ID;
+    link.rel = "stylesheet";
+    link.href = resolveThemeStylesheetHref();
+    document.head.appendChild(link);
+  }
+
+  function resolveThemeStylesheetHref() {
+    if (AUTH_STATE_SCRIPT_SRC) {
+      return new URL("../css/theme-mode.css", AUTH_STATE_SCRIPT_SRC).href;
+    }
+
+    return new URL("../shared/css/theme-mode.css", window.location.href).href;
+  }
+
+  function installThemeToggleWhenReady() {
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", installThemeToggle, {
+        once: true,
+      });
+      return;
+    }
+
+    installThemeToggle();
+  }
+
+  function installThemeToggle() {
+    if (document.querySelector("[data-gh-theme-toggle]")) {
+      updateThemeToggleState();
+      return;
+    }
+
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "gh-theme-toggle";
+    button.dataset.ghThemeToggle = "true";
+    button.innerHTML = `
+      <span class="gh-theme-toggle__icon gh-theme-toggle__sun" aria-hidden="true">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="4"></circle>
+          <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"></path>
+        </svg>
+      </span>
+      <span class="gh-theme-toggle__icon gh-theme-toggle__moon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M20.99 12.79A9 9 0 1 1 11.21 3a7 7 0 0 0 9.78 9.79Z"></path>
+        </svg>
+      </span>
+    `;
+    button.addEventListener("click", toggleThemePreference);
+
+    const navRight =
+      document.querySelector(".nav-right") ||
+      document.querySelector(".gh-nav-links");
+    const navAccount = navRight?.querySelector(".nav-account");
+    if (navRight) {
+      navRight.insertBefore(button, navAccount || null);
+    } else {
+      button.classList.add("gh-theme-toggle--fixed");
+      document.body.appendChild(button);
+    }
+
+    updateThemeToggleState();
+  }
+
+  function updateThemeToggleState() {
+    const theme = getThemePreference();
+    document.querySelectorAll("[data-gh-theme-toggle]").forEach((button) => {
+      const isLight = theme === "light";
+      button.classList.toggle("is-light", isLight);
+      button.setAttribute(
+        "aria-label",
+        isLight ? "Switch to dark mode" : "Switch to light mode",
+      );
+      button.setAttribute(
+        "title",
+        isLight ? "Switch to dark mode" : "Switch to light mode",
+      );
+      button.setAttribute("aria-pressed", String(isLight));
+    });
   }
 
   function getRoleHomePath(role, needsSchoolVerification = false) {
@@ -617,6 +746,9 @@ window.GAMERSHUB_API_BASE = "https://reputable-amigo-thermos.ngrok-free.dev";
     applyUserProfile,
     getCachedProfile,
     updateCachedProfile,
+    getThemePreference,
+    setThemePreference,
+    toggleThemePreference,
     getRoleHomePath,
     buildAppUrl,
     fetchCurrentUser,
