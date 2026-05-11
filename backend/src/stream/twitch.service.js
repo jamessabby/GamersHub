@@ -50,7 +50,9 @@ async function getAppAccessToken() {
     grant_type: "client_credentials",
   });
 
-  const resp = await fetch(`${TOKEN_URL}?${params.toString()}`, { method: "POST" });
+  const resp = await fetch(`${TOKEN_URL}?${params.toString()}`, {
+    method: "POST",
+  });
   if (!resp.ok) {
     const body = await resp.text();
     throw new Error(`Twitch token request failed (${resp.status}): ${body}`);
@@ -84,10 +86,12 @@ async function twitchHeaders() {
  */
 async function fetchTwitchStreams({ game = "", limit = 8 } = {}) {
   if (!isTwitchConfigured()) {
+    console.log("[Twitch] Not configured - missing env vars");
     return [];
   }
 
   try {
+    console.log("[Twitch] Starting fetch for game:", game, "limit:", limit);
     const safeLimit = Math.min(Math.max(Number(limit) || 8, 1), 20);
     const headers = await twitchHeaders();
 
@@ -95,6 +99,7 @@ async function fetchTwitchStreams({ game = "", limit = 8 } = {}) {
 
     // If a game name was given, resolve it to a Twitch game ID first.
     if (game) {
+      console.log("[Twitch] Resolving game name:", game);
       const gameResp = await fetch(
         `${GAMES_URL}?name=${encodeURIComponent(game.trim())}`,
         { headers },
@@ -102,6 +107,13 @@ async function fetchTwitchStreams({ game = "", limit = 8 } = {}) {
       if (gameResp.ok) {
         const gameData = await gameResp.json();
         gameId = gameData.data?.[0]?.id || null;
+        console.log("[Twitch] Game ID resolved:", gameId);
+      } else {
+        console.log(
+          "[Twitch] Game resolution failed:",
+          gameResp.status,
+          gameResp.statusText,
+        );
       }
     }
 
@@ -113,30 +125,47 @@ async function fetchTwitchStreams({ game = "", limit = 8 } = {}) {
       // Fall back to the top esports category on Twitch (game_id 512980)
       // so we always get relevant content when no game is specified or not found.
       streamParams.set("game_id", "512980"); // Valorant default fallback
+      console.log("[Twitch] Using default game_id: 512980");
     }
     streamParams.set("type", "live");
 
-    const streamsResp = await fetch(`${STREAMS_URL}?${streamParams.toString()}`, { headers });
+    console.log(
+      "[Twitch] Fetching streams with params:",
+      streamParams.toString(),
+    );
+    const streamsResp = await fetch(
+      `${STREAMS_URL}?${streamParams.toString()}`,
+      { headers },
+    );
     if (!streamsResp.ok) {
-      console.warn("[Twitch] Streams fetch failed:", streamsResp.status);
+      console.log(
+        "[Twitch] Streams fetch failed:",
+        streamsResp.status,
+        streamsResp.statusText,
+      );
+      const errorText = await streamsResp.text();
+      console.log("[Twitch] Error response:", errorText);
       return [];
     }
 
     const streamsData = await streamsResp.json();
     const rawStreams = streamsData.data || [];
+    console.log("[Twitch] Found", rawStreams.length, "raw streams");
 
     if (!rawStreams.length) return [];
 
     // Enrich with user (channel) info to get profile image URLs
     const userIds = rawStreams.map((s) => s.user_id);
     const userParams = new URLSearchParams(userIds.map((id) => ["id", id]));
-    const usersResp = await fetch(`${USERS_URL}?${userParams.toString()}`, { headers });
+    const usersResp = await fetch(`${USERS_URL}?${userParams.toString()}`, {
+      headers,
+    });
     const usersData = usersResp.ok ? await usersResp.json() : { data: [] };
     const usersMap = Object.fromEntries(
       (usersData.data || []).map((u) => [u.id, u]),
     );
 
-    return rawStreams.map((s) => {
+    const result = rawStreams.map((s) => {
       const user = usersMap[s.user_id] || {};
       const thumbnail = s.thumbnail_url
         ? s.thumbnail_url.replace("{width}", "440").replace("{height}", "248")
@@ -158,6 +187,9 @@ async function fetchTwitchStreams({ game = "", limit = 8 } = {}) {
         tags: Array.isArray(s.tags) ? s.tags.slice(0, 3) : [],
       };
     });
+
+    console.log("[Twitch] Returning", result.length, "processed streams");
+    return result;
   } catch (err) {
     // Never let Twitch errors crash the main page
     console.error("[Twitch] fetchTwitchStreams error:", err.message);

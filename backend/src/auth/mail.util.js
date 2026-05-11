@@ -2,7 +2,8 @@ const nodemailer = require("nodemailer");
 
 const SMTP_HOST = (process.env.SMTP_HOST || "").trim();
 const SMTP_PORT = Number(process.env.SMTP_PORT || 587);
-const SMTP_SECURE = String(process.env.SMTP_SECURE || "").toLowerCase() === "true";
+const SMTP_SECURE =
+  String(process.env.SMTP_SECURE || "").toLowerCase() === "true";
 const SMTP_USER = (process.env.SMTP_USER || "").trim();
 const SMTP_PASS = (process.env.SMTP_PASS || "").trim();
 const SMTP_FROM = (process.env.SMTP_FROM || SMTP_USER || "").trim();
@@ -36,7 +37,9 @@ async function sendMfaCodeEmail({ to, username, code, expiresInMinutes }) {
   `;
 
   if (!isSmtpConfigured()) {
-    console.info(`[GamersHub MFA] Email transport not configured. Verification code for ${to}: ${code}`);
+    console.info(
+      `[GamersHub MFA] Email transport not configured. Verification code for ${to}: ${code}`,
+    );
     return { mode: "console" };
   }
 
@@ -51,7 +54,12 @@ async function sendMfaCodeEmail({ to, username, code, expiresInMinutes }) {
   return { mode: "smtp" };
 }
 
-async function sendPasswordResetEmail({ to, username, code, expiresInMinutes }) {
+async function sendPasswordResetEmail({
+  to,
+  username,
+  code,
+  expiresInMinutes,
+}) {
   if (!to) {
     throw new Error("User email address is missing.");
   }
@@ -78,7 +86,9 @@ async function sendPasswordResetEmail({ to, username, code, expiresInMinutes }) 
   `;
 
   if (!isSmtpConfigured()) {
-    console.info(`[GamersHub Password Reset] Email transport not configured. Reset code for ${to}: ${code}`);
+    console.info(
+      `[GamersHub Password Reset] Email transport not configured. Reset code for ${to}: ${code}`,
+    );
     return { mode: "console" };
   }
 
@@ -86,7 +96,12 @@ async function sendPasswordResetEmail({ to, username, code, expiresInMinutes }) 
   return { mode: "smtp" };
 }
 
-async function sendRegistrationApprovalEmail({ to, teamName, tournamentTitle, joinCode }) {
+async function sendRegistrationApprovalEmail({
+  to,
+  teamName,
+  tournamentTitle,
+  joinCode,
+}) {
   if (!to) return;
   const subject = `Your GamersHub tournament registration is approved!`;
   const text = [
@@ -109,14 +124,21 @@ async function sendRegistrationApprovalEmail({ to, teamName, tournamentTitle, jo
     </div>
   `;
   if (!isSmtpConfigured()) {
-    console.info(`[GamersHub Registration] Approval email for ${to}: join code ${joinCode}`);
+    console.info(
+      `[GamersHub Registration] Approval email for ${to}: join code ${joinCode}`,
+    );
     return { mode: "console" };
   }
   await sendMail({ from: SMTP_FROM, to, subject, text, html });
   return { mode: "smtp" };
 }
 
-async function sendRegistrationRejectionEmail({ to, teamName, tournamentTitle, reason }) {
+async function sendRegistrationRejectionEmail({
+  to,
+  teamName,
+  tournamentTitle,
+  reason,
+}) {
   if (!to) return;
   const subject = `GamersHub tournament registration update`;
   const text = [
@@ -144,7 +166,9 @@ async function sendRegistrationRejectionEmail({ to, teamName, tournamentTitle, r
 }
 
 function isSmtpConfigured() {
-  return Boolean(SMTP_FROM && SMTP_USER && SMTP_PASS && (SMTP_SERVICE || SMTP_HOST));
+  return Boolean(
+    SMTP_FROM && SMTP_USER && SMTP_PASS && (SMTP_SERVICE || SMTP_HOST),
+  );
 }
 
 async function getTransporter() {
