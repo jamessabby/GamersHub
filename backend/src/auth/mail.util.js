@@ -1,12 +1,12 @@
 const nodemailer = require("nodemailer");
 
-const SMTP_HOST = process.env.SMTP_HOST || "";
+const SMTP_HOST = (process.env.SMTP_HOST || "").trim();
 const SMTP_PORT = Number(process.env.SMTP_PORT || 587);
 const SMTP_SECURE = String(process.env.SMTP_SECURE || "").toLowerCase() === "true";
-const SMTP_USER = process.env.SMTP_USER || "";
-const SMTP_PASS = process.env.SMTP_PASS || "";
-const SMTP_FROM = process.env.SMTP_FROM || SMTP_USER || "";
-const SMTP_SERVICE = process.env.SMTP_SERVICE || "";
+const SMTP_USER = (process.env.SMTP_USER || "").trim();
+const SMTP_PASS = (process.env.SMTP_PASS || "").trim();
+const SMTP_FROM = (process.env.SMTP_FROM || SMTP_USER || "").trim();
+const SMTP_SERVICE = (process.env.SMTP_SERVICE || "").trim();
 
 let transporterPromise = null;
 
@@ -40,8 +40,7 @@ async function sendMfaCodeEmail({ to, username, code, expiresInMinutes }) {
     return { mode: "console" };
   }
 
-  const transporter = await getTransporter();
-  await transporter.sendMail({
+  await sendMail({
     from: SMTP_FROM,
     to,
     subject,
@@ -83,8 +82,7 @@ async function sendPasswordResetEmail({ to, username, code, expiresInMinutes }) 
     return { mode: "console" };
   }
 
-  const transporter = await getTransporter();
-  await transporter.sendMail({ from: SMTP_FROM, to, subject, text, html });
+  await sendMail({ from: SMTP_FROM, to, subject, text, html });
   return { mode: "smtp" };
 }
 
@@ -114,8 +112,7 @@ async function sendRegistrationApprovalEmail({ to, teamName, tournamentTitle, jo
     console.info(`[GamersHub Registration] Approval email for ${to}: join code ${joinCode}`);
     return { mode: "console" };
   }
-  const transporter = await getTransporter();
-  await transporter.sendMail({ from: SMTP_FROM, to, subject, text, html });
+  await sendMail({ from: SMTP_FROM, to, subject, text, html });
   return { mode: "smtp" };
 }
 
@@ -142,13 +139,12 @@ async function sendRegistrationRejectionEmail({ to, teamName, tournamentTitle, r
     console.info(`[GamersHub Registration] Rejection email for ${to}`);
     return { mode: "console" };
   }
-  const transporter = await getTransporter();
-  await transporter.sendMail({ from: SMTP_FROM, to, subject, text, html });
+  await sendMail({ from: SMTP_FROM, to, subject, text, html });
   return { mode: "smtp" };
 }
 
 function isSmtpConfigured() {
-  return Boolean(SMTP_FROM && SMTP_USER && SMTP_PASS && SMTP_SERVICE);
+  return Boolean(SMTP_FROM && SMTP_USER && SMTP_PASS && (SMTP_SERVICE || SMTP_HOST));
 }
 
 async function getTransporter() {
@@ -160,6 +156,16 @@ async function getTransporter() {
   }
 
   return transporterPromise;
+}
+
+async function sendMail(mailOptions) {
+  const transporter = await getTransporter();
+  try {
+    return await transporter.sendMail(mailOptions);
+  } catch (error) {
+    transporterPromise = null;
+    throw error;
+  }
 }
 
 async function createTransporter() {
