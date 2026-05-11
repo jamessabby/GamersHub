@@ -2409,138 +2409,54 @@
   }
 
   async function renderReportsPage() {
-    // ── state ──────────────────────────────────────────────────────────────
-    let currentRange = "30d";
+    const payload = await fetchJson(`${auth.apiBase}/api/superadmin/reports/summary?range=30d`);
+    const cards = [
+      ["Users", payload.summary.users],
+      ["Posts", payload.summary.posts],
+      ["Streams", payload.summary.streams],
+      ["Reactions", payload.summary.reactions],
+      ["Comments", payload.summary.comments],
+      ["Tournaments", payload.summary.tournaments],
+    ]
+      .map(([label, total]) => `<div class="console-card"><span>${label}</span><strong>${total}</strong></div>`)
+      .join("");
 
-    async function loadReports() {
-      const payload = await fetchJson(`${auth.apiBase}/api/superadmin/reports/summary?range=${currentRange}`);
-      return payload;
-    }
-
-    function renderCards(payload) {
-      return [
-        ["Users", payload.summary.users, "👤"],
-        ["Posts", payload.summary.posts, "📝"],
-        ["Streams", payload.summary.streams, "📡"],
-        ["Reactions", payload.summary.reactions, "❤️"],
-        ["Comments", payload.summary.comments, "💬"],
-        ["Tournaments", payload.summary.tournaments, "🏆"],
-      ]
-        .map(([label, total, icon]) => `
-          <div class="console-card rpt-stat-card">
-            <div class="rpt-stat-icon">${icon}</div>
-            <div class="rpt-stat-body">
-              <span class="rpt-stat-label">${label}</span>
-              <strong class="rpt-stat-value">${total ?? 0}</strong>
-            </div>
-          </div>`)
-        .join("");
-    }
-
-    function renderTrendRows(registrations, filter) {
-      const filtered = filter
-        ? registrations.filter(r => (r.date || "").includes(filter))
-        : registrations;
-      if (!filtered.length) return '<tr><td colspan="2" class="rpt-empty">No data for selected period.</td></tr>';
-      return filtered.map(item => `
-        <tr>
-          <td>${escapeHtml(item.date)}</td>
-          <td><span class="rpt-badge">${item.total}</span></td>
-        </tr>`).join("");
-    }
-
-    // ── initial render ──────────────────────────────────────────────────────
     content.innerHTML = `
-      <div class="rpt-toolbar">
-        <div class="rpt-toolbar-left">
-          <span class="rpt-toolbar-label">Date range:</span>
-          <div class="rpt-range-pills" id="rptRangePills">
-            <button class="rpt-pill active" data-range="7d">7 days</button>
-            <button class="rpt-pill" data-range="30d">30 days</button>
-            <button class="rpt-pill" data-range="90d">90 days</button>
-            <button class="rpt-pill" data-range="all">All time</button>
-          </div>
+      <div class="console-grid cards">${cards}</div>
+      <section class="console-panel">
+        <h2>Export reports</h2>
+        <div class="console-actions">
+          <button class="console-btn primary" data-export-type="activity">Export activity CSV</button>
+          <button class="console-btn" data-export-type="users">Export users CSV</button>
+          <button class="console-btn" data-export-type="audit">Export audit CSV</button>
         </div>
-        <div class="rpt-toolbar-right">
-          <button class="console-btn primary" data-export-type="activity">⬇ Activity CSV</button>
-          <button class="console-btn" data-export-type="users">⬇ Users CSV</button>
-          <button class="console-btn" data-export-type="audit">⬇ Audit CSV</button>
-        </div>
-      </div>
-
-      <div class="console-grid cards rpt-cards" id="rptCards">
-        <div class="rpt-loading">Loading stats…</div>
-      </div>
-
-      <section class="console-panel rpt-trend-panel">
-        <div class="rpt-trend-header">
-          <h2>Registration trend</h2>
-          <div class="rpt-filter-wrap">
-            <input type="month" id="rptMonthFilter" class="rpt-month-input" title="Filter by month" />
-            <button class="rpt-clear-btn" id="rptClearFilter" title="Clear filter">✕</button>
-          </div>
-        </div>
+      </section>
+      <section class="console-panel" style="margin-top:18px;">
+        <h2>Registration trend</h2>
         <div class="console-table-wrap">
           <table class="console-table">
             <thead><tr><th>Date</th><th>Registrations</th></tr></thead>
-            <tbody id="rptTrendBody"><tr><td colspan="2" class="rpt-loading-cell">Loading…</td></tr></tbody>
+            <tbody>
+              ${
+                payload.analytics.registrations.map((item) => `<tr><td>${escapeHtml(item.date)}</td><td>${item.total}</td></tr>`).join("")
+                || '<tr><td colspan="2">No registration data found.</td></tr>'
+              }
+            </tbody>
           </table>
         </div>
       </section>
     `;
 
-    // ── load and fill ───────────────────────────────────────────────────────
-    let payload = null;
-    try {
-      payload = await loadReports();
-      document.getElementById("rptCards").innerHTML = renderCards(payload);
-      document.getElementById("rptTrendBody").innerHTML = renderTrendRows(payload.analytics.registrations || [], "");
-    } catch (e) {
-      setFlash("Failed to load report data.", true);
-    }
-
-    // ── range pills ─────────────────────────────────────────────────────────
-    document.getElementById("rptRangePills").addEventListener("click", async (e) => {
-      const pill = e.target.closest(".rpt-pill");
-      if (!pill) return;
-      document.querySelectorAll(".rpt-pill").forEach(p => p.classList.remove("active"));
-      pill.classList.add("active");
-      currentRange = pill.dataset.range;
-      document.getElementById("rptCards").innerHTML = '<div class="rpt-loading">Loading…</div>';
-      document.getElementById("rptTrendBody").innerHTML = '<tr><td colspan="2" class="rpt-loading-cell">Loading…</td></tr>';
-      try {
-        payload = await loadReports();
-        document.getElementById("rptCards").innerHTML = renderCards(payload);
-        const monthFilter = document.getElementById("rptMonthFilter").value;
-        document.getElementById("rptTrendBody").innerHTML = renderTrendRows(payload.analytics.registrations || [], monthFilter);
-      } catch (e) {
-        setFlash("Failed to load report data.", true);
-      }
-    });
-
-    // ── month filter ────────────────────────────────────────────────────────
-    document.getElementById("rptMonthFilter").addEventListener("change", (e) => {
-      if (!payload) return;
-      document.getElementById("rptTrendBody").innerHTML = renderTrendRows(
-        payload.analytics.registrations || [], e.target.value
-      );
-    });
-
-    document.getElementById("rptClearFilter").addEventListener("click", () => {
-      document.getElementById("rptMonthFilter").value = "";
-      if (!payload) return;
-      document.getElementById("rptTrendBody").innerHTML = renderTrendRows(payload.analytics.registrations || [], "");
-    });
-
-    // ── CSV exports ─────────────────────────────────────────────────────────
     content.querySelectorAll("[data-export-type]").forEach((button) => {
       button.addEventListener("click", async () => {
         button.disabled = true;
         const originalLabel = button.textContent;
-        button.textContent = "Exporting…";
+        button.textContent = "Exporting...";
         try {
           const response = await fetch(`${auth.apiBase}/api/superadmin/reports/export?type=${encodeURIComponent(button.dataset.exportType)}`);
-          if (!response.ok) throw new Error("Failed to export report.");
+          if (!response.ok) {
+            throw new Error("Failed to export report.");
+          }
           const blob = await response.blob();
           const url = URL.createObjectURL(blob);
           const link = document.createElement("a");
