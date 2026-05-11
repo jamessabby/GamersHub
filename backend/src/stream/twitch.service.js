@@ -167,9 +167,18 @@ async function fetchTwitchStreams({ game = "", limit = 8 } = {}) {
 
     const result = rawStreams.map((s) => {
       const user = usersMap[s.user_id] || {};
-      const thumbnail = s.thumbnail_url
-        ? s.thumbnail_url.replace("{width}", "440").replace("{height}", "248")
-        : "";
+      let thumbnail = "";
+      if (s.thumbnail_url) {
+        // Twitch thumbnail URLs typically use {width}x{height} format
+        // Replace both {width}x{height} and separate {width}/{height} patterns
+        thumbnail = s.thumbnail_url
+          .replace("{width}x{height}", "440x248")
+          .replace("{width}", "440")
+          .replace("{height}", "248");
+        console.log("[Twitch] Original thumbnail:", s.thumbnail_url);
+        console.log("[Twitch] Processed thumbnail:", thumbnail);
+        console.log("[Twitch] DEBUG: Processing thumbnail for stream:", s.title);
+      }
 
       return {
         source: "twitch",

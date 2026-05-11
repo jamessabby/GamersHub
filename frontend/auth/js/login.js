@@ -230,6 +230,50 @@
     googleBtn.disabled = loading;
   }
 
+  function normalizeLoginPayload(payload) {
+    if (!payload || typeof payload !== "object") {
+      return null;
+    }
+
+    if (payload.mfaRequired && payload.mfaTicket) {
+      return payload;
+    }
+
+    if (payload.token && payload.user && payload.user.username) {
+      return payload;
+    }
+
+    if (payload.session?.token && payload.user && payload.user.username) {
+      return {
+        ...payload,
+        token: payload.session.token,
+        session: payload.session,
+      };
+    }
+
+    if (payload.token && payload.userId && payload.username) {
+      return {
+        ...payload,
+        user: {
+          userId: payload.userId,
+          username: payload.username,
+          role: payload.role || payload.userRole || "user",
+          email: payload.email || "",
+          authProvider: payload.authProvider || "local",
+        },
+      };
+    }
+
+    if (payload.token && payload.session && payload.session.user) {
+      return {
+        ...payload,
+        user: payload.session.user,
+      };
+    }
+
+    return null;
+  }
+
   async function loginUser({ username, password }) {
     let response;
     try {
@@ -252,6 +296,8 @@
       payload = {};
     }
 
+    console.debug("[GamersHub] auth/login response", response.status, payload);
+
     if (!response.ok) {
       throw {
         status: response.status,
@@ -259,7 +305,16 @@
       };
     }
 
-    return payload;
+    const normalized = normalizeLoginPayload(payload);
+    if (!normalized) {
+      throw {
+        status: 500,
+        message: "Unexpected login response. Please check backend shape.",
+        details: JSON.stringify(payload),
+      };
+    }
+
+    return normalized;
   }
 
   async function handleLogin() {

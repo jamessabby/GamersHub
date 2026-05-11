@@ -1,9 +1,9 @@
+const dns = require("dns").promises;
 const nodemailer = require("nodemailer");
 
 const SMTP_HOST = (process.env.SMTP_HOST || "").trim();
 const SMTP_PORT = Number(process.env.SMTP_PORT || 587);
-const SMTP_SECURE =
-  String(process.env.SMTP_SECURE || "").toLowerCase() === "true";
+const SMTP_SECURE = String(process.env.SMTP_SECURE || "").trim().toLowerCase() === "true";
 const SMTP_USER = (process.env.SMTP_USER || "").trim();
 const SMTP_PASS = (process.env.SMTP_PASS || "").trim();
 const SMTP_FROM = (process.env.SMTP_FROM || SMTP_USER || "").trim();
@@ -37,13 +37,12 @@ async function sendMfaCodeEmail({ to, username, code, expiresInMinutes }) {
   `;
 
   if (!isSmtpConfigured()) {
-    console.info(
-      `[GamersHub MFA] Email transport not configured. Verification code for ${to}: ${code}`,
-    );
+    console.info(`[GamersHub MFA] Email transport not configured. Verification code for ${to}: ${code}`);
     return { mode: "console" };
   }
 
-  await sendMail({
+  const transporter = await getTransporter();
+  const info = await transporter.sendMail({
     from: SMTP_FROM,
     to,
     subject,
@@ -51,15 +50,11 @@ async function sendMfaCodeEmail({ to, username, code, expiresInMinutes }) {
     html,
   });
 
+  console.info(`[GamersHub MFA] Email sent to ${to} via ${SMTP_SERVICE || SMTP_HOST}:${SMTP_PORT} (messageId=${info.messageId})`);
   return { mode: "smtp" };
 }
 
-async function sendPasswordResetEmail({
-  to,
-  username,
-  code,
-  expiresInMinutes,
-}) {
+async function sendPasswordResetEmail({ to, username, code, expiresInMinutes }) {
   if (!to) {
     throw new Error("User email address is missing.");
   }
@@ -86,22 +81,17 @@ async function sendPasswordResetEmail({
   `;
 
   if (!isSmtpConfigured()) {
-    console.info(
-      `[GamersHub Password Reset] Email transport not configured. Reset code for ${to}: ${code}`,
-    );
+    console.info(`[GamersHub Password Reset] Email transport not configured. Reset code for ${to}: ${code}`);
     return { mode: "console" };
   }
 
-  await sendMail({ from: SMTP_FROM, to, subject, text, html });
+  const transporter = await getTransporter();
+  const info = await transporter.sendMail({ from: SMTP_FROM, to, subject, text, html });
+  console.info(`[GamersHub Email] Registration approval email sent to ${to} via ${SMTP_SERVICE || SMTP_HOST}:${SMTP_PORT} (messageId=${info.messageId})`);
   return { mode: "smtp" };
 }
 
-async function sendRegistrationApprovalEmail({
-  to,
-  teamName,
-  tournamentTitle,
-  joinCode,
-}) {
+async function sendRegistrationApprovalEmail({ to, teamName, tournamentTitle, joinCode }) {
   if (!to) return;
   const subject = `Your GamersHub tournament registration is approved!`;
   const text = [
@@ -124,21 +114,16 @@ async function sendRegistrationApprovalEmail({
     </div>
   `;
   if (!isSmtpConfigured()) {
-    console.info(
-      `[GamersHub Registration] Approval email for ${to}: join code ${joinCode}`,
-    );
+    console.info(`[GamersHub Registration] Approval email for ${to}: join code ${joinCode}`);
     return { mode: "console" };
   }
-  await sendMail({ from: SMTP_FROM, to, subject, text, html });
+  const transporter = await getTransporter();
+  const info = await transporter.sendMail({ from: SMTP_FROM, to, subject, text, html });
+  console.info(`[GamersHub Email] Registration rejection email sent to ${to} via ${SMTP_SERVICE || SMTP_HOST}:${SMTP_PORT} (messageId=${info.messageId})`);
   return { mode: "smtp" };
 }
 
-async function sendRegistrationRejectionEmail({
-  to,
-  teamName,
-  tournamentTitle,
-  reason,
-}) {
+async function sendRegistrationRejectionEmail({ to, teamName, tournamentTitle, reason }) {
   if (!to) return;
   const subject = `GamersHub tournament registration update`;
   const text = [
@@ -161,38 +146,25 @@ async function sendRegistrationRejectionEmail({
     console.info(`[GamersHub Registration] Rejection email for ${to}`);
     return { mode: "console" };
   }
-  await sendMail({ from: SMTP_FROM, to, subject, text, html });
+  const transporter = await getTransporter();
+  await transporter.sendMail({ from: SMTP_FROM, to, subject, text, html });
   return { mode: "smtp" };
 }
 
 function isSmtpConfigured() {
-  return Boolean(
-    SMTP_FROM && SMTP_USER && SMTP_PASS && (SMTP_SERVICE || SMTP_HOST),
-  );
+  return Boolean(SMTP_FROM && SMTP_USER && SMTP_PASS && (SMTP_SERVICE || SMTP_HOST));
 }
 
 async function getTransporter() {
   if (!transporterPromise) {
-    transporterPromise = createTransporter().catch((error) => {
-      transporterPromise = null;
-      throw error;
-    });
+    transporterPromise = createTransporter();
   }
 
   return transporterPromise;
 }
 
-async function sendMail(mailOptions) {
-  const transporter = await getTransporter();
-  try {
-    return await transporter.sendMail(mailOptions);
-  } catch (error) {
-    transporterPromise = null;
-    throw error;
-  }
-}
-
 async function createTransporter() {
+  const resolvedHost = SMTP_SERVICE ? null : await resolveSmtpHost();
   const transportOptions = SMTP_SERVICE
     ? {
         service: SMTP_SERVICE,
@@ -200,26 +172,38 @@ async function createTransporter() {
           user: SMTP_USER,
           pass: SMTP_PASS,
         },
-        tls: {
-          rejectUnauthorized: false,
-        },
       }
     : {
-        host: SMTP_HOST,
+        host: resolvedHost?.address || SMTP_HOST,
         port: SMTP_PORT,
         secure: SMTP_SECURE,
+        family: resolvedHost?.family,
         auth: {
           user: SMTP_USER,
           pass: SMTP_PASS,
         },
         tls: {
-          rejectUnauthorized: false,
+          servername: SMTP_HOST,
         },
       };
 
+  console.info(`[GamersHub Email] Initializing SMTP transport using ${SMTP_SERVICE || SMTP_HOST}:${SMTP_PORT}, secure=${SMTP_SECURE}`);
   const transporter = nodemailer.createTransport(transportOptions);
   await transporter.verify();
+  console.info(`[GamersHub Email] SMTP transport verified successfully`);
   return transporter;
+}
+
+async function resolveSmtpHost() {
+  if (!SMTP_HOST) {
+    return null;
+  }
+
+  try {
+    return await dns.lookup(SMTP_HOST, { family: 4 });
+  } catch {
+    return null;
+  }
 }
 
 function escapeHtml(value) {
