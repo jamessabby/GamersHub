@@ -62,6 +62,7 @@
   let feedPollTimer = null;
   let friendPollTimer = null;
   let isFeedSyncing = false;
+  const uploadMediaBlobUrls = new Map();
   const reactionSummaryCache = new Map();
   const commentsLoadedPosts = new Set();
 
@@ -336,6 +337,7 @@
     const previousState = preserveState ? captureFeedUiState() : null;
     renderFeed(items);
     feedSnapshot = buildFeedSnapshot(items);
+    await hydrateUploadMedia(feedList);
     await hydrateFeedEngagement(items);
 
     if (previousState) {
@@ -953,7 +955,12 @@
     if (post.mediaType === "image") {
       return `
         <div class="post-image-wrap">
-          <img class="post-image" src="${escapeAttribute(mediaSrc)}" alt="Post attachment" />
+          <img
+            class="post-image"
+            src="${escapeAttribute(mediaSrc)}"
+            alt="Post attachment"
+            data-upload-media-src="${escapeAttribute(mediaSrc)}"
+          />
         </div>
       `;
     }
@@ -985,6 +992,67 @@
     return String(mediaUrl).startsWith("/uploads/")
       ? `${API_BASE}${mediaUrl}`
       : mediaUrl;
+  }
+
+  async function hydrateUploadMedia(root) {
+    const mediaNodes = Array.from(
+      root?.querySelectorAll("[data-upload-media-src]") || [],
+    ).filter((node) => shouldFetchUploadMedia(node.dataset.uploadMediaSrc));
+
+    await Promise.allSettled(
+      mediaNodes.map(async (node) => {
+        const originalSrc = node.dataset.uploadMediaSrc;
+        if (!originalSrc) {
+          return;
+        }
+
+        const cachedBlobUrl = uploadMediaBlobUrls.get(originalSrc);
+        if (cachedBlobUrl) {
+          applyHydratedMediaSource(node, cachedBlobUrl);
+          return;
+        }
+
+        const response = await fetch(originalSrc, {
+          headers: { "ngrok-skip-browser-warning": "true" },
+        });
+        if (!response.ok) {
+          throw new Error(`Media request failed with ${response.status}`);
+        }
+
+        const contentType = response.headers.get("content-type") || "";
+        if (!/^(image|video)\//i.test(contentType)) {
+          throw new Error(`Unexpected media content type: ${contentType || "unknown"}`);
+        }
+
+        const blobUrl = URL.createObjectURL(await response.blob());
+        uploadMediaBlobUrls.set(originalSrc, blobUrl);
+        applyHydratedMediaSource(node, blobUrl);
+      }),
+    );
+  }
+
+  function shouldFetchUploadMedia(mediaSrc) {
+    if (!mediaSrc) {
+      return false;
+    }
+
+    try {
+      return new URL(mediaSrc, window.location.href).pathname.startsWith("/uploads/");
+    } catch {
+      return false;
+    }
+  }
+
+  function applyHydratedMediaSource(node, src) {
+    if (!node || !src) {
+      return;
+    }
+
+    node.src = src;
+    const parentVideo = node.closest?.("video");
+    if (parentVideo) {
+      parentVideo.load();
+    }
   }
 
   function applyReactionSummary(postId, summary) {

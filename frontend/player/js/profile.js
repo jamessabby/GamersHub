@@ -51,6 +51,7 @@
   let draft = null;
   let isEditing = false;
   let activePlatform = null;
+  const uploadMediaBlobUrls = new Map();
 
   const topNav = document.getElementById("topNav");
   const profileMain = document.getElementById("profileMain");
@@ -400,7 +401,7 @@
         throw new Error(payload.message || "Failed to load profile posts.");
       }
 
-      renderProfilePosts(payload.items || []);
+      await renderProfilePosts(payload.items || []);
     } catch (error) {
       console.error("Profile posts hydration failed:", error);
       profilePostsList.innerHTML = `
@@ -411,7 +412,7 @@
     }
   }
 
-  function renderProfilePosts(items) {
+  async function renderProfilePosts(items) {
     if (!profilePostsList) {
       return;
     }
@@ -426,6 +427,7 @@
     }
 
     profilePostsList.innerHTML = items.map(renderProfilePost).join("");
+    await hydrateUploadMedia(profilePostsList);
   }
 
   function renderProfilePost(post) {
@@ -472,7 +474,12 @@
     if (post.mediaType === "image") {
       return `
         <div class="post-image-wrap">
-          <img class="post-image" src="${escapeAttribute(mediaSrc)}" alt="Post attachment" />
+          <img
+            class="post-image"
+            src="${escapeAttribute(mediaSrc)}"
+            alt="Post attachment"
+            data-upload-media-src="${escapeAttribute(mediaSrc)}"
+          />
         </div>
       `;
     }
@@ -504,6 +511,55 @@
     return String(mediaUrl).startsWith("/uploads/")
       ? `${API_BASE}${mediaUrl}`
       : mediaUrl;
+  }
+
+  async function hydrateUploadMedia(root) {
+    const mediaNodes = Array.from(
+      root?.querySelectorAll("[data-upload-media-src]") || [],
+    ).filter((node) => shouldFetchUploadMedia(node.dataset.uploadMediaSrc));
+
+    await Promise.allSettled(
+      mediaNodes.map(async (node) => {
+        const originalSrc = node.dataset.uploadMediaSrc;
+        if (!originalSrc) {
+          return;
+        }
+
+        const cachedBlobUrl = uploadMediaBlobUrls.get(originalSrc);
+        if (cachedBlobUrl) {
+          node.src = cachedBlobUrl;
+          return;
+        }
+
+        const response = await fetch(originalSrc, {
+          headers: { "ngrok-skip-browser-warning": "true" },
+        });
+        if (!response.ok) {
+          throw new Error(`Media request failed with ${response.status}`);
+        }
+
+        const contentType = response.headers.get("content-type") || "";
+        if (!/^image\//i.test(contentType)) {
+          throw new Error(`Unexpected image content type: ${contentType || "unknown"}`);
+        }
+
+        const blobUrl = URL.createObjectURL(await response.blob());
+        uploadMediaBlobUrls.set(originalSrc, blobUrl);
+        node.src = blobUrl;
+      }),
+    );
+  }
+
+  function shouldFetchUploadMedia(mediaSrc) {
+    if (!mediaSrc) {
+      return false;
+    }
+
+    try {
+      return new URL(mediaSrc, window.location.href).pathname.startsWith("/uploads/");
+    } catch {
+      return false;
+    }
   }
 
   function renderView() {
