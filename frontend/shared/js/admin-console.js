@@ -105,6 +105,9 @@
     renderSidebar();
 
     document.getElementById("consoleLogoutBtn")?.addEventListener("click", async () => {
+      // Show confirmation modal before logging out
+      const confirmed = await showLogoutConfirm();
+      if (!confirmed) return;
       try {
         await fetch(`${auth.apiBase}/api/auth/logout`, { method: "POST" });
       } catch {
@@ -2409,108 +2412,111 @@
   }
 
   async function renderReportsPage() {
-    // ── state ──────────────────────────────────────────────────────────────
     let currentRange = "30d";
 
     async function loadReports() {
-      const payload = await fetchJson(`${auth.apiBase}/api/superadmin/reports/summary?range=${currentRange}`);
-      return payload;
+      return fetchJson(`${auth.apiBase}/api/superadmin/reports/summary?range=${currentRange}`);
     }
 
-    function renderCards(payload) {
+    function renderStatCards(payload) {
       return [
-        ["Users", payload.summary.users, "👤"],
-        ["Posts", payload.summary.posts, "📝"],
-        ["Streams", payload.summary.streams, "📡"],
-        ["Reactions", payload.summary.reactions, "❤️"],
-        ["Comments", payload.summary.comments, "💬"],
-        ["Tournaments", payload.summary.tournaments, "🏆"],
-      ]
-        .map(([label, total, icon]) => `
-          <div class="console-card rpt-stat-card">
-            <div class="rpt-stat-icon">${icon}</div>
-            <div class="rpt-stat-body">
-              <span class="rpt-stat-label">${label}</span>
-              <strong class="rpt-stat-value">${total ?? 0}</strong>
-            </div>
-          </div>`)
-        .join("");
+        ["USERS",       payload.summary.users],
+        ["POSTS",       payload.summary.posts],
+        ["STREAMS",     payload.summary.streams],
+        ["REACTIONS",   payload.summary.reactions],
+        ["COMMENTS",    payload.summary.comments],
+        ["TOURNAMENTS", payload.summary.tournaments],
+      ].map(([label, total]) => `
+        <div class="console-card rpt-stat-card">
+          <span class="rpt-stat-label">${label}</span>
+          <strong class="rpt-stat-value">${total ?? 0}</strong>
+        </div>`).join("");
     }
 
     function renderTrendRows(registrations, filter) {
       const filtered = filter
-        ? registrations.filter(r => (r.date || "").includes(filter))
+        ? registrations.filter(r => (r.date || "").startsWith(filter))
         : registrations;
-      if (!filtered.length) return '<tr><td colspan="2" class="rpt-empty">No data for selected period.</td></tr>';
+      if (!filtered.length) return '<tr><td colspan="2" class="rpt-empty">No data for the selected period.</td></tr>';
       return filtered.map(item => `
         <tr>
           <td>${escapeHtml(item.date)}</td>
-          <td><span class="rpt-badge">${item.total}</span></td>
+          <td><span class="rpt-count-badge">${item.total}</span></td>
         </tr>`).join("");
     }
 
-    // ── initial render ──────────────────────────────────────────────────────
     content.innerHTML = `
       <div class="rpt-toolbar">
-        <div class="rpt-toolbar-left">
-          <span class="rpt-toolbar-label">Date range:</span>
+        <div class="rpt-toolbar-group">
+          <span class="rpt-toolbar-label">Date range</span>
           <div class="rpt-range-pills" id="rptRangePills">
-            <button class="rpt-pill active" data-range="7d">7 days</button>
-            <button class="rpt-pill" data-range="30d">30 days</button>
+            <button class="rpt-pill" data-range="7d">7 days</button>
+            <button class="rpt-pill active" data-range="30d">30 days</button>
             <button class="rpt-pill" data-range="90d">90 days</button>
             <button class="rpt-pill" data-range="all">All time</button>
           </div>
         </div>
-        <div class="rpt-toolbar-right">
-          <button class="console-btn primary" data-export-type="activity">⬇ Activity CSV</button>
-          <button class="console-btn" data-export-type="users">⬇ Users CSV</button>
-          <button class="console-btn" data-export-type="audit">⬇ Audit CSV</button>
+        <div class="rpt-toolbar-group rpt-export-group">
+          <span class="rpt-toolbar-label">Export</span>
+          <button class="console-btn primary rpt-export-btn" data-export-type="activity">Activity CSV</button>
+          <button class="console-btn rpt-export-btn" data-export-type="users">Users CSV</button>
+          <button class="console-btn rpt-export-btn" data-export-type="audit">Audit CSV</button>
         </div>
       </div>
 
       <div class="console-grid cards rpt-cards" id="rptCards">
-        <div class="rpt-loading">Loading stats…</div>
+        <div class="rpt-skeleton-row"><div class="rpt-skeleton"></div><div class="rpt-skeleton"></div><div class="rpt-skeleton"></div><div class="rpt-skeleton"></div><div class="rpt-skeleton"></div><div class="rpt-skeleton"></div></div>
       </div>
 
-      <section class="console-panel rpt-trend-panel">
+      <section class="console-panel rpt-trend-section">
         <div class="rpt-trend-header">
-          <h2>Registration trend</h2>
-          <div class="rpt-filter-wrap">
-            <input type="month" id="rptMonthFilter" class="rpt-month-input" title="Filter by month" />
-            <button class="rpt-clear-btn" id="rptClearFilter" title="Clear filter">✕</button>
+          <h2 class="rpt-section-title">Registration Trend</h2>
+          <div class="rpt-filter-group">
+            <label class="rpt-filter-label" for="rptMonthFilter">Filter by month</label>
+            <div class="rpt-filter-controls">
+              <input type="month" id="rptMonthFilter" class="console-input rpt-month-input" />
+              <button class="rpt-clear-btn" id="rptClearFilter" title="Clear filter">Clear</button>
+            </div>
           </div>
         </div>
         <div class="console-table-wrap">
           <table class="console-table">
-            <thead><tr><th>Date</th><th>Registrations</th></tr></thead>
-            <tbody id="rptTrendBody"><tr><td colspan="2" class="rpt-loading-cell">Loading…</td></tr></tbody>
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Registrations</th>
+              </tr>
+            </thead>
+            <tbody id="rptTrendBody">
+              <tr><td colspan="2" class="rpt-empty">Loading…</td></tr>
+            </tbody>
           </table>
         </div>
       </section>
     `;
 
-    // ── load and fill ───────────────────────────────────────────────────────
     let payload = null;
     try {
       payload = await loadReports();
-      document.getElementById("rptCards").innerHTML = renderCards(payload);
+      document.getElementById("rptCards").innerHTML = renderStatCards(payload);
       document.getElementById("rptTrendBody").innerHTML = renderTrendRows(payload.analytics.registrations || [], "");
     } catch (e) {
       setFlash("Failed to load report data.", true);
+      document.getElementById("rptCards").innerHTML = "";
     }
 
-    // ── range pills ─────────────────────────────────────────────────────────
+    // Range pills
     document.getElementById("rptRangePills").addEventListener("click", async (e) => {
       const pill = e.target.closest(".rpt-pill");
       if (!pill) return;
       document.querySelectorAll(".rpt-pill").forEach(p => p.classList.remove("active"));
       pill.classList.add("active");
       currentRange = pill.dataset.range;
-      document.getElementById("rptCards").innerHTML = '<div class="rpt-loading">Loading…</div>';
-      document.getElementById("rptTrendBody").innerHTML = '<tr><td colspan="2" class="rpt-loading-cell">Loading…</td></tr>';
+      document.getElementById("rptCards").innerHTML = '<div class="rpt-skeleton-row"><div class="rpt-skeleton"></div><div class="rpt-skeleton"></div><div class="rpt-skeleton"></div><div class="rpt-skeleton"></div><div class="rpt-skeleton"></div><div class="rpt-skeleton"></div></div>';
+      document.getElementById("rptTrendBody").innerHTML = '<tr><td colspan="2" class="rpt-empty">Loading…</td></tr>';
       try {
         payload = await loadReports();
-        document.getElementById("rptCards").innerHTML = renderCards(payload);
+        document.getElementById("rptCards").innerHTML = renderStatCards(payload);
         const monthFilter = document.getElementById("rptMonthFilter").value;
         document.getElementById("rptTrendBody").innerHTML = renderTrendRows(payload.analytics.registrations || [], monthFilter);
       } catch (e) {
@@ -2518,12 +2524,10 @@
       }
     });
 
-    // ── month filter ────────────────────────────────────────────────────────
+    // Month filter
     document.getElementById("rptMonthFilter").addEventListener("change", (e) => {
       if (!payload) return;
-      document.getElementById("rptTrendBody").innerHTML = renderTrendRows(
-        payload.analytics.registrations || [], e.target.value
-      );
+      document.getElementById("rptTrendBody").innerHTML = renderTrendRows(payload.analytics.registrations || [], e.target.value);
     });
 
     document.getElementById("rptClearFilter").addEventListener("click", () => {
@@ -2532,7 +2536,7 @@
       document.getElementById("rptTrendBody").innerHTML = renderTrendRows(payload.analytics.registrations || [], "");
     });
 
-    // ── CSV exports ─────────────────────────────────────────────────────────
+    // CSV exports
     content.querySelectorAll("[data-export-type]").forEach((button) => {
       button.addEventListener("click", async () => {
         button.disabled = true;
@@ -2637,4 +2641,52 @@
     };
     return map[actionType] || String(actionType || "").replace(/[._]/g, " ");
   }
+
+  // ── Logout confirmation modal ────────────────────────────────────────
+  function showLogoutConfirm() {
+    return new Promise((resolve) => {
+      // Remove any existing modal
+      document.getElementById("logoutConfirmModal")?.remove();
+
+      const modal = document.createElement("div");
+      modal.id = "logoutConfirmModal";
+      modal.innerHTML = `
+        <div class="lcm-backdrop"></div>
+        <div class="lcm-box" role="dialog" aria-modal="true" aria-labelledby="lcmTitle">
+          <div class="lcm-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+              <polyline points="16 17 21 12 16 7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+              <line x1="21" y1="12" x2="9" y2="12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <h2 class="lcm-title" id="lcmTitle">Sign out?</h2>
+          <p class="lcm-body">You'll be returned to the login page. Any unsaved changes will be lost.</p>
+          <div class="lcm-actions">
+            <button class="lcm-btn lcm-cancel" id="lcmCancel">Cancel</button>
+            <button class="lcm-btn lcm-confirm" id="lcmConfirm">Sign out</button>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(modal);
+
+      // Animate in
+      requestAnimationFrame(() => modal.classList.add("lcm-visible"));
+
+      function close(result) {
+        modal.classList.remove("lcm-visible");
+        setTimeout(() => modal.remove(), 220);
+        resolve(result);
+      }
+
+      document.getElementById("lcmConfirm").addEventListener("click", () => close(true));
+      document.getElementById("lcmCancel").addEventListener("click", () => close(false));
+      modal.querySelector(".lcm-backdrop").addEventListener("click", () => close(false));
+      document.addEventListener("keydown", function esc(e) {
+        if (e.key === "Escape") { document.removeEventListener("keydown", esc); close(false); }
+      });
+    });
+  }
+
+
 })();
