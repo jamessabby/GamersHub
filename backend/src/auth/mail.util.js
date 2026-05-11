@@ -148,12 +148,15 @@ async function sendRegistrationRejectionEmail({ to, teamName, tournamentTitle, r
 }
 
 function isSmtpConfigured() {
-  return Boolean(SMTP_FROM && SMTP_USER && SMTP_PASS && (SMTP_SERVICE || SMTP_HOST));
+  return Boolean(SMTP_FROM && SMTP_USER && SMTP_PASS && SMTP_SERVICE);
 }
 
 async function getTransporter() {
   if (!transporterPromise) {
-    transporterPromise = createTransporter();
+    transporterPromise = createTransporter().catch((error) => {
+      transporterPromise = null;
+      throw error;
+    });
   }
 
   return transporterPromise;
@@ -167,6 +170,9 @@ async function createTransporter() {
           user: SMTP_USER,
           pass: SMTP_PASS,
         },
+        tls: {
+          rejectUnauthorized: false,
+        },
       }
     : {
         host: SMTP_HOST,
@@ -175,6 +181,9 @@ async function createTransporter() {
         auth: {
           user: SMTP_USER,
           pass: SMTP_PASS,
+        },
+        tls: {
+          rejectUnauthorized: false,
         },
       };
 
