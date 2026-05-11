@@ -225,6 +225,7 @@
       } else {
         state.avatar = result;
         saveUiState();
+        publishCurrentProfile();
       }
     };
     reader.readAsDataURL(file);
@@ -292,6 +293,9 @@
       applyBackendProfile(payload);
       renderView();
       applyProfileMode();
+      if (!isPublicProfile) {
+        publishCurrentProfile();
+      }
     } catch (error) {
       console.error("Profile hydration failed:", error);
       window.GamersHubAuth?.toast(
@@ -431,6 +435,7 @@
   }
 
   function renderProfilePost(post) {
+    const author = resolveRenderedAuthor(post);
     const schoolTag = post.author?.schoolTag
       ? `<span class="post-school-tag">${escapeHtml(post.author.schoolTag)}</span>`
       : "";
@@ -440,13 +445,13 @@
         <div class="post-header">
           <div class="post-avatar">
             <img
-              src="../assets/icons/player-dashboard-icons/user-profile.png"
-              alt="${escapeAttribute(post.author?.displayName || "Player")}"
+              src="${escapeAttribute(author.avatar)}"
+              alt="${escapeAttribute(author.displayName)}"
             />
           </div>
           <div class="post-meta">
             <div class="post-author-row">
-              <span class="post-author">${escapeHtml(post.author?.displayName || "Player")}</span>
+              <span class="post-author">${escapeHtml(author.displayName)}</span>
               ${schoolTag}
             </div>
             <div class="post-time">
@@ -463,6 +468,24 @@
         </div>
       </article>
     `;
+  }
+
+  function resolveRenderedAuthor(post) {
+    const cachedProfile =
+      Number(post.userId) === Number(session.userId)
+        ? auth?.getCachedProfile?.(session.userId)
+        : null;
+
+    return {
+      displayName:
+        cachedProfile?.displayName ||
+        post.author?.displayName ||
+        post.author?.username ||
+        "Player",
+      avatar:
+        cachedProfile?.avatar ||
+        "../assets/icons/player-dashboard-icons/user-profile.png",
+    };
   }
 
   function renderProfilePostMedia(post) {
@@ -719,6 +742,7 @@
       state.avatar = draft.avatar || state.avatar;
       state.socials = { ...draft.socials };
       saveUiState();
+      publishCurrentProfile();
       cancelEdit();
       renderView();
       setSavingState(false, "Saved");
@@ -895,6 +919,25 @@
 
   function buildUiStorageKey() {
     return `${PROFILE_UI_STORAGE_KEY}_${session.userId || session.username || "guest"}`;
+  }
+
+  function publishCurrentProfile() {
+    if (isPublicProfile) {
+      return;
+    }
+
+    auth?.updateCachedProfile?.({
+      userId: state.userId,
+      username: state.username,
+      displayName: state.displayName,
+      school: state.school,
+      schoolTag: state.schoolTag,
+      courseYear: state.courseYear,
+      primaryGames: state.primaryGames,
+      primaryGame: state.primaryGames?.[0] || "",
+      avatar: state.avatar,
+      socials: state.socials,
+    });
   }
 
   function formatDate(isoDate) {

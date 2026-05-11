@@ -103,8 +103,8 @@
   });
 
   createPostInput?.addEventListener("input", () => {
-    createPostInput.style.height = "32px";
-    createPostInput.style.height = `${Math.min(createPostInput.scrollHeight, 84)}px`;
+    createPostInput.style.height = "104px";
+    createPostInput.style.height = `${Math.min(createPostInput.scrollHeight, 180)}px`;
     syncComposerControls();
   });
 
@@ -230,12 +230,17 @@
   });
 
   window.addEventListener("gh:friends-updated", () => void loadFriendPanel());
+  window.addEventListener("gh:profile-updated", () => {
+    auth?.applyUserProfile?.();
+    void refreshLiveDashboard({ forceFeed: true });
+  });
   window.addEventListener("focus", () => {
     void refreshLiveDashboard({ forceFeed: true });
   });
   document.addEventListener("visibilitychange", handleVisibilityChange);
 
   syncComposerControls();
+  auth?.applyUserProfile?.();
   renderLoadingState();
   renderSearchIdleState();
   renderIncomingPlaceholder("No incoming friend requests right now.");
@@ -618,6 +623,7 @@
       }
 
       createPostInput.value = "";
+      createPostInput.style.height = "";
       resetMediaComposer();
       setComposerBusy(false, "Your post was saved to the feed database.");
       syncComposerControls();
@@ -826,6 +832,7 @@
   }
 
   function renderPostCard(post) {
+    const author = resolveRenderedAuthor(post);
     const schoolTag = post.author?.schoolTag
       ? `<span class="post-school-tag">${escapeHtml(post.author.schoolTag)}</span>`
       : "";
@@ -835,20 +842,20 @@
         <div class="post-header">
           <div class="post-avatar">
             <img
-              src="../assets/icons/player-dashboard-icons/user-profile.png"
-              alt="${escapeHtml(post.author?.displayName || "Player")}"
+              src="${escapeAttribute(author.avatar)}"
+              alt="${escapeAttribute(author.displayName)}"
             />
           </div>
           <div class="post-meta">
             <div class="post-author-row">
-              <span class="post-author">${escapeHtml(post.author?.displayName || "Player")}</span>
+              <span class="post-author">${escapeHtml(author.displayName)}</span>
               ${schoolTag}
             </div>
             <div class="post-time">
               <img class="privacy-icon" src="../assets/icons/player-dashboard-icons/privacy-public.png" alt="" />
               <span>${escapeHtml(formatMetaLabel(post.createdLabel))}</span>
               <span>&bull;</span>
-              <span>@${escapeHtml(post.author?.username || "user")}</span>
+              <span>@${escapeHtml(author.username)}</span>
             </div>
           </div>
         </div>
@@ -925,6 +932,25 @@
         </section>
       </article>
     `;
+  }
+
+  function resolveRenderedAuthor(post) {
+    const cachedProfile =
+      Number(post.userId) === Number(session.userId)
+        ? auth?.getCachedProfile?.(session.userId)
+        : null;
+
+    return {
+      displayName:
+        cachedProfile?.displayName ||
+        post.author?.displayName ||
+        post.author?.username ||
+        "Player",
+      username: post.author?.username || cachedProfile?.username || "user",
+      avatar:
+        cachedProfile?.avatar ||
+        "../assets/icons/player-dashboard-icons/user-profile.png",
+    };
   }
 
   function renderReactionPicker(postId) {
@@ -1233,6 +1259,7 @@
   }
 
   function renderCommentItem(comment) {
+    const author = resolveRenderedAuthor(comment);
     const schoolTag = comment.author?.schoolTag
       ? `<span class="post-comment-school-tag">${escapeHtml(comment.author.schoolTag)}</span>`
       : "";
@@ -1240,11 +1267,11 @@
     return `
       <li class="post-comment-item">
         <div class="post-comment-avatar">
-          <img src="../assets/icons/player-dashboard-icons/user-profile.png" alt="${escapeAttribute(comment.author?.displayName || "Player")}" />
+          <img src="${escapeAttribute(author.avatar)}" alt="${escapeAttribute(author.displayName)}" />
         </div>
         <div class="post-comment-body">
           <div class="post-comment-meta">
-            <span class="post-comment-author">${escapeHtml(comment.author?.displayName || "Player")}</span>
+            <span class="post-comment-author">${escapeHtml(author.displayName)}</span>
             ${schoolTag}
             <span class="post-comment-time">${escapeHtml(comment.createdLabel || "Just now")}</span>
             ${Number(comment.userId) === Number(session.userId) ? `<button type="button" class="post-comment-delete" data-comment-action="delete" data-comment-id="${escapeAttribute(String(comment.commentId))}" data-post-id="${escapeAttribute(String(comment.postId))}">Delete</button>` : ""}

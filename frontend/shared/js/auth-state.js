@@ -17,6 +17,8 @@ window.GAMERSHUB_API_BASE = "https://reputable-amigo-thermos.ngrok-free.dev";
   const SESSION_KEY = "gh_session";
   const PENDING_MFA_KEY = "gh_pending_mfa";
   const API_BASE_KEY = "gh_api_base";
+  const PROFILE_CACHE_KEY = "gh_profile_cache";
+  const PROFILE_UI_STORAGE_KEY = "gh_profile_ui";
   const API_BASE = resolveApiBase();
 
   function getSession() {
@@ -111,9 +113,112 @@ window.GAMERSHUB_API_BASE = "https://reputable-amigo-thermos.ngrok-free.dev";
       return;
     }
 
+    const profile = getCachedProfile(session.userId);
+    const displayName = profile?.displayName || session.displayName || session.username;
+
     root.querySelectorAll("[data-gh-user]").forEach((node) => {
-      node.textContent = session.username;
+      node.textContent = displayName;
     });
+
+    applyUserProfile(root);
+  }
+
+  function getCachedProfile(userId) {
+    const session = getSession();
+    const resolvedUserId = userId || session?.userId;
+    if (!resolvedUserId) {
+      return null;
+    }
+
+    try {
+      const profile = JSON.parse(
+        localStorage.getItem(buildProfileCacheKey(resolvedUserId)) || "null",
+      );
+      const uiProfile = JSON.parse(
+        localStorage.getItem(buildProfileUiKey(resolvedUserId)) || "null",
+      );
+
+      return profile || uiProfile
+        ? {
+            ...(profile || {}),
+            avatar: uiProfile?.avatar || profile?.avatar || "",
+            socials: uiProfile?.socials || profile?.socials || {},
+          }
+        : null;
+    } catch {
+      return null;
+    }
+  }
+
+  function updateCachedProfile(profile = {}) {
+    const session = getSession();
+    const userId = profile.userId || session?.userId;
+    if (!userId) {
+      return null;
+    }
+
+    const nextProfile = {
+      ...(getCachedProfile(userId) || {}),
+      ...profile,
+      userId,
+    };
+    const { avatar: _avatar, socials: _socials, ...profileForStorage } = nextProfile;
+
+    try {
+      localStorage.setItem(
+        buildProfileCacheKey(userId),
+        JSON.stringify(profileForStorage),
+      );
+    } catch {
+      // storage unavailable or full
+    }
+
+    if (session && Number(session.userId) === Number(userId)) {
+      setSession({
+        ...session,
+        displayName: nextProfile.displayName || session.displayName,
+      });
+      applyUserProfile(document);
+      window.dispatchEvent(
+        new CustomEvent("gh:profile-updated", { detail: nextProfile }),
+      );
+    }
+
+    return nextProfile;
+  }
+
+  function applyUserProfile(root = document) {
+    const session = getSession();
+    if (!session?.username) {
+      return;
+    }
+
+    const profile = getCachedProfile(session.userId);
+    const displayName = profile?.displayName || session.displayName || session.username;
+    const avatar = profile?.avatar || "";
+
+    root.querySelectorAll("[data-gh-user]").forEach((node) => {
+      node.textContent = displayName;
+    });
+
+    if (!avatar) {
+      return;
+    }
+
+    root.querySelectorAll("[data-gh-avatar], .nav-avatar").forEach((node) => {
+      if (node instanceof HTMLImageElement) {
+        node.src = avatar;
+        node.alt = displayName;
+      }
+    });
+  }
+
+  function buildProfileCacheKey(userId) {
+    return `${PROFILE_CACHE_KEY}_${userId}`;
+  }
+
+  function buildProfileUiKey(userId) {
+    return `${PROFILE_UI_STORAGE_KEY}_${userId}`;
   }
 
   function getRoleHomePath(role, needsSchoolVerification = false) {
@@ -189,6 +294,7 @@ window.GAMERSHUB_API_BASE = "https://reputable-amigo-thermos.ngrok-free.dev";
       token: session?.token || "",
       userId: Number(session?.userId) || null,
       username: session?.username || "",
+      displayName: session?.displayName || "",
       role: session?.role || "user",
       email: session?.email || "",
       authProvider: session?.authProvider || "local",
@@ -508,6 +614,9 @@ window.GAMERSHUB_API_BASE = "https://reputable-amigo-thermos.ngrok-free.dev";
     requireAuth,
     requireRole,
     applyUserName,
+    applyUserProfile,
+    getCachedProfile,
+    updateCachedProfile,
     getRoleHomePath,
     buildAppUrl,
     fetchCurrentUser,

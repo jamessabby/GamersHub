@@ -34,6 +34,7 @@
   let sharedActivityPollTimer = null;
 
   auth.applyUserName();
+  void refreshCurrentProfile();
   applySharedNavigation();
 
   if (friendsList && !isDashboardFriendManager && friendsList.dataset.source !== "dashboard") {
@@ -56,7 +57,11 @@
   window.addEventListener("gh:notifications-updated", () => {
     void renderNotifications();
   });
+  window.addEventListener("gh:profile-updated", () => {
+    auth.applyUserProfile?.();
+  });
   window.addEventListener("focus", () => {
+    void refreshCurrentProfile();
     void refreshSharedActivity();
   });
   document.addEventListener("visibilitychange", handleSharedVisibilityChange);
@@ -110,6 +115,33 @@
     }
 
     injectMobileHamburger();
+  }
+
+  async function refreshCurrentProfile() {
+    if (!session.userId) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`${API_BASE}/api/users/profile/${session.userId}`);
+      if (!response.ok) {
+        return;
+      }
+
+      const profile = await response.json();
+      auth.updateCachedProfile?.({
+        userId: profile.userId,
+        username: profile.username,
+        displayName: profile.displayName,
+        school: profile.school,
+        schoolTag: profile.schoolTag,
+        courseYear: profile.courseYear,
+        primaryGames: profile.primaryGames,
+        primaryGame: profile.primaryGame,
+      });
+    } catch {
+      auth.applyUserProfile?.();
+    }
   }
 
   function injectMobileHamburger() {
