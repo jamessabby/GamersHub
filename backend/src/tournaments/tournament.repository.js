@@ -94,12 +94,24 @@ async function listScheduleByTournamentId(tournamentId) {
         m.TEAM_A_SCORE AS teamAScore,
         m.TEAM_B_SCORE AS teamBScore,
         CONVERT(varchar(10), m.MATCH_DATE, 23) AS matchDate,
-        CONVERT(varchar(8), m.MATCH_TIME, 108) AS matchTime
+        CONVERT(varchar(8), m.MATCH_TIME, 108) AS matchTime,
+        m.STATUS AS status,
+        regA.TEAM_BANNER_URL AS teamABannerUrl,
+        regB.TEAM_BANNER_URL AS teamBBannerUrl
       FROM dbo.MATCH m
       LEFT JOIN dbo.TEAM teamA
         ON teamA.TEAM_ID = m.TEAM_A_ID
       LEFT JOIN dbo.TEAM teamB
         ON teamB.TEAM_ID = m.TEAM_B_ID
+      -- Join approved registrations to get team banners
+      LEFT JOIN dbo.TOURNAMENT_REGISTRATION regA
+        ON regA.TOURNAMENT_ID = m.TOURNAMENT_ID
+        AND regA.TEAM_NAME = COALESCE(teamA.TEAM_NAME, CONCAT('Team ', m.TEAM_A_ID))
+        AND regA.STATUS = 'approved'
+      LEFT JOIN dbo.TOURNAMENT_REGISTRATION regB
+        ON regB.TOURNAMENT_ID = m.TOURNAMENT_ID
+        AND regB.TEAM_NAME = COALESCE(teamB.TEAM_NAME, CONCAT('Team ', m.TEAM_B_ID))
+        AND regB.STATUS = 'approved'
       WHERE m.TOURNAMENT_ID = @tournamentId
       ORDER BY m.MATCH_DATE, m.MATCH_TIME, m.MATCH_ID
     `);
@@ -503,7 +515,7 @@ async function findRegistrationByPublicId(publicId) {
   return result.recordset[0] || null;
 }
 
-async function createRegistration({ tournamentId, teamName, contactName, contactEmail, contactPhone, rosterNotes, paymentProofUrl, feeAmount = 0, paymentStatus = "unpaid" }) {
+async function createRegistration({ tournamentId, teamName, contactName, contactEmail, contactPhone, rosterNotes, paymentProofUrl, teamBannerUrl, feeAmount = 0, paymentStatus = "unpaid" }) {
   await poolConnect;
   const result = await pool
     .request()
@@ -514,11 +526,12 @@ async function createRegistration({ tournamentId, teamName, contactName, contact
     .input("contactPhone", sql.NVarChar(50), contactPhone || null)
     .input("rosterNotes", sql.NVarChar(sql.MAX), rosterNotes || null)
     .input("paymentProofUrl", sql.NVarChar(1000), paymentProofUrl || null)
+    .input("teamBannerUrl", sql.NVarChar(1000), teamBannerUrl || null)
     .input("feeAmount", sql.Int, feeAmount || 0)
     .input("paymentStatus", sql.NVarChar(20), paymentStatus || "unpaid")
     .query(`
       INSERT INTO dbo.TOURNAMENT_REGISTRATION
-        (TOURNAMENT_ID, TEAM_NAME, CONTACT_NAME, CONTACT_EMAIL, CONTACT_PHONE, ROSTER_NOTES, PAYMENT_PROOF_URL, FEE_AMOUNT, PAYMENT_STATUS)
+        (TOURNAMENT_ID, TEAM_NAME, CONTACT_NAME, CONTACT_EMAIL, CONTACT_PHONE, ROSTER_NOTES, PAYMENT_PROOF_URL, TEAM_BANNER_URL, FEE_AMOUNT, PAYMENT_STATUS)
       OUTPUT
         INSERTED.REGISTRATION_ID AS registrationId,
         INSERTED.PUBLIC_ID       AS publicId,
@@ -529,7 +542,7 @@ async function createRegistration({ tournamentId, teamName, contactName, contact
         INSERTED.PAYMENT_STATUS  AS paymentStatus,
         INSERTED.CREATED_AT      AS createdAt
       VALUES
-        (@tournamentId, @teamName, @contactName, @contactEmail, @contactPhone, @rosterNotes, @paymentProofUrl, @feeAmount, @paymentStatus)
+        (@tournamentId, @teamName, @contactName, @contactEmail, @contactPhone, @rosterNotes, @paymentProofUrl, @teamBannerUrl, @feeAmount, @paymentStatus)
     `);
   return result.recordset[0] || null;
 }
@@ -573,6 +586,7 @@ async function updateRegistrationPayment({ registrationId, paymentStatus, paymen
     .input("registrationId", sql.Int, registrationId)
     .input("paymentStatus", sql.NVarChar(20), paymentStatus)
     .input("paymentProofUrl", sql.NVarChar(1000), paymentProofUrl || null)
+    .input("teamBannerUrl", sql.NVarChar(1000), teamBannerUrl || null)
     .query(`
       UPDATE dbo.TOURNAMENT_REGISTRATION
       SET PAYMENT_STATUS    = @paymentStatus,
@@ -787,6 +801,7 @@ async function updateRegistrationProof(registrationId, paymentProofUrl) {
     .request()
     .input("registrationId", sql.Int, registrationId)
     .input("paymentProofUrl", sql.NVarChar(1000), paymentProofUrl || null)
+    .input("teamBannerUrl", sql.NVarChar(1000), teamBannerUrl || null)
     .query(`
       UPDATE dbo.TOURNAMENT_REGISTRATION
       SET PAYMENT_PROOF_URL = @paymentProofUrl,
@@ -796,7 +811,26 @@ async function updateRegistrationProof(registrationId, paymentProofUrl) {
 }
 
 
+async function updateRegistrationBanner({ publicId, teamBannerUrl }) {
+  await poolConnect;
+  const result = await pool
+    .request()
+    .input("publicId", sql.NVarChar(36), publicId)
+    .input("teamBannerUrl", sql.NVarChar(1000), teamBannerUrl)
+    .query(`
+      UPDATE dbo.TOURNAMENT_REGISTRATION
+      SET TEAM_BANNER_URL = @teamBannerUrl, UPDATED_AT = SYSUTCDATETIME()
+      OUTPUT
+        INSERTED.REGISTRATION_ID AS registrationId,
+        INSERTED.PUBLIC_ID       AS publicId,
+        INSERTED.TEAM_BANNER_URL AS teamBannerUrl
+      WHERE PUBLIC_ID = @publicId
+    `);
+  return result.recordset[0] || null;
+}
+
 module.exports = {
+  updateRegistrationBanner,
   listTournaments,
   findTournamentById,
   listScheduleByTournamentId,

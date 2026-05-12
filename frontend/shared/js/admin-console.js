@@ -2068,6 +2068,19 @@
           <td>${statusBadge(r.status)}</td>
           <td>${paymentBadge(r.paymentStatus)}</td>
           <td>${formatPesoAmount(feeAmount)}</td>
+          <td style="min-width:80px;">${r.teamBannerUrl
+            ? `<div style="position:relative;display:inline-block;">
+                 <img src="${escapeAttribute(auth.apiBase + r.teamBannerUrl)}" alt="" style="width:56px;height:36px;object-fit:cover;border-radius:6px;border:1px solid rgba(139,92,246,0.3);cursor:pointer;display:block;" onclick="window.open('${escapeAttribute(auth.apiBase + r.teamBannerUrl)}','_blank')">
+               </div>
+               <label class="console-btn" style="font-size:10px;padding:2px 7px;cursor:pointer;display:inline-block;margin-top:4px;">
+                 <input type="file" accept="image/*" style="display:none;" class="reg-banner-file" data-reg-id="${escapeAttribute(r.publicId)}" data-team="${escapeAttribute(r.teamName)}">
+                 Replace
+               </label>`
+            : `<label class="console-btn" style="font-size:10px;padding:2px 7px;cursor:pointer;display:inline-block;background:rgba(167,139,250,0.1);border-color:rgba(167,139,250,0.25);color:#a78bfa;">
+                 <input type="file" accept="image/*" style="display:none;" class="reg-banner-file" data-reg-id="${escapeAttribute(r.publicId)}" data-team="${escapeAttribute(r.teamName)}">
+                 Upload
+               </label>`
+          }</td>
           <td>${r.paymentProofUrl
             ? `<a href="${escapeAttribute(auth.apiBase + r.paymentProofUrl)}" target="_blank" rel="noopener" style="color:#a78bfa;font-size:0.82rem;">View proof</a>`
             : '<span style="color:#64748b;font-size:0.82rem;">-</span>'}</td>
@@ -2128,6 +2141,7 @@
                 <th>Status</th>
                 <th>Payment</th>
                 <th>Fee</th>
+                <th>Banner</th>
                 <th>Proof</th>
                 <th>Players</th>
                 <th>Join Code</th>
@@ -2135,7 +2149,7 @@
                 <th>Actions</th>
               </tr>
             </thead>
-            <tbody>${regRows || '<tr><td colspan="12" style="color:#64748b;">No registrations found.</td></tr>'}</tbody>
+            <tbody>${regRows || '<tr><td colspan="13" style="color:#64748b;">No registrations found.</td></tr>'}</tbody>
           </table>
         </div>
       </section>
@@ -2212,6 +2226,38 @@
         } catch (error) {
           setFlash(error.message || "Failed to confirm payment.", true);
           btn.disabled = false; btn.textContent = "Confirm Payment";
+        }
+      });
+    });
+
+    // Banner upload (inline file picker in the table)
+    content.querySelectorAll(".reg-banner-file").forEach((fileInput) => {
+      fileInput.addEventListener("change", async () => {
+        const file = fileInput.files?.[0];
+        if (!file) return;
+        if (file.size > 5 * 1024 * 1024) {
+          setFlash("Banner image must be under 5 MB.", true);
+          return;
+        }
+        const regId = fileInput.dataset.regId;
+        const team  = fileInput.dataset.team;
+        const label = fileInput.closest("label");
+        if (label) { label.style.opacity = "0.5"; label.textContent = "Uploading..."; }
+        const fd = new FormData();
+        fd.append("teamBanner", file, file.name);
+        try {
+          const res = await fetch(`${auth.apiBase}/api/admin/registrations/${regId}/banner`, {
+            method: "PUT",
+            headers: { Authorization: `Bearer ${auth.token}` },
+            body: fd,
+          });
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.message || "Upload failed.");
+          setFlash(`Banner updated for "${team}".`);
+          await renderRegistrationsPage(statusFilter);
+        } catch (error) {
+          setFlash(error.message || "Failed to update banner.", true);
+          if (label) { label.style.opacity = ""; label.textContent = "Upload"; }
         }
       });
     });

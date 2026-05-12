@@ -103,7 +103,10 @@
         (match) => `
           <article class="sch-match">
             <div class="sch-team-media">
-              <div class="sch-team-avatar">${escapeHtml(getInitials(match.teamAName))}</div>
+              ${match.teamABannerUrl
+                ? `<img class="sch-team-banner" src="${escapeAttribute(apiBase + match.teamABannerUrl)}" alt="${escapeHtml(match.teamAName)}" onerror="this.style.display='none';this.nextElementSibling.style.display=''"><div class="sch-team-avatar" style="display:none;">${escapeHtml(getInitials(match.teamAName))}</div>`
+                : `<div class="sch-team-avatar">${escapeHtml(getInitials(match.teamAName))}</div>`
+              }
             </div>
             <div class="sch-team-info">
               <span class="sch-team-label">Team A</span>
@@ -124,7 +127,10 @@
               <span class="sch-team-score">${formatScore(match.teamBScore)}</span>
             </div>
             <div class="sch-team-media">
-              <div class="sch-team-avatar">${escapeHtml(getInitials(match.teamBName))}</div>
+              ${match.teamBBannerUrl
+                ? `<img class="sch-team-banner" src="${escapeAttribute(apiBase + match.teamBBannerUrl)}" alt="${escapeHtml(match.teamBName)}" onerror="this.style.display='none';this.nextElementSibling.style.display=''"><div class="sch-team-avatar" style="display:none;">${escapeHtml(getInitials(match.teamBName))}</div>`
+                : `<div class="sch-team-avatar">${escapeHtml(getInitials(match.teamBName))}</div>`
+              }
             </div>
           </article>
         `,
@@ -177,6 +183,15 @@
       .slice(0, 2)
       .map((part) => part[0].toUpperCase())
       .join("");
+  }
+
+  function escapeAttribute(value) {
+    return String(value || "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
   }
 
   function escapeHtml(value) {

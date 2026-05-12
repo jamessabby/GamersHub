@@ -164,7 +164,8 @@ async function listRegistrations(req, res) {
 
 async function submitRegistration(req, res) {
   try {
-    const paymentProofUrl = req.file ? `/uploads/payment-proofs/${req.file.filename}` : null;
+    const paymentProofUrl = req.files?.paymentProof?.[0] ? `/uploads/payment-proofs/${req.files.paymentProof[0].filename}` : null;
+    const teamBannerUrl   = req.files?.teamBanner?.[0]   ? `/uploads/team-banners/${req.files.teamBanner[0].filename}`     : null;
     const playerCount = parseInt(req.body.playerCount, 10);
     const rosterNotes = !Number.isNaN(playerCount) && playerCount > 0
       ? `${playerCount} player${playerCount === 1 ? "" : "s"}`
@@ -177,6 +178,7 @@ async function submitRegistration(req, res) {
       contactPhone: req.body.contactPhone || null,
       rosterNotes,
       paymentProofUrl,
+      teamBannerUrl,
       participants: req.body.participants || [],
     });
     res.status(201).json({
@@ -186,6 +188,21 @@ async function submitRegistration(req, res) {
     });
   } catch (error) {
     res.status(error.statusCode || 400).json({ message: error.message || "Failed to submit registration." });
+  }
+}
+
+async function updateRegistrationBanner(req, res) {
+  try {
+    if (!req.file) return res.status(400).json({ message: "No banner image uploaded." });
+    const teamBannerUrl = `/uploads/team-banners/${req.file.filename}`;
+    const updated = await tournamentService.updateRegistrationBanner({
+      publicId: req.params.publicId,
+      teamBannerUrl,
+    });
+    if (!updated) return res.status(404).json({ message: "Registration not found." });
+    res.status(200).json({ message: "Banner updated.", teamBannerUrl });
+  } catch (error) {
+    res.status(error.statusCode || 500).json({ message: error.message || "Failed to update banner." });
   }
 }
 
@@ -281,6 +298,7 @@ async function uploadProofByPublicId(req, res) {
 }
 
 module.exports = {
+  updateRegistrationBanner,
   listTournaments,
   getRegistrationByPublicId,
   uploadProofByPublicId,

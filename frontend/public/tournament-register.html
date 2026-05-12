@@ -228,6 +228,36 @@
 
         <div class="section-divider"></div>
 
+        <!-- Team Banner -->
+        <p class="section-label">Team Banner <span class="section-hint-inline">(required)</span></p>
+        <p class="section-hint">
+          Upload your team logo or banner image. It will be displayed on the tournament schedule
+          and leaderboard once your registration is approved. PNG, JPG, or WebP, max 5 MB.
+        </p>
+
+        <div class="form-group-custom">
+          <label class="field-label" for="regTeamBanner">TEAM BANNER IMAGE</label>
+          <label class="banner-upload-zone" id="bannerUploadZone" for="regTeamBanner">
+            <input
+              type="file"
+              id="regTeamBanner"
+              accept="image/jpeg,image/png,image/webp,image/gif"
+              style="display:none;"
+            />
+            <div class="banner-upload-placeholder" id="bannerUploadPlaceholder">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="opacity:0.45;margin-bottom:8px;">
+                <rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/>
+                <polyline points="21 15 16 10 5 21"/>
+              </svg>
+              <span style="font-size:13px;color:rgba(245,247,255,0.45);">Click to choose image</span>
+              <span style="font-size:11px;color:rgba(245,247,255,0.25);margin-top:4px;">PNG, JPG, WebP · max 5 MB</span>
+            </div>
+            <img id="bannerPreview" src="" alt="Banner preview" class="banner-preview-img" style="display:none;" />
+          </label>
+        </div>
+
+        <div class="section-divider"></div>
+
         <!-- Submit -->
         <button class="btn-submit" id="submitBtn" type="button">
           <span class="btn-text">Submit Registration</span>

@@ -243,7 +243,7 @@ async function listRegistrations({ tournamentId, status }) {
   return { items: rows, total: rows.length };
 }
 
-async function submitRegistration({ tournamentId, teamName, contactName, contactEmail, contactPhone, rosterNotes, paymentProofUrl, participants }) {
+async function submitRegistration({ tournamentId, teamName, contactName, contactEmail, contactPhone, rosterNotes, paymentProofUrl, teamBannerUrl, participants }) {
   if (!tournamentId || !teamName || !contactName || !contactEmail) {
     const e = new Error("Tournament, team name, contact name, and contact email are required.");
     e.statusCode = 400;
@@ -265,6 +265,7 @@ async function submitRegistration({ tournamentId, teamName, contactName, contact
     contactPhone: contactPhone ? String(contactPhone).trim() : null,
     rosterNotes: rosterNotes ? String(rosterNotes).trim() : null,
     paymentProofUrl: paymentProofUrl || null,
+    teamBannerUrl: teamBannerUrl || null,
     feeAmount,
     paymentStatus: feeAmount > 0 ? "unpaid" : "paid",
   });
@@ -505,7 +506,23 @@ async function updateProofByPublicId({ publicId, paymentProofUrl }) {
 }
 
 
+async function updateRegistrationBanner({ publicId, teamBannerUrl }) {
+  if (!publicId || !teamBannerUrl) {
+    const e = new Error("publicId and teamBannerUrl are required.");
+    e.statusCode = 400;
+    throw e;
+  }
+  const updated = await tournamentRepo.updateRegistrationBanner({ publicId, teamBannerUrl });
+  if (!updated) {
+    const e = new Error("Registration not found.");
+    e.statusCode = 404;
+    throw e;
+  }
+  return updated;
+}
+
 module.exports = {
+  updateRegistrationBanner,
   listTournaments,
   endTournament,
   getScheduleByTournamentId,

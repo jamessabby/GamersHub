@@ -2,6 +2,7 @@ const express = require("express");
 const adminController = require("./admin.controller");
 const tournamentController = require("../tournaments/tournament.controller");
 const adminUpload = require("./admin.upload");
+const bannerUpload = require("../tournaments/banner.upload");
 const { requireAuth, requireRole } = require("../middleware/auth.middleware");
 
 const router = express.Router();
@@ -30,6 +31,9 @@ router.get("/registrations", requireRole("admin", "superadmin"), tournamentContr
 router.put("/registrations/:publicId/approve", requireRole("admin", "superadmin"), tournamentController.approveRegistration);
 router.put("/registrations/:publicId/reject", requireRole("admin", "superadmin"), tournamentController.rejectRegistration);
 router.put("/registrations/:publicId/payment", requireRole("admin", "superadmin"), tournamentController.confirmRegistrationPayment);
+
+// Registration banner (admin can update or teams can upload after approval)
+router.put("/registrations/:publicId/banner", requireRole("admin", "superadmin"), bannerUpload.single("teamBanner"), tournamentController.updateRegistrationBanner);
 
 // Stream management (admin) — upload-thumbnail must come before /:streamId
 router.get("/streams", requireRole("admin", "superadmin"), adminController.listStreams);

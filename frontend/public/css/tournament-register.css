@@ -635,3 +635,51 @@ select.input-field option {
 @keyframes spin {
   to { transform: rotate(360deg); }
 }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   A.  REGISTRATION FORM — Team Banner Upload Zone
+   Append the block below to: frontend/public/css/tournament-register.css
+   ═══════════════════════════════════════════════════════════════════════ */
+ 
+/* ── Banner upload zone ── */
+.banner-upload-zone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 120px;
+  border: 1.5px dashed rgba(167, 139, 250, 0.35);
+  border-radius: 14px;
+  background: rgba(167, 139, 250, 0.04);
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+  padding: 18px 16px;
+  position: relative;
+  overflow: hidden;
+}
+ 
+.banner-upload-zone:hover,
+.banner-upload-zone:focus-within {
+  border-color: rgba(167, 139, 250, 0.6);
+  background: rgba(167, 139, 250, 0.08);
+}
+ 
+.banner-upload-zone.input-error {
+  border-color: rgba(239, 68, 68, 0.6) !important;
+}
+ 
+.banner-upload-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  pointer-events: none;
+}
+ 
+.banner-preview-img {
+  width: 100%;
+  max-height: 180px;
+  object-fit: cover;
+  border-radius: 10px;
+  display: block;
+}

@@ -15,6 +15,9 @@
   const participantList = $("participantList");
   const addParticipantBtn = $("addParticipantBtn");
   const submitBtn = $("submitBtn");
+  const bannerInput = document.getElementById("regTeamBanner");
+  const bannerPreview = $("bannerPreview");
+  const bannerPlaceholder = $("bannerUploadPlaceholder");
   const globalError = $("globalError");
   const regCard = $("regCard");
   const successCard = $("successCard");
@@ -41,6 +44,28 @@
   }
 
   addParticipantBtn.addEventListener("click", () => addParticipantRow());
+
+  // ── Banner preview ─────────────────────────────────
+  if (bannerInput) {
+    bannerInput.addEventListener("change", () => {
+      const file = bannerInput.files?.[0];
+      if (!file) return;
+      if (file.size > 5 * 1024 * 1024) {
+        showError("Team banner must be under 5 MB.");
+        bannerInput.value = "";
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        if (bannerPreview) {
+          bannerPreview.src = e.target.result;
+          bannerPreview.style.display = "";
+        }
+        if (bannerPlaceholder) bannerPlaceholder.style.display = "none";
+      };
+      reader.readAsDataURL(file);
+    });
+  }
   tournamentSel.addEventListener("change", updateRegistrationFeeNotice);
 
   // ── Stars ──────────────────────────────────────────
@@ -202,6 +227,14 @@
       ok = false;
     }
 
+
+    if (!bannerInput || !bannerInput.files?.[0]) {
+      if (ok) showError("Please upload your team banner image.");
+      const zone = document.getElementById("bannerUploadZone");
+      if (zone) zone.classList.add("input-error");
+      ok = false;
+    }
+
     return ok;
   }
 
@@ -226,6 +259,10 @@
       fd.append("contactPhone", contactPhoneInput.value.trim());
     }
     fd.append("playerCount", parseInt(playerCountInput.value, 10));
+    const bannerFile = bannerInput?.files?.[0];
+    if (bannerFile) {
+      fd.append("teamBanner", bannerFile, bannerFile.name);
+    }
     const participants = getParticipants();
     if (participants.length) {
       fd.append("participants", JSON.stringify(participants));
