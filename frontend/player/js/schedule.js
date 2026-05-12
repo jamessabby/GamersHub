@@ -1,7 +1,5 @@
 (() => {
-  const API_BASE =
-    window.GamersHubAuth?.apiBase ||
-    `http://${window.location.hostname || "localhost"}:3000`;
+  const API_BASE = resolveApiBase();
   const tournamentId =
     new URLSearchParams(window.location.search).get("tournament") || "1";
   const topNav = document.getElementById("topNav");
@@ -107,7 +105,7 @@
             <div class="sch-team-media">
               ${
                 match.teamABannerUrl
-                  ? `<img class="sch-team-banner" src="${escapeAttribute(resolveAssetUrl(match.teamABannerUrl))}" alt="${escapeHtml(match.teamAName)}" onerror="this.style.display='none';this.nextElementSibling.style.display=''"><div class="sch-team-avatar" style="display:none;">${escapeHtml(getInitials(match.teamAName))}</div>`
+                  ? renderTeamBanner(match.teamABannerUrl, match.teamAName)
                   : `<div class="sch-team-avatar">${escapeHtml(getInitials(match.teamAName))}</div>`
               }
             </div>
@@ -132,7 +130,7 @@
             <div class="sch-team-media">
               ${
                 match.teamBBannerUrl
-                  ? `<img class="sch-team-banner" src="${escapeAttribute(resolveAssetUrl(match.teamBBannerUrl))}" alt="${escapeHtml(match.teamBName)}" onerror="this.style.display='none';this.nextElementSibling.style.display=''"><div class="sch-team-avatar" style="display:none;">${escapeHtml(getInitials(match.teamBName))}</div>`
+                  ? renderTeamBanner(match.teamBBannerUrl, match.teamBName)
                   : `<div class="sch-team-avatar">${escapeHtml(getInitials(match.teamBName))}</div>`
               }
             </div>
@@ -189,15 +187,80 @@
       .join("");
   }
 
+  function renderTeamBanner(path, teamName) {
+    const src = resolveAssetUrl(path);
+    const initials = escapeHtml(getInitials(teamName));
+
+    return `
+      <img
+        class="sch-team-banner"
+        src="${escapeAttribute(src)}"
+        alt="${escapeAttribute(teamName)}"
+        onerror="this.hidden=true;this.nextElementSibling.hidden=false;"
+      >
+      <div class="sch-team-avatar" hidden>${initials}</div>
+    `;
+  }
+
+  function resolveApiBase() {
+    const configuredBase =
+      window.GamersHubAuth?.apiBase ||
+      window.GAMERSHUB_API_BASE ||
+      getStoredApiBase();
+    const normalizedBase = normalizeApiBase(configuredBase);
+    if (normalizedBase) {
+      return normalizedBase;
+    }
+
+    const host = window.location.hostname || "localhost";
+    return `http://${isLocalHost(host) ? host : "localhost"}:3000`;
+  }
+
+  function getStoredApiBase() {
+    try {
+      return localStorage.getItem("gh_api_base");
+    } catch {
+      return "";
+    }
+  }
+
+  function normalizeApiBase(value) {
+    const raw = String(value || "").trim();
+    if (!raw) {
+      return "";
+    }
+
+    try {
+      const url = new URL(raw);
+      if (!["http:", "https:"].includes(url.protocol)) {
+        return "";
+      }
+      return url.origin;
+    } catch {
+      return "";
+    }
+  }
+
+  function isLocalHost(host) {
+    return (
+      host === "localhost" ||
+      host === "127.0.0.1" ||
+      /^192\.168\./.test(host) ||
+      /^10\./.test(host) ||
+      /^172\.(1[6-9]|2\d|3[01])\./.test(host)
+    );
+  }
+
   function resolveAssetUrl(path) {
     const value = String(path || "").trim();
     if (!value) {
       return "";
     }
-    if (/^https?:\/\//i.test(value)) {
+    try {
+      return new URL(value, `${API_BASE}/`).href;
+    } catch {
       return value;
     }
-    return `${API_BASE}${value.startsWith("/") ? "" : "/"}${value}`;
   }
 
   function escapeAttribute(value) {
