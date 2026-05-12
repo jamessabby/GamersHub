@@ -28,6 +28,8 @@ async function getScheduleByTournamentId(tournamentId) {
       teamBScore: match.teamBScore,
       matchDate: match.matchDate || "",
       matchTime: match.matchTime || "",
+      teamABannerUrl: match.teamABannerUrl || "",
+      teamBBannerUrl: match.teamBBannerUrl || "",
       status:
         match.teamAScore != null && match.teamBScore != null ? "completed" : "upcoming",
     })),

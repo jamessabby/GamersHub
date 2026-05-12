@@ -104,7 +104,7 @@
           <article class="sch-match">
             <div class="sch-team-media">
               ${match.teamABannerUrl
-                ? `<img class="sch-team-banner" src="${escapeAttribute(apiBase + match.teamABannerUrl)}" alt="${escapeHtml(match.teamAName)}" onerror="this.style.display='none';this.nextElementSibling.style.display=''"><div class="sch-team-avatar" style="display:none;">${escapeHtml(getInitials(match.teamAName))}</div>`
+                ? `<img class="sch-team-banner" src="${escapeAttribute(resolveAssetUrl(match.teamABannerUrl))}" alt="${escapeHtml(match.teamAName)}" onerror="this.style.display='none';this.nextElementSibling.style.display=''"><div class="sch-team-avatar" style="display:none;">${escapeHtml(getInitials(match.teamAName))}</div>`
                 : `<div class="sch-team-avatar">${escapeHtml(getInitials(match.teamAName))}</div>`
               }
             </div>
@@ -128,7 +128,7 @@
             </div>
             <div class="sch-team-media">
               ${match.teamBBannerUrl
-                ? `<img class="sch-team-banner" src="${escapeAttribute(apiBase + match.teamBBannerUrl)}" alt="${escapeHtml(match.teamBName)}" onerror="this.style.display='none';this.nextElementSibling.style.display=''"><div class="sch-team-avatar" style="display:none;">${escapeHtml(getInitials(match.teamBName))}</div>`
+                ? `<img class="sch-team-banner" src="${escapeAttribute(resolveAssetUrl(match.teamBBannerUrl))}" alt="${escapeHtml(match.teamBName)}" onerror="this.style.display='none';this.nextElementSibling.style.display=''"><div class="sch-team-avatar" style="display:none;">${escapeHtml(getInitials(match.teamBName))}</div>`
                 : `<div class="sch-team-avatar">${escapeHtml(getInitials(match.teamBName))}</div>`
               }
             </div>
@@ -183,6 +183,17 @@
       .slice(0, 2)
       .map((part) => part[0].toUpperCase())
       .join("");
+  }
+
+  function resolveAssetUrl(path) {
+    const value = String(path || "").trim();
+    if (!value) {
+      return "";
+    }
+    if (/^https?:\/\//i.test(value)) {
+      return value;
+    }
+    return `${API_BASE}${value.startsWith("/") ? "" : "/"}${value}`;
   }
 
   function escapeAttribute(value) {

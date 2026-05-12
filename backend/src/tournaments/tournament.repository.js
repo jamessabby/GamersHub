@@ -95,7 +95,6 @@ async function listScheduleByTournamentId(tournamentId) {
         m.TEAM_B_SCORE AS teamBScore,
         CONVERT(varchar(10), m.MATCH_DATE, 23) AS matchDate,
         CONVERT(varchar(8), m.MATCH_TIME, 108) AS matchTime,
-        m.STATUS AS status,
         regA.TEAM_BANNER_URL AS teamABannerUrl,
         regB.TEAM_BANNER_URL AS teamBBannerUrl
       FROM dbo.MATCH m
