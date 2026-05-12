@@ -2,6 +2,8 @@ const feedRepo = require("./feed.repository");
 const authUserRepo = require("../users/user.repository");
 const profileRepo = require("../users/profile.repository");
 const auditService = require("../audit/audit.service");
+const notificationRepo = require("../users/notification.repository");
+const friendRepo = require("../users/friend.repository");
 
 async function listFeed({ viewerUserId, limit } = {}) {
   const parsedViewerUserId = Number(viewerUserId);
@@ -114,6 +116,33 @@ async function createPost(payload) {
     details: { hasMedia: !!mediaUrl },
   });
 
+  // Notify all accepted friends that a new post was made
+  try {
+    const relationships = await friendRepo.listRelationshipsForUser(userId);
+    const friendIds = relationships
+      .filter((r) => r.status === "accepted")
+      .map((r) => (r.userAId === userId ? r.userBId : r.userAId));
+
+    const posterName = author.username;
+    const preview = (content || "").slice(0, 80);
+
+    await Promise.all(
+      friendIds.map((friendId) =>
+        notificationRepo
+          .createNotification({
+            userId: friendId,
+            notificationType: "new_post",
+            title: `${posterName} posted something new`,
+            body: preview || "Check out their latest post.",
+            linkUrl: null,
+          })
+          .catch(() => null),
+      ),
+    );
+  } catch (_) {
+    // Non-critical — don't fail the post if notification errors
+  }
+
   const authors = await loadAuthors([userId]);
   return mapFeedItem(post, authors);
 }
@@ -156,7 +185,9 @@ async function deletePost(postId, requestingUserId, requestingUserRole) {
 }
 
 async function loadAuthors(userIds) {
-  const uniqueUserIds = [...new Set(userIds.filter((userId) => Number.isInteger(userId)))];
+  const uniqueUserIds = [
+    ...new Set(userIds.filter((userId) => Number.isInteger(userId))),
+  ];
   const authorEntries = await Promise.all(
     uniqueUserIds.map(async (userId) => {
       const [authUser, profile] = await Promise.all([
@@ -184,14 +215,13 @@ async function loadAuthors(userIds) {
 }
 
 function mapFeedItem(post, authors) {
-  const author =
-    authors.get(post.userId) || {
-      userId: post.userId,
-      username: `user-${post.userId}`,
-      displayName: `User ${post.userId}`,
-      school: "",
-      schoolTag: "",
-    };
+  const author = authors.get(post.userId) || {
+    userId: post.userId,
+    username: `user-${post.userId}`,
+    displayName: `User ${post.userId}`,
+    school: "",
+    schoolTag: "",
+  };
 
   return {
     postId: post.postId,
@@ -266,11 +296,9 @@ function isOptionalPostColumnError(error) {
   const message = String(error?.message || "").toUpperCase();
   return (
     message.includes("CANNOT INSERT THE VALUE NULL INTO COLUMN") &&
-    (
-      message.includes("CONTENT") ||
+    (message.includes("CONTENT") ||
       message.includes("MEDIA_URL") ||
-      message.includes("MEDIA_TYPE")
-    )
+      message.includes("MEDIA_TYPE"))
   );
 }
 

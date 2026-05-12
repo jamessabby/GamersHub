@@ -21,7 +21,9 @@ async function ensureProfileForUser({ userId, username, email }) {
   ) {
     profile = await profileRepo.updateProfile(userId, {
       ...profile,
-      studentId: hasText(profile.studentId) ? profile.studentId : fallbackStudentId,
+      studentId: hasText(profile.studentId)
+        ? profile.studentId
+        : fallbackStudentId,
       email,
     });
   }
@@ -87,7 +89,9 @@ async function updateProfileByUserId(userId, payload) {
       payload.displayName ?? currentProfile.displayName ?? authUser.username,
     ),
     email: authUser.email,
-    phoneNumber: normalizeText(payload.phoneNumber ?? currentProfile.phoneNumber),
+    phoneNumber: normalizeText(
+      payload.phoneNumber ?? currentProfile.phoneNumber,
+    ),
     school: normalizeText(payload.school ?? currentProfile.school),
     courseYear: normalizeText(payload.courseYear ?? currentProfile.courseYear),
     primaryGame: normalizePrimaryGames(
@@ -95,7 +99,10 @@ async function updateProfileByUserId(userId, payload) {
     ),
   };
 
-  const updatedProfile = await profileRepo.updateProfile(parsedUserId, mergedProfile);
+  const updatedProfile = await profileRepo.updateProfile(
+    parsedUserId,
+    mergedProfile,
+  );
 
   const wasUnverified =
     !hasText(currentProfile.studentId) ||
@@ -113,7 +120,10 @@ async function updateProfileByUserId(userId, payload) {
       actionType: "user.school_verified",
       entityType: "user_profile",
       entityId: parsedUserId,
-      details: { school: mergedProfile.school, courseYear: mergedProfile.courseYear },
+      details: {
+        school: mergedProfile.school,
+        courseYear: mergedProfile.courseYear,
+      },
     });
   }
 
@@ -138,7 +148,9 @@ async function searchPlayers({ viewerUserId, query, limit }) {
     limit: Number.isInteger(limit) ? limit : Number(limit) || 8,
   });
   const items = await Promise.all(
-    profiles.map((profile) => mapRelationshipProfile(profile, parsedViewerUserId)),
+    profiles.map((profile) =>
+      mapRelationshipProfile(profile, parsedViewerUserId),
+    ),
   );
 
   return {
@@ -158,15 +170,18 @@ async function getFriendsByUserId(userId) {
 
   for (const relationship of relationships) {
     const isRequester = relationship.userAId === parsedUserId;
-    const counterpartUserId = isRequester ? relationship.userBId : relationship.userAId;
+    const counterpartUserId = isRequester
+      ? relationship.userBId
+      : relationship.userAId;
     const person = await loadPersonSummary(counterpartUserId);
     const item = {
       ...person,
-      relationshipState: relationship.status === "accepted"
-        ? "friends"
-        : isRequester
-          ? "outgoing_pending"
-          : "incoming_pending",
+      relationshipState:
+        relationship.status === "accepted"
+          ? "friends"
+          : isRequester
+            ? "outgoing_pending"
+            : "incoming_pending",
       requestedByUserId: relationship.userAId,
       requestedToUserId: relationship.userBId,
     };
@@ -202,9 +217,14 @@ async function createFriendRequest(userId, payload) {
     assertUserExists(targetUserId),
   ]);
 
-  const existingRelationship = await friendRepo.findRelationship(requesterUserId, targetUserId);
+  const existingRelationship = await friendRepo.findRelationship(
+    requesterUserId,
+    targetUserId,
+  );
   if (existingRelationship) {
-    const error = new Error(resolveExistingRelationshipMessage(existingRelationship, requesterUserId));
+    const error = new Error(
+      resolveExistingRelationshipMessage(existingRelationship, requesterUserId),
+    );
     error.statusCode = 409;
     throw error;
   }
@@ -242,7 +262,10 @@ async function respondToFriendRequest(userId, requesterUserId, payload) {
     assertUserExists(parsedRequesterUserId),
   ]);
 
-  const relationship = await friendRepo.findRelationship(targetUserId, parsedRequesterUserId);
+  const relationship = await friendRepo.findRelationship(
+    targetUserId,
+    parsedRequesterUserId,
+  );
   if (!relationship || relationship.status !== "pending") {
     const error = new Error("Friend request not found.");
     error.statusCode = 404;
@@ -253,7 +276,9 @@ async function respondToFriendRequest(userId, requesterUserId, payload) {
     relationship.userAId !== parsedRequesterUserId ||
     relationship.userBId !== targetUserId
   ) {
-    const error = new Error("Only the requested player can respond to this friend request.");
+    const error = new Error(
+      "Only the requested player can respond to this friend request.",
+    );
     error.statusCode = 403;
     throw error;
   }
@@ -291,7 +316,9 @@ async function removeFriendByUserId(userId, friendUserId) {
   );
 
   if (parsedUserId === parsedFriendUserId) {
-    const error = new Error("You cannot remove yourself from your friends list.");
+    const error = new Error(
+      "You cannot remove yourself from your friends list.",
+    );
     error.statusCode = 400;
     throw error;
   }
@@ -301,7 +328,10 @@ async function removeFriendByUserId(userId, friendUserId) {
     assertUserExists(parsedFriendUserId),
   ]);
 
-  const relationship = await friendRepo.findRelationship(parsedUserId, parsedFriendUserId);
+  const relationship = await friendRepo.findRelationship(
+    parsedUserId,
+    parsedFriendUserId,
+  );
   if (!relationship || relationship.status !== "accepted") {
     const error = new Error("Accepted friendship not found.");
     error.statusCode = 404;
@@ -329,7 +359,10 @@ async function getNotificationsByUserId(userId) {
 
 async function markNotificationReadByUserId(userId, notificationId) {
   const parsedUserId = parsePositiveUserId(userId);
-  const parsedNotificationId = parsePositiveUserId(notificationId, "A valid notificationId is required.");
+  const parsedNotificationId = parsePositiveUserId(
+    notificationId,
+    "A valid notificationId is required.",
+  );
   await assertUserExists(parsedUserId);
 
   const notification = await notificationRepo.markNotificationRead(
@@ -350,7 +383,8 @@ async function markAllNotificationsReadByUserId(userId) {
   const parsedUserId = parsePositiveUserId(userId);
   await assertUserExists(parsedUserId);
 
-  const updatedCount = await notificationRepo.markAllNotificationsRead(parsedUserId);
+  const updatedCount =
+    await notificationRepo.markAllNotificationsRead(parsedUserId);
   return {
     updatedCount,
   };
@@ -377,6 +411,7 @@ function mapProfileResponse(authUser, profile) {
     primaryGames,
     primaryGame: primaryGames[0] || "",
     schoolTag: buildSchoolTag(profile?.school),
+    activityStatus: profile?.activityStatus || "",
   };
 }
 
@@ -397,23 +432,33 @@ function mapPublicProfileResponse(authUser, profile) {
     primaryGames,
     primaryGame: primaryGames[0] || "",
     schoolTag: buildSchoolTag(profile?.school),
+    activityStatus: profile?.activityStatus || "",
   };
 }
 
 async function mapRelationshipProfile(profile, viewerUserId) {
   const authUser = await authUserRepo.findById(profile.userId);
-  const relationship = await friendRepo.findRelationship(viewerUserId, profile.userId);
+  const relationship = await friendRepo.findRelationship(
+    viewerUserId,
+    profile.userId,
+  );
 
   return {
     userId: profile.userId,
-    username: profile.username || authUser?.username || `user-${profile.userId}`,
-    displayName: profile.displayName || authUser?.username || `User ${profile.userId}`,
+    username:
+      profile.username || authUser?.username || `user-${profile.userId}`,
+    displayName:
+      profile.displayName || authUser?.username || `User ${profile.userId}`,
     school: profile.school || "",
     schoolTag: buildSchoolTag(profile.school),
     primaryGame: profile.primaryGame || "",
     matchField: profile.matchField || "",
     matchValue: profile.matchValue || "",
-    relationshipState: mapRelationshipState(relationship, viewerUserId, profile.userId),
+    relationshipState: mapRelationshipState(
+      relationship,
+      viewerUserId,
+      profile.userId,
+    ),
   };
 }
 
@@ -452,7 +497,10 @@ async function setActivityStatus({ userId, actorUserId, activityStatus }) {
 
   await assertUserExists(parsedUserId);
 
-  const trimmed = String(activityStatus || "").trim().slice(0, 100) || null;
+  const trimmed =
+    String(activityStatus || "")
+      .trim()
+      .slice(0, 100) || null;
   const updated = await profileRepo.updateActivityStatus(parsedUserId, trimmed);
 
   if (!updated) {
@@ -473,7 +521,10 @@ function mapRelationshipState(relationship, viewerUserId, targetUserId) {
     return "friends";
   }
 
-  if (relationship.userAId === viewerUserId && relationship.userBId === targetUserId) {
+  if (
+    relationship.userAId === viewerUserId &&
+    relationship.userBId === targetUserId
+  ) {
     return "outgoing_pending";
   }
 
@@ -609,3 +660,4 @@ module.exports = {
   markNotificationReadByUserId,
   markAllNotificationsReadByUserId,
 };
+  

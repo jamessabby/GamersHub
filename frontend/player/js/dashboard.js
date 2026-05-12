@@ -81,6 +81,103 @@
     }
   });
 
+  // ── Top search bar ──────────────────────────────────────────────────
+  const searchDropdown = document.getElementById("searchDropdown");
+  let topSearchDebounceId = null;
+
+  searchInput?.addEventListener("input", () => {
+    const q = searchInput.value.trim();
+    clearTimeout(topSearchDebounceId);
+    if (!q || q.length < 2) {
+      closeSearchDropdown();
+      return;
+    }
+    topSearchDebounceId = window.setTimeout(() => void runTopSearch(q), 260);
+  });
+
+  searchInput?.addEventListener("focus", () => {
+    const q = searchInput.value.trim();
+    if (q.length >= 2) void runTopSearch(q);
+  });
+
+  document.addEventListener("click", (event) => {
+    if (!event.target.closest(".search-wrap")) closeSearchDropdown();
+  });
+
+  searchInput?.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") { closeSearchDropdown(); searchInput.blur(); }
+  });
+
+  async function runTopSearch(query) {
+    if (!session?.userId || !searchDropdown) return;
+    try {
+      const res = await fetch(
+        `${API_BASE}/api/users/search?viewerUserId=${encodeURIComponent(session.userId)}&q=${encodeURIComponent(query)}&limit=8`,
+        { headers: { "ngrok-skip-browser-warning": "true" } },
+      );
+      const payload = await res.json();
+      if (!res.ok) throw new Error(payload.message || "Search failed.");
+      renderTopSearchResults(payload.items || []);
+    } catch (err) {
+      if (searchDropdown) {
+        searchDropdown.innerHTML = `<div class="search-dropdown-empty">Search failed. Try again.</div>`;
+        openSearchDropdown();
+      }
+    }
+  }
+
+  function renderTopSearchResults(items) {
+    if (!searchDropdown) return;
+    if (!items.length) {
+      searchDropdown.innerHTML = `<div class="search-dropdown-empty">No players found.</div>`;
+      openSearchDropdown();
+      return;
+    }
+    searchDropdown.innerHTML = items.map((item) => {
+      const name = escapeHtml(item.displayName || item.username || "Unknown");
+      const username = escapeHtml(item.username || "");
+      const school = escapeHtml(item.schoolTag || item.school || "");
+      const game = escapeHtml(item.primaryGame || "");
+      const meta = [school, game].filter(Boolean).join(" · ");
+      const avatar = escapeAttribute(item.avatarUrl || "../assets/icons/player-dashboard-icons/user-profile.png");
+      const state = item.relationshipState || "";
+      const stateLabel = state === "friends" ? "Friends" : state === "outgoing_pending" ? "Pending" : "";
+      return `
+        <div class="search-dropdown-item" tabindex="0" data-search-user-id="${escapeAttribute(String(item.userId || ""))}">
+          <img class="search-dropdown-avatar" src="${avatar}" alt="" onerror="this.style.opacity='0'" />
+          <div class="search-dropdown-info">
+            <span class="search-dropdown-name">${name}</span>
+            <span class="search-dropdown-meta">@${username}${meta ? " · " + meta : ""}</span>
+          </div>
+          ${stateLabel ? `<span class="search-dropdown-tag">${stateLabel}</span>` : ""}
+        </div>
+      `;
+    }).join("");
+    openSearchDropdown();
+
+    searchDropdown.querySelectorAll(".search-dropdown-item").forEach((el) => {
+      el.addEventListener("click", () => {
+        const uid = el.dataset.searchUserId;
+        if (uid) {
+          window.location.href = `./profile.html?userId=${encodeURIComponent(uid)}`;
+        }
+        closeSearchDropdown();
+      });
+      el.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") el.click();
+      });
+    });
+  }
+
+  function openSearchDropdown() {
+    searchDropdown?.classList.remove("hidden");
+  }
+
+  function closeSearchDropdown() {
+    searchDropdown?.classList.add("hidden");
+  }
+  // ── end top search ───────────────────────────────────────────────────
+
   document.addEventListener("click", (event) => {
     if (
       !event.target.closest(".post-reaction-picker") &&
@@ -853,7 +950,7 @@
             </div>
             <div class="post-time">
               <img class="privacy-icon" src="../assets/icons/player-dashboard-icons/privacy-public.png" alt="" />
-              <span>${escapeHtml(formatMetaLabel(post.createdLabel))}</span>
+              <span data-created-at="${escapeAttribute(post.createdAt || "")}">${escapeHtml(post.createdAt ? formatRelativeTime(post.createdAt) : formatMetaLabel(post.createdLabel))}</span>
               <span>&bull;</span>
               <span>@${escapeHtml(author.username)}</span>
             </div>
@@ -992,10 +1089,15 @@
     }
 
     if (post.mediaType === "video") {
+      const videoType = guessVideoMimeType(post.mediaUrl);
       return `
         <div class="post-video-wrap">
           <video class="post-video" controls preload="metadata">
-            <source src="${escapeAttribute(mediaSrc)}" />
+            <source
+              src="${escapeAttribute(mediaSrc)}"
+              ${videoType ? `type="${escapeAttribute(videoType)}"` : ""}
+              data-upload-media-src="${escapeAttribute(mediaSrc)}"
+            />
             Your browser does not support the video tag.
           </video>
         </div>
@@ -1018,6 +1120,13 @@
     return String(mediaUrl).startsWith("/uploads/")
       ? `${API_BASE}${mediaUrl}`
       : mediaUrl;
+  }
+
+  function guessVideoMimeType(mediaUrl) {
+    if (!mediaUrl) return "";
+    const ext = String(mediaUrl).split(".").pop().toLowerCase().split("?")[0];
+    const map = { mp4: "video/mp4", webm: "video/webm", ogg: "video/ogg", mov: "video/mp4" };
+    return map[ext] || "";
   }
 
   async function hydrateUploadMedia(root) {
@@ -1273,7 +1382,7 @@
           <div class="post-comment-meta">
             <span class="post-comment-author">${escapeHtml(author.displayName)}</span>
             ${schoolTag}
-            <span class="post-comment-time">${escapeHtml(comment.createdLabel || "Just now")}</span>
+            <span class="post-comment-time" data-created-at="${escapeAttribute(comment.createdAt || "")}">${escapeHtml(comment.createdAt ? formatRelativeTime(comment.createdAt) : (comment.createdLabel || "Just now"))}</span>
             ${Number(comment.userId) === Number(session.userId) ? `<button type="button" class="post-comment-delete" data-comment-action="delete" data-comment-id="${escapeAttribute(String(comment.commentId))}" data-post-id="${escapeAttribute(String(comment.postId))}">Delete</button>` : ""}
           </div>
           <p class="post-comment-message">${escapeHtml(comment.message || "")}</p>
@@ -1512,7 +1621,7 @@
             ${schoolTag}
           </div>
           <span class="friend-username">@${escapeHtml(friend.username)}</span>
-          <span class="friend-status watching">${escapeHtml(friend.primaryGame || friend.school || "Connected on GamersHub")}</span>
+          <span class="friend-status watching">${escapeHtml(friend.activityStatus || friend.primaryGame || friend.school || "Connected on GamersHub")}</span>
         </div>
       </li>
     `;
@@ -1775,6 +1884,34 @@
       ? "Recently posted"
       : String(value);
   }
+
+  function formatRelativeTime(isoString) {
+    if (!isoString) return "Recently posted";
+    const createdAt = new Date(isoString);
+    if (Number.isNaN(createdAt.getTime())) return "Recently posted";
+    const diffMs = Date.now() - createdAt.getTime();
+    if (diffMs < 60 * 1000) return "Just now";
+    const diffMinutes = Math.floor(diffMs / (60 * 1000));
+    if (diffMinutes < 60) return `${diffMinutes} min ago`;
+    const diffHours = Math.floor(diffMinutes / 60);
+    if (diffHours < 24) return `${diffHours} hr ago`;
+    const diffDays = Math.floor(diffHours / 24);
+    if (diffDays < 7) return `${diffDays}d ago`;
+    return createdAt.toLocaleDateString("en-CA", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    });
+  }
+
+  function refreshAllTimestamps() {
+    document.querySelectorAll("[data-created-at]").forEach((el) => {
+      el.textContent = formatRelativeTime(el.dataset.createdAt);
+    });
+  }
+
+  // Refresh timestamps every minute so "Just now" ages correctly
+  setInterval(refreshAllTimestamps, 60 * 1000);
 
   function formatReactionCountLabel(value) {
     const count = Number(value) || 0;

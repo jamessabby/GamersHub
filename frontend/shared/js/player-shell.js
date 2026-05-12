@@ -1040,6 +1040,31 @@
 
     rightSidebar.insertBefore(widget, rightSidebar.firstChild);
 
+    // Hydrate from server so the widget always reflects the real saved value,
+    // not just what's in localStorage (which may be stale or missing).
+    (async () => {
+      try {
+        const res = await fetch(`${API_BASE}/api/users/profile/${session.userId}`);
+        if (res.ok) {
+          const data = await res.json();
+          const serverStatus = data.activityStatus || data.profile?.activityStatus || "";
+          if (serverStatus) {
+            localStorage.setItem(ACTIVITY_STORAGE_KEY, serverStatus);
+            const currentEl = document.getElementById("ghActivityCurrent");
+            if (currentEl) {
+              currentEl.innerHTML = escapeHtml(serverStatus);
+            }
+            const input = document.getElementById("ghActivityInput");
+            if (input && !input.value) {
+              input.value = serverStatus;
+            }
+          }
+        }
+      } catch (_) {
+        // Non-critical — fall back to cached value silently
+      }
+    })();
+
     widget.querySelectorAll(".gh-activity-preset").forEach((btn) => {
       btn.addEventListener("click", () => {
         const preset = btn.dataset.preset;

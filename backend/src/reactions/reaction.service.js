@@ -3,6 +3,7 @@ const feedRepo = require("../feed/feed.repository");
 const authUserRepo = require("../users/user.repository");
 const profileRepo = require("../users/profile.repository");
 const auditService = require("../audit/audit.service");
+const notificationRepo = require("../users/notification.repository");
 
 const ALLOWED_REACTIONS = new Set(["like", "love", "wow"]);
 
@@ -42,6 +43,24 @@ async function setPostReaction(postId, payload) {
     userId: parsedUserId,
     reactionType,
   });
+
+  // Notify the post owner (skip if reacting to own post)
+  try {
+    const post = await feedRepo.findPostById(parsedPostId);
+    if (post && post.userId !== parsedUserId) {
+      const reactor = await authUserRepo.findById(parsedUserId);
+      const reactorName = reactor?.username || `User ${parsedUserId}`;
+      await notificationRepo.createNotification({
+        userId: post.userId,
+        notificationType: "reaction",
+        title: `${reactorName} reacted to your post`,
+        body: `They left a ${reactionType} on your post.`,
+        linkUrl: null,
+      });
+    }
+  } catch (_) {
+    // Non-critical — don't fail the reaction if notification errors
+  }
 
   await auditService.logAuditEvent({
     actorUserId: parsedUserId,
@@ -127,6 +146,25 @@ async function createPostComment(postId, payload) {
     entityId: comment.commentId,
     details: { postId: parsedPostId },
   });
+
+  // Notify the post owner (skip if commenting on own post)
+  try {
+    const post = await feedRepo.findPostById(parsedPostId);
+    if (post && post.userId !== parsedUserId) {
+      const commenter = await authUserRepo.findById(parsedUserId);
+      const commenterName = commenter?.username || `User ${parsedUserId}`;
+      const preview = (message || "").slice(0, 80);
+      await notificationRepo.createNotification({
+        userId: post.userId,
+        notificationType: "comment",
+        title: `${commenterName} commented on your post`,
+        body: preview || "They left a comment on your post.",
+        linkUrl: null,
+      });
+    }
+  } catch (_) {
+    // Non-critical — don't fail the comment if notification errors
+  }
 
   const authors = await loadAuthors([parsedUserId]);
   const summary = await buildPostSummary(parsedPostId, parsedUserId);
