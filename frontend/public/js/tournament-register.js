@@ -1,8 +1,9 @@
 (() => {
   // auth-state.js is loaded before this file and exposes window.GamersHubAuth.
   // On this public page there is no session, but apiBase gives the correct backend origin.
-  const API_BASE = window.GamersHubAuth?.apiBase
-    || `http://${window.location.hostname || "localhost"}:3000`;
+  const API_BASE =
+    window.GamersHubAuth?.apiBase ||
+    `http://${window.location.hostname || "localhost"}:3000`;
 
   const $ = (id) => document.getElementById(id);
   const tournamentSel = $("regTournament");
@@ -32,7 +33,9 @@
       <input type="text" class="input-field participant-input" placeholder="GamersHub username" maxlength="100" value="${value.replace(/"/g, "&quot;")}">
       <button type="button" class="participant-remove" aria-label="Remove">✕</button>
     `;
-    row.querySelector(".participant-remove").addEventListener("click", () => row.remove());
+    row
+      .querySelector(".participant-remove")
+      .addEventListener("click", () => row.remove());
     participantList.appendChild(row);
     row.querySelector(".participant-input").focus();
   }
@@ -77,8 +80,10 @@
       star.className = "star";
       const size = Math.random() * 2 + 1;
       star.style.cssText = [
-        `width:${size}px`, `height:${size}px`,
-        `left:${Math.random() * 100}%`, `top:${Math.random() * 100}%`,
+        `width:${size}px`,
+        `height:${size}px`,
+        `left:${Math.random() * 100}%`,
+        `top:${Math.random() * 100}%`,
         `--d:${(Math.random() * 4 + 2).toFixed(1)}s`,
         `--delay:${(Math.random() * 5).toFixed(1)}s`,
         `--min-o:${(Math.random() * 0.15).toFixed(2)}`,
@@ -101,7 +106,9 @@
 
   function markInvalid(el) {
     el.classList.add("input-error");
-    el.addEventListener("input", () => el.classList.remove("input-error"), { once: true });
+    el.addEventListener("input", () => el.classList.remove("input-error"), {
+      once: true,
+    });
   }
 
   // ── Load tournaments ───────────────────────────────
@@ -109,16 +116,23 @@
     try {
       const res = await fetch(`${API_BASE}/api/tournaments`);
       const data = await res.json();
-      const list = Array.isArray(data) ? data : (data.items || []);
+      const list = Array.isArray(data) ? data : data.items || [];
       const active = list.filter((t) => {
         const status = String(t.status || "").toLowerCase();
-        return t.isActive || status === "ongoing" || status === "upcoming" || status.includes("open") || status.includes("register");
+        return (
+          t.isActive ||
+          status === "ongoing" ||
+          status === "upcoming" ||
+          status.includes("open") ||
+          status.includes("register")
+        );
       });
 
       tournamentSel.innerHTML = "";
       tournamentFees.clear();
       if (!active.length) {
-        tournamentSel.innerHTML = '<option value="">No open tournaments right now</option>';
+        tournamentSel.innerHTML =
+          '<option value="">No open tournaments right now</option>';
         updateRegistrationFeeNotice();
         return;
       }
@@ -131,8 +145,13 @@
       active.forEach((t) => {
         const opt = document.createElement("option");
         opt.value = t.tournamentId;
-        opt.dataset.feeAmount = String(Math.max(0, Number(t.registrationFeeAmount) || 0));
-        tournamentFees.set(String(t.tournamentId), Math.max(0, Number(t.registrationFeeAmount) || 0));
+        opt.dataset.feeAmount = String(
+          Math.max(0, Number(t.registrationFeeAmount) || 0),
+        );
+        tournamentFees.set(
+          String(t.tournamentId),
+          Math.max(0, Number(t.registrationFeeAmount) || 0),
+        );
         opt.textContent = `${t.title}${t.gameName ? ` - ${t.gameName}` : ""}`;
         tournamentSel.appendChild(opt);
       });
@@ -141,14 +160,19 @@
       const params = new URLSearchParams(window.location.search);
       const preId = params.get("tournament");
       if (preId) {
-        const match = Array.from(tournamentSel.options).find((o) => o.value === preId);
+        const match = Array.from(tournamentSel.options).find(
+          (o) => o.value === preId,
+        );
         if (match) tournamentSel.value = preId;
       }
       updateRegistrationFeeNotice();
     } catch {
-      tournamentSel.innerHTML = '<option value="">Failed to load tournaments</option>';
+      tournamentSel.innerHTML =
+        '<option value="">Failed to load tournaments</option>';
       updateRegistrationFeeNotice();
-      showError(`Could not reach the backend at ${API_BASE}. For the Vercel demo, open this page once with ?apiBase=https://YOUR-NGROK-URL.`);
+      showError(
+        `Could not reach the backend at ${API_BASE}. For the Vercel demo, open this page once with ?apiBase=https://YOUR-NGROK-URL.`,
+      );
     }
   }
 
@@ -156,7 +180,8 @@
     if (!registrationFeeNotice) return;
     const feeAmount = getSelectedFeeAmount();
     if (!tournamentSel.value) {
-      registrationFeeNotice.textContent = "Select a tournament to see the registration fee.";
+      registrationFeeNotice.textContent =
+        "Select a tournament to see the registration fee.";
       registrationFeeNotice.style.color = "";
       return;
     }
@@ -166,7 +191,8 @@
         ` &mdash; After submitting you will get a <strong>Pay via GCash / Maya / Card</strong> button powered by PayMongo.`;
       registrationFeeNotice.style.color = "rgba(255,255,255,0.6)";
     } else {
-      registrationFeeNotice.textContent = "Registration fee: Free. No payment is required for this tournament.";
+      registrationFeeNotice.textContent =
+        "Registration fee: Free. No payment is required for this tournament.";
       registrationFeeNotice.style.color = "";
     }
   }
@@ -177,7 +203,10 @@
     if (fromOption != null && fromOption !== "") {
       return Math.max(0, Number(fromOption) || 0);
     }
-    return Math.max(0, Number(tournamentFees.get(String(tournamentSel.value))) || 0);
+    return Math.max(
+      0,
+      Number(tournamentFees.get(String(tournamentSel.value))) || 0,
+    );
   }
 
   function formatPesoAmount(amount) {
@@ -221,12 +250,16 @@
     }
 
     const count = parseInt(playerCountInput.value, 10);
-    if (!playerCountInput.value || Number.isNaN(count) || count < 1 || count > 20) {
+    if (
+      !playerCountInput.value ||
+      Number.isNaN(count) ||
+      count < 1 ||
+      count > 20
+    ) {
       if (ok) showError("Number of players must be between 1 and 20.");
       markInvalid(playerCountInput);
       ok = false;
     }
-
 
     if (!bannerInput || !bannerInput.files?.[0]) {
       if (ok) showError("Please upload your team banner image.");
@@ -268,7 +301,10 @@
       fd.append("participants", JSON.stringify(participants));
     }
     try {
-      const res = await fetch(`${API_BASE}/api/tournaments/register`, { method: "POST", body: fd });
+      const res = await fetch(`${API_BASE}/api/tournaments/register`, {
+        method: "POST",
+        body: fd,
+      });
       const data = await res.json();
 
       if (!res.ok) {
@@ -279,10 +315,13 @@
         return;
       }
 
-      const tourName = tournamentSel.options[tournamentSel.selectedIndex]?.text || "the tournament";
+      const tourName =
+        tournamentSel.options[tournamentSel.selectedIndex]?.text ||
+        "the tournament";
       const teamName = teamNameInput.value.trim();
       const email = contactEmailInput.value.trim();
-      const feeAmount = Number(data.registration?.feeAmount ?? getSelectedFeeAmount()) || 0;
+      const feeAmount =
+        Number(data.registration?.feeAmount ?? getSelectedFeeAmount()) || 0;
       const feeText = formatPesoAmount(feeAmount);
 
       // Hide form, show success card

@@ -1028,12 +1028,23 @@
       const teamsList = document.getElementById("teamsList");
       const row = document.createElement("div");
       row.className = "team-row";
-      row.style.cssText = "display:flex;gap:8px;align-items:center;";
+      row.style.cssText = "display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:10px;background:rgba(139,92,246,0.05);border:1px solid rgba(139,92,246,0.15);border-radius:10px;";
       row.innerHTML = `
-        <input class="console-input" type="text" data-team-name placeholder="Team name *" style="flex:1;" />
-        <input class="console-input" type="number" data-team-seed placeholder="Seed (optional)" min="1" style="flex:0 0 140px;" />
-        <button type="button" class="console-btn danger" style="flex:0 0 auto;padding:8px 10px;">x</button>
+        <input class="console-input" type="text" data-team-name placeholder="Team name *" style="flex:1 1 200px;" />
+        <input class="console-input" type="number" data-team-seed placeholder="Seed (optional)" min="1" style="flex:0 0 130px;" />
+        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;flex:0 0 auto;padding:6px 10px;border-radius:8px;border:1px solid rgba(139,92,246,0.25);background:rgba(139,92,246,0.08);color:#c4b5fd;font-size:12px;font-weight:600;white-space:nowrap;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+          <span data-banner-label>Add Banner</span>
+          <input type="file" accept="image/*" data-team-banner style="display:none;" />
+        </label>
+        <button type="button" class="console-btn danger" style="flex:0 0 auto;padding:8px 10px;" title="Remove team">✕</button>
       `;
+      // Update label text on file select
+      const fileInput = row.querySelector("[data-team-banner]");
+      const bannerLabel = row.querySelector("[data-banner-label]");
+      fileInput.addEventListener("change", () => {
+        bannerLabel.textContent = fileInput.files[0]?.name || "Add Banner";
+      });
       row.querySelector(".console-btn.danger").addEventListener("click", () => row.remove());
       teamsList.appendChild(row);
     });
@@ -1046,16 +1057,18 @@
       submitBtn.textContent = "Creating...";
       try {
         const data = new FormData(form);
-        const teams = Array.from(form.querySelectorAll(".team-row")).map((row) => {
+        const teamRows = Array.from(form.querySelectorAll(".team-row"));
+        const teams = teamRows.map((row) => {
           const nameInput = row.querySelector("[data-team-name]");
           const seedInput = row.querySelector("[data-team-seed]");
           return {
             teamName: (nameInput?.value || "").trim(),
             seed: seedInput?.value ? Number(seedInput.value) : null,
+            _bannerFile: row.querySelector("[data-team-banner]")?.files?.[0] || null,
           };
         }).filter((t) => t.teamName);
 
-        await fetchJson(`${auth.apiBase}/api/admin/tournaments`, {
+        const result = await fetchJson(`${auth.apiBase}/api/admin/tournaments`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -1066,10 +1079,33 @@
             endDate: data.get("endDate") || null,
             registrationFeePesos: data.get("registrationFeePesos") || "0",
             isActive: data.get("isActive") === "on",
-            teams,
+            teams: teams.map(({ teamName, seed }) => ({ teamName, seed })),
           }),
         });
-        setFlash(`Tournament created successfully. ${teams.length} manual team(s) registered.`);
+
+        // Upload banners for manual teams that have one
+        const createdTeams = result.teams || [];
+        let bannerUploads = 0;
+        for (let i = 0; i < createdTeams.length; i++) {
+          const bannerFile = teams[i]?._bannerFile;
+          const regPublicId = createdTeams[i]?.registrationPublicId;
+          if (bannerFile && regPublicId) {
+            try {
+              const fd = new FormData();
+              fd.append("teamBanner", bannerFile, bannerFile.name);
+              await fetch(`${auth.apiBase}/api/admin/registrations/${regPublicId}/banner`, {
+                method: "PUT",
+                body: fd,
+              });
+              bannerUploads++;
+            } catch (_) {
+              // Non-critical — banner can be uploaded from Registrations tab
+            }
+          }
+        }
+
+        const bannerNote = bannerUploads > 0 ? ` ${bannerUploads} banner(s) uploaded.` : "";
+        setFlash(`Tournament created successfully. ${teams.length} manual team(s) registered.${bannerNote}`);
         form.reset();
         form.style.display = "none";
         document.getElementById("toggleTournamentForm").textContent = "Show form";
@@ -1077,6 +1113,9 @@
         if (manualTeamsSection) manualTeamsSection.style.display = "none";
         const manualTeamsBtn = document.getElementById("toggleManualTeamsBtn");
         if (manualTeamsBtn) manualTeamsBtn.textContent = "Show manual teams";
+        // Clear team rows
+        const teamsList = document.getElementById("teamsList");
+        if (teamsList) teamsList.innerHTML = "";
         await renderTournamentsPage();
       } catch (error) {
         setFlash(error.message || "Failed to create tournament.", true);
@@ -2068,14 +2107,17 @@
           <td>${statusBadge(r.status)}</td>
           <td>${paymentBadge(r.paymentStatus)}</td>
           <td>${formatPesoAmount(feeAmount)}</td>
-          <td style="min-width:80px;">${r.teamBannerUrl
-            ? `<div style="position:relative;display:inline-block;">
+          <td style="min-width:90px;">${r.teamBannerUrl
+            ? `<div style="display:flex;flex-direction:column;gap:4px;align-items:flex-start;">
                  <img src="${escapeAttribute(auth.apiBase + r.teamBannerUrl)}" alt="" style="width:56px;height:36px;object-fit:cover;border-radius:6px;border:1px solid rgba(139,92,246,0.3);cursor:pointer;display:block;" onclick="window.open('${escapeAttribute(auth.apiBase + r.teamBannerUrl)}','_blank')">
-               </div>
-               <label class="console-btn" style="font-size:10px;padding:2px 7px;cursor:pointer;display:inline-block;margin-top:4px;">
-                 <input type="file" accept="image/*" style="display:none;" class="reg-banner-file" data-reg-id="${escapeAttribute(r.publicId)}" data-team="${escapeAttribute(r.teamName)}">
-                 <span data-upload-label>Replace</span>
-               </label>`
+                 <div style="display:flex;gap:4px;">
+                   <label class="console-btn" style="font-size:10px;padding:2px 7px;cursor:pointer;display:inline-block;">
+                     <input type="file" accept="image/*" style="display:none;" class="reg-banner-file" data-reg-id="${escapeAttribute(r.publicId)}" data-team="${escapeAttribute(r.teamName)}">
+                     <span data-upload-label>Replace</span>
+                   </label>
+                   <button class="console-btn danger reg-banner-delete-btn" data-reg-id="${escapeAttribute(r.publicId)}" data-team="${escapeAttribute(r.teamName)}" style="font-size:10px;padding:2px 7px;background:rgba(239,68,68,0.15);color:#fca5a5;border-color:rgba(239,68,68,0.25);">Delete</button>
+                 </div>
+               </div>`
             : `<label class="console-btn" style="font-size:10px;padding:2px 7px;cursor:pointer;display:inline-block;background:rgba(167,139,250,0.1);border-color:rgba(167,139,250,0.25);color:#a78bfa;">
                  <input type="file" accept="image/*" style="display:none;" class="reg-banner-file" data-reg-id="${escapeAttribute(r.publicId)}" data-team="${escapeAttribute(r.teamName)}">
                  <span data-upload-label>Upload</span>
@@ -2263,6 +2305,33 @@
           if (label) label.style.opacity = "";
           if (labelText) labelText.textContent = originalLabelText;
           fileInput.value = "";
+        }
+      });
+    });
+
+    // Banner delete
+    content.querySelectorAll(".reg-banner-delete-btn").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        const regId = btn.dataset.regId;
+        const team  = btn.dataset.team;
+        if (!confirm(`Remove the banner for "${team}"?`)) return;
+        btn.disabled = true;
+        btn.textContent = "Removing...";
+        try {
+          const res = await fetch(`${auth.apiBase}/api/admin/registrations/${regId}/banner`, {
+            method: "DELETE",
+            headers: { Authorization: `Bearer ${session.token}` },
+          });
+          if (!res.ok) {
+            const data = await res.json().catch(() => ({}));
+            throw new Error(data.message || "Delete failed.");
+          }
+          setFlash(`Banner removed for "${team}".`);
+          await renderRegistrationsPage(statusFilter);
+        } catch (error) {
+          setFlash(error.message || "Failed to remove banner.", true);
+          btn.disabled = false;
+          btn.textContent = "Delete";
         }
       });
     });

@@ -5,7 +5,9 @@ async function listTournaments(req, res) {
     const tournaments = await tournamentService.listTournaments();
     res.status(200).json(tournaments);
   } catch (error) {
-    res.status(500).json({ message: error.message || "Failed to load tournaments." });
+    res
+      .status(500)
+      .json({ message: error.message || "Failed to load tournaments." });
   }
 }
 
@@ -16,9 +18,9 @@ async function getSchedule(req, res) {
     );
     res.status(200).json(payload);
   } catch (error) {
-    res
-      .status(error.statusCode || 500)
-      .json({ message: error.message || "Failed to load tournament schedule." });
+    res.status(error.statusCode || 500).json({
+      message: error.message || "Failed to load tournament schedule.",
+    });
   }
 }
 
@@ -29,9 +31,9 @@ async function getLeaderboard(req, res) {
     );
     res.status(200).json(payload);
   } catch (error) {
-    res
-      .status(error.statusCode || 500)
-      .json({ message: error.message || "Failed to load tournament leaderboard." });
+    res.status(error.statusCode || 500).json({
+      message: error.message || "Failed to load tournament leaderboard.",
+    });
   }
 }
 
@@ -50,25 +52,35 @@ async function createTournament(req, res) {
     });
     res.status(201).json(payload);
   } catch (error) {
-    res.status(error.statusCode || 500).json({ message: error.message || "Failed to create tournament." });
+    res
+      .status(error.statusCode || 500)
+      .json({ message: error.message || "Failed to create tournament." });
   }
 }
 
 async function listTournamentTeams(req, res) {
   try {
-    const teams = await tournamentService.listTeamsByTournament(req.params.tournamentId);
+    const teams = await tournamentService.listTeamsByTournament(
+      req.params.tournamentId,
+    );
     res.status(200).json({ items: teams, total: teams.length });
   } catch (error) {
-    res.status(error.statusCode || 500).json({ message: error.message || "Failed to load teams." });
+    res
+      .status(error.statusCode || 500)
+      .json({ message: error.message || "Failed to load teams." });
   }
 }
 
 async function listLeaderboardAdmin(req, res) {
   try {
-    const entries = await tournamentService.listLeaderboardEntries(req.params.tournamentId);
+    const entries = await tournamentService.listLeaderboardEntries(
+      req.params.tournamentId,
+    );
     res.status(200).json({ items: entries, total: entries.length });
   } catch (error) {
-    res.status(error.statusCode || 500).json({ message: error.message || "Failed to load leaderboard entries." });
+    res.status(error.statusCode || 500).json({
+      message: error.message || "Failed to load leaderboard entries.",
+    });
   }
 }
 
@@ -82,16 +94,22 @@ async function upsertLeaderboardEntry(req, res) {
     });
     res.status(200).json(entry);
   } catch (error) {
-    res.status(error.statusCode || 500).json({ message: error.message || "Failed to save leaderboard entry." });
+    res
+      .status(error.statusCode || 500)
+      .json({ message: error.message || "Failed to save leaderboard entry." });
   }
 }
 
 async function listTournamentMatches(req, res) {
   try {
-    const payload = await tournamentService.getScheduleByTournamentId(req.params.tournamentId);
+    const payload = await tournamentService.getScheduleByTournamentId(
+      req.params.tournamentId,
+    );
     res.status(200).json(payload);
   } catch (error) {
-    res.status(error.statusCode || 500).json({ message: error.message || "Failed to load matches." });
+    res
+      .status(error.statusCode || 500)
+      .json({ message: error.message || "Failed to load matches." });
   }
 }
 
@@ -106,7 +124,9 @@ async function createMatch(req, res) {
     });
     res.status(201).json(match);
   } catch (error) {
-    res.status(error.statusCode || 500).json({ message: error.message || "Failed to create match." });
+    res
+      .status(error.statusCode || 500)
+      .json({ message: error.message || "Failed to create match." });
   }
 }
 
@@ -124,7 +144,9 @@ async function updateMatch(req, res) {
     }
     res.status(200).json(match);
   } catch (error) {
-    res.status(error.statusCode || 500).json({ message: error.message || "Failed to update match." });
+    res
+      .status(error.statusCode || 500)
+      .json({ message: error.message || "Failed to update match." });
   }
 }
 
@@ -133,7 +155,9 @@ async function getMatchStats(req, res) {
     const stats = await tournamentService.getMatchStats(req.params.matchId);
     res.status(200).json({ items: stats, total: stats.length });
   } catch (error) {
-    res.status(error.statusCode || 500).json({ message: error.message || "Failed to load match stats." });
+    res
+      .status(error.statusCode || 500)
+      .json({ message: error.message || "Failed to load match stats." });
   }
 }
 
@@ -146,7 +170,9 @@ async function saveMatchStats(req, res) {
     });
     res.status(200).json({ items: saved, total: saved.length });
   } catch (error) {
-    res.status(error.statusCode || 500).json({ message: error.message || "Failed to save match stats." });
+    res
+      .status(error.statusCode || 500)
+      .json({ message: error.message || "Failed to save match stats." });
   }
 }
 
@@ -158,7 +184,9 @@ async function listRegistrations(req, res) {
     });
     res.status(200).json(payload);
   } catch (error) {
-    res.status(error.statusCode || 500).json({ message: error.message || "Failed to load registrations." });
+    res
+      .status(error.statusCode || 500)
+      .json({ message: error.message || "Failed to load registrations." });
   }
 }
 
@@ -166,12 +194,17 @@ async function submitRegistration(req, res) {
   try {
     const paymentProofFile = req.files?.paymentProof?.[0] || null;
     const teamBannerFile = req.files?.teamBanner?.[0] || null;
-    const paymentProofUrl = paymentProofFile ? `/uploads/payment-proofs/${paymentProofFile.filename}` : null;
-    const teamBannerUrl = teamBannerFile ? `/uploads/team-banners/${teamBannerFile.filename}` : null;
+    const paymentProofUrl = paymentProofFile
+      ? `/uploads/payment-proofs/${paymentProofFile.filename}`
+      : null;
+    const teamBannerUrl = teamBannerFile
+      ? `/uploads/team-banners/${teamBannerFile.filename}`
+      : null;
     const playerCount = parseInt(req.body.playerCount, 10);
-    const rosterNotes = !Number.isNaN(playerCount) && playerCount > 0
-      ? `${playerCount} player${playerCount === 1 ? "" : "s"}`
-      : (req.body.rosterNotes || null);
+    const rosterNotes =
+      !Number.isNaN(playerCount) && playerCount > 0
+        ? `${playerCount} player${playerCount === 1 ? "" : "s"}`
+        : req.body.rosterNotes || null;
     const reg = await tournamentService.submitRegistration({
       tournamentId: req.body.tournamentId,
       teamName: req.body.teamName,
@@ -189,22 +222,44 @@ async function submitRegistration(req, res) {
       checkoutUrl: reg.checkoutUrl || null,
     });
   } catch (error) {
-    res.status(error.statusCode || 400).json({ message: error.message || "Failed to submit registration." });
+    res
+      .status(error.statusCode || 400)
+      .json({ message: error.message || "Failed to submit registration." });
   }
 }
 
 async function updateRegistrationBanner(req, res) {
   try {
-    if (!req.file) return res.status(400).json({ message: "No banner image uploaded." });
+    if (!req.file)
+      return res.status(400).json({ message: "No banner image uploaded." });
     const teamBannerUrl = `/uploads/team-banners/${req.file.filename}`;
     const updated = await tournamentService.updateRegistrationBanner({
       publicId: req.params.publicId,
       teamBannerUrl,
     });
-    if (!updated) return res.status(404).json({ message: "Registration not found." });
+    if (!updated)
+      return res.status(404).json({ message: "Registration not found." });
     res.status(200).json({ message: "Banner updated.", teamBannerUrl });
   } catch (error) {
-    res.status(error.statusCode || 500).json({ message: error.message || "Failed to update banner." });
+    res
+      .status(error.statusCode || 500)
+      .json({ message: error.message || "Failed to update banner." });
+  }
+}
+
+async function deleteRegistrationBanner(req, res) {
+  try {
+    const updated = await tournamentService.updateRegistrationBanner({
+      publicId: req.params.publicId,
+      teamBannerUrl: null,
+    });
+    if (!updated)
+      return res.status(404).json({ message: "Registration not found." });
+    res.status(200).json({ message: "Banner removed." });
+  } catch (error) {
+    res
+      .status(error.statusCode || 500)
+      .json({ message: error.message || "Failed to remove banner." });
   }
 }
 
@@ -214,9 +269,13 @@ async function approveRegistration(req, res) {
       actor: req.auth.user,
       registrationId: req.params.publicId,
     });
-    res.status(200).json({ message: "Registration approved.", registration: updated });
+    res
+      .status(200)
+      .json({ message: "Registration approved.", registration: updated });
   } catch (error) {
-    res.status(error.statusCode || 500).json({ message: error.message || "Failed to approve registration." });
+    res
+      .status(error.statusCode || 500)
+      .json({ message: error.message || "Failed to approve registration." });
   }
 }
 
@@ -227,9 +286,13 @@ async function rejectRegistration(req, res) {
       registrationId: req.params.publicId,
       reason: req.body.reason || null,
     });
-    res.status(200).json({ message: "Registration rejected.", registration: updated });
+    res
+      .status(200)
+      .json({ message: "Registration rejected.", registration: updated });
   } catch (error) {
-    res.status(error.statusCode || 500).json({ message: error.message || "Failed to reject registration." });
+    res
+      .status(error.statusCode || 500)
+      .json({ message: error.message || "Failed to reject registration." });
   }
 }
 
@@ -241,7 +304,9 @@ async function confirmRegistrationPayment(req, res) {
     });
     res.status(200).json(result);
   } catch (error) {
-    res.status(error.statusCode || 500).json({ message: error.message || "Failed to confirm payment." });
+    res
+      .status(error.statusCode || 500)
+      .json({ message: error.message || "Failed to confirm payment." });
   }
 }
 
@@ -253,16 +318,24 @@ async function joinTournamentByCode(req, res) {
     });
     res.status(200).json(result);
   } catch (error) {
-    res.status(error.statusCode || 400).json({ message: error.message || "Failed to join tournament." });
+    res
+      .status(error.statusCode || 400)
+      .json({ message: error.message || "Failed to join tournament." });
   }
 }
 
 async function endTournament(req, res) {
   try {
-    const tournament = await tournamentService.endTournament(req.params.tournamentId);
-    res.status(200).json({ message: "Tournament ended successfully.", tournament });
+    const tournament = await tournamentService.endTournament(
+      req.params.tournamentId,
+    );
+    res
+      .status(200)
+      .json({ message: "Tournament ended successfully.", tournament });
   } catch (error) {
-    res.status(error.statusCode || 500).json({ message: error.message || "Failed to end tournament." });
+    res
+      .status(error.statusCode || 500)
+      .json({ message: error.message || "Failed to end tournament." });
   }
 }
 
@@ -278,7 +351,9 @@ async function getTournamentSummary(req, res) {
       leaderboard: leaderboard.items || [],
     });
   } catch (error) {
-    res.status(error.statusCode || 500).json({ message: error.message || "Failed to load tournament summary." });
+    res
+      .status(error.statusCode || 500)
+      .json({ message: error.message || "Failed to load tournament summary." });
   }
 }
 
@@ -293,15 +368,21 @@ async function uploadProofByPublicId(req, res) {
       publicId: req.params.publicId,
       paymentProofUrl,
     });
-    if (!updated) return res.status(404).json({ message: "Registration not found." });
-    res.status(200).json({ message: "Receipt uploaded successfully.", paymentProofUrl });
+    if (!updated)
+      return res.status(404).json({ message: "Registration not found." });
+    res
+      .status(200)
+      .json({ message: "Receipt uploaded successfully.", paymentProofUrl });
   } catch (error) {
-    res.status(error.statusCode || 500).json({ message: error.message || "Upload failed." });
+    res
+      .status(error.statusCode || 500)
+      .json({ message: error.message || "Upload failed." });
   }
 }
 
 module.exports = {
   updateRegistrationBanner,
+  deleteRegistrationBanner,
   listTournaments,
   getRegistrationByPublicId,
   uploadProofByPublicId,
@@ -328,10 +409,15 @@ module.exports = {
 
 async function getRegistrationByPublicId(req, res) {
   try {
-    const reg = await tournamentService.getRegistrationByPublicId(req.params.publicId);
-    if (!reg) return res.status(404).json({ message: "Registration not found." });
+    const reg = await tournamentService.getRegistrationByPublicId(
+      req.params.publicId,
+    );
+    if (!reg)
+      return res.status(404).json({ message: "Registration not found." });
     res.status(200).json(reg);
   } catch (error) {
-    res.status(error.statusCode || 500).json({ message: error.message || "Failed to load registration." });
+    res
+      .status(error.statusCode || 500)
+      .json({ message: error.message || "Failed to load registration." });
   }
 }

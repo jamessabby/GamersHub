@@ -3,12 +3,17 @@ const path = require("path");
 const multer = require("multer");
 
 // ── Ensure upload directories exist ───────────────────────────────────────────
-const proofDir  = path.join(__dirname, "..", "..", "uploads", "payment-proofs");
+const proofDir = path.join(__dirname, "..", "..", "uploads", "payment-proofs");
 const bannerDir = path.join(__dirname, "..", "..", "uploads", "team-banners");
-fs.mkdirSync(proofDir,  { recursive: true });
+fs.mkdirSync(proofDir, { recursive: true });
 fs.mkdirSync(bannerDir, { recursive: true });
 
-const IMAGE_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "image/gif"]);
+const IMAGE_TYPES = new Set([
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "image/gif",
+]);
 
 const storage = multer.diskStorage({
   destination(_req, file, cb) {
@@ -21,8 +26,11 @@ const storage = multer.diskStorage({
   },
   filename(_req, file, cb) {
     const extension = path.extname(file.originalname || "").toLowerCase();
-    const suffix    = file.fieldname === "teamBanner" ? "banner" : "proof";
-    cb(null, `${Date.now()}-${Math.round(Math.random() * 1e9)}-${suffix}${extension}`);
+    const suffix = file.fieldname === "teamBanner" ? "banner" : "proof";
+    cb(
+      null,
+      `${Date.now()}-${Math.round(Math.random() * 1e9)}-${suffix}${extension}`,
+    );
   },
 });
 
@@ -43,5 +51,5 @@ module.exports = multer({
   limits: { fileSize: 8 * 1024 * 1024 },
 }).fields([
   { name: "paymentProof", maxCount: 1 },
-  { name: "teamBanner",   maxCount: 1 },
+  { name: "teamBanner", maxCount: 1 },
 ]);

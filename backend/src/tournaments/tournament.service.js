@@ -134,6 +134,30 @@ async function createTournament({ title, gameName, startDate, endDate, status, i
           teamId: team.teamId,
           seed: entry.seed || null,
         });
+
+        // Also create an approved registration so admin can manage the
+        // team banner from the Registrations tab.
+        const reg = await tournamentRepo.createRegistration({
+          tournamentId: tournament.tournamentId,
+          teamName,
+          contactName: "Admin",
+          contactEmail: "admin@gamershub.local",
+          contactPhone: null,
+          rosterNotes: "Manually added by admin",
+          paymentProofUrl: null,
+          teamBannerUrl: entry.teamBannerUrl || null,
+          feeAmount: 0,
+          paymentStatus: "paid",
+        });
+        if (reg) {
+          await tournamentRepo.updateRegistrationStatus({
+            registrationId: reg.registrationId,
+            status: "approved",
+          });
+          team.registrationPublicId = reg.publicId || null;
+          team.teamBannerUrl = entry.teamBannerUrl || null;
+        }
+
         createdTeams.push(team);
       }
     }
@@ -509,12 +533,12 @@ async function updateProofByPublicId({ publicId, paymentProofUrl }) {
 
 
 async function updateRegistrationBanner({ publicId, teamBannerUrl }) {
-  if (!publicId || !teamBannerUrl) {
-    const e = new Error("publicId and teamBannerUrl are required.");
+  if (!publicId) {
+    const e = new Error("publicId is required.");
     e.statusCode = 400;
     throw e;
   }
-  const updated = await tournamentRepo.updateRegistrationBanner({ publicId, teamBannerUrl });
+  const updated = await tournamentRepo.updateRegistrationBanner({ publicId, teamBannerUrl: teamBannerUrl || null });
   if (!updated) {
     const e = new Error("Registration not found.");
     e.statusCode = 404;

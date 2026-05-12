@@ -105,7 +105,10 @@
   });
 
   searchInput?.addEventListener("keydown", (event) => {
-    if (event.key === "Escape") { closeSearchDropdown(); searchInput.blur(); }
+    if (event.key === "Escape") {
+      closeSearchDropdown();
+      searchInput.blur();
+    }
   });
 
   async function runTopSearch(query) {
@@ -133,16 +136,25 @@
       openSearchDropdown();
       return;
     }
-    searchDropdown.innerHTML = items.map((item) => {
-      const name = escapeHtml(item.displayName || item.username || "Unknown");
-      const username = escapeHtml(item.username || "");
-      const school = escapeHtml(item.schoolTag || item.school || "");
-      const game = escapeHtml(item.primaryGame || "");
-      const meta = [school, game].filter(Boolean).join(" · ");
-      const avatar = escapeAttribute(item.avatarUrl || "../assets/icons/player-dashboard-icons/user-profile.png");
-      const state = item.relationshipState || "";
-      const stateLabel = state === "friends" ? "Friends" : state === "outgoing_pending" ? "Pending" : "";
-      return `
+    searchDropdown.innerHTML = items
+      .map((item) => {
+        const name = escapeHtml(item.displayName || item.username || "Unknown");
+        const username = escapeHtml(item.username || "");
+        const school = escapeHtml(item.schoolTag || item.school || "");
+        const game = escapeHtml(item.primaryGame || "");
+        const meta = [school, game].filter(Boolean).join(" · ");
+        const avatar = escapeAttribute(
+          item.avatarUrl ||
+            "../assets/icons/player-dashboard-icons/user-profile.png",
+        );
+        const state = item.relationshipState || "";
+        const stateLabel =
+          state === "friends"
+            ? "Friends"
+            : state === "outgoing_pending"
+              ? "Pending"
+              : "";
+        return `
         <div class="search-dropdown-item" tabindex="0" data-search-user-id="${escapeAttribute(String(item.userId || ""))}">
           <img class="search-dropdown-avatar" src="${avatar}" alt="" onerror="this.style.opacity='0'" />
           <div class="search-dropdown-info">
@@ -152,7 +164,8 @@
           ${stateLabel ? `<span class="search-dropdown-tag">${stateLabel}</span>` : ""}
         </div>
       `;
-    }).join("");
+      })
+      .join("");
     openSearchDropdown();
 
     searchDropdown.querySelectorAll(".search-dropdown-item").forEach((el) => {
@@ -262,47 +275,63 @@
   });
 
   // Hover to show/hide reaction picker
-  feedList?.addEventListener("mouseenter", (event) => {
-    const btn = event.target.closest(".post-react-btn");
-    if (!btn) return;
-    const postCard = btn.closest("[data-post-id]");
-    if (!postCard) return;
-    const picker = postCard.querySelector("[data-post-reaction-picker]");
-    if (picker) picker.classList.remove("hidden");
-    postCard._reactHoverTimer && clearTimeout(postCard._reactHoverTimer);
-  }, true);
+  feedList?.addEventListener(
+    "mouseenter",
+    (event) => {
+      const btn = event.target.closest(".post-react-btn");
+      if (!btn) return;
+      const postCard = btn.closest("[data-post-id]");
+      if (!postCard) return;
+      const picker = postCard.querySelector("[data-post-reaction-picker]");
+      if (picker) picker.classList.remove("hidden");
+      postCard._reactHoverTimer && clearTimeout(postCard._reactHoverTimer);
+    },
+    true,
+  );
 
-  feedList?.addEventListener("mouseleave", (event) => {
-    const btn = event.target.closest(".post-react-btn");
-    if (!btn) return;
-    const postCard = btn.closest("[data-post-id]");
-    if (!postCard) return;
-    const picker = postCard.querySelector("[data-post-reaction-picker]");
-    if (!picker) return;
-    postCard._reactHoverTimer = setTimeout(() => {
-      // Only hide if mouse isn't over the picker itself
-      if (!postCard.matches(":hover") || !picker.matches(":hover")) {
+  feedList?.addEventListener(
+    "mouseleave",
+    (event) => {
+      const btn = event.target.closest(".post-react-btn");
+      if (!btn) return;
+      const postCard = btn.closest("[data-post-id]");
+      if (!postCard) return;
+      const picker = postCard.querySelector("[data-post-reaction-picker]");
+      if (!picker) return;
+      postCard._reactHoverTimer = setTimeout(() => {
+        // Only hide if mouse isn't over the picker itself
+        if (!postCard.matches(":hover") || !picker.matches(":hover")) {
+          picker.classList.add("hidden");
+        }
+      }, 120);
+    },
+    true,
+  );
+
+  feedList?.addEventListener(
+    "mouseenter",
+    (event) => {
+      const picker = event.target.closest("[data-post-reaction-picker]");
+      if (!picker) return;
+      const postCard = picker.closest("[data-post-id]");
+      if (postCard?._reactHoverTimer) clearTimeout(postCard._reactHoverTimer);
+    },
+    true,
+  );
+
+  feedList?.addEventListener(
+    "mouseleave",
+    (event) => {
+      const picker = event.target.closest("[data-post-reaction-picker]");
+      if (!picker) return;
+      const postCard = picker.closest("[data-post-id]");
+      if (!postCard) return;
+      postCard._reactHoverTimer = setTimeout(() => {
         picker.classList.add("hidden");
-      }
-    }, 120);
-  }, true);
-
-  feedList?.addEventListener("mouseenter", (event) => {
-    const picker = event.target.closest("[data-post-reaction-picker]");
-    if (!picker) return;
-    const postCard = picker.closest("[data-post-id]");
-    if (postCard?._reactHoverTimer) clearTimeout(postCard._reactHoverTimer);
-  }, true);
-
-  feedList?.addEventListener("mouseleave", (event) => {
-    const picker = event.target.closest("[data-post-reaction-picker]");
-    if (!picker) return;
-    const postCard = picker.closest("[data-post-id]");
-    if (!postCard) return;
-    postCard._reactHoverTimer = setTimeout(() => {
-      picker.classList.add("hidden");
-    }, 120);
-  }, true);
+      }, 120);
+    },
+    true,
+  );
 
   feedList?.addEventListener("click", (event) => {
     const commentDeleteBtn = event.target.closest(
@@ -1168,7 +1197,12 @@
   function guessVideoMimeType(mediaUrl) {
     if (!mediaUrl) return "";
     const ext = String(mediaUrl).split(".").pop().toLowerCase().split("?")[0];
-    const map = { mp4: "video/mp4", webm: "video/webm", ogg: "video/ogg", mov: "video/mp4" };
+    const map = {
+      mp4: "video/mp4",
+      webm: "video/webm",
+      ogg: "video/ogg",
+      mov: "video/mp4",
+    };
     return map[ext] || "";
   }
 
@@ -1199,7 +1233,9 @@
 
         const contentType = response.headers.get("content-type") || "";
         if (!/^(image|video)\//i.test(contentType)) {
-          throw new Error(`Unexpected media content type: ${contentType || "unknown"}`);
+          throw new Error(
+            `Unexpected media content type: ${contentType || "unknown"}`,
+          );
         }
 
         const blobUrl = URL.createObjectURL(await response.blob());
@@ -1215,7 +1251,9 @@
     }
 
     try {
-      return new URL(mediaSrc, window.location.href).pathname.startsWith("/uploads/");
+      return new URL(mediaSrc, window.location.href).pathname.startsWith(
+        "/uploads/",
+      );
     } catch {
       return false;
     }
@@ -1425,7 +1463,7 @@
           <div class="post-comment-meta">
             <span class="post-comment-author">${escapeHtml(author.displayName)}</span>
             ${schoolTag}
-            <span class="post-comment-time" data-created-at="${escapeAttribute(comment.createdAt || "")}">${escapeHtml(comment.createdAt ? formatRelativeTime(comment.createdAt) : (comment.createdLabel || "Just now"))}</span>
+            <span class="post-comment-time" data-created-at="${escapeAttribute(comment.createdAt || "")}">${escapeHtml(comment.createdAt ? formatRelativeTime(comment.createdAt) : comment.createdLabel || "Just now")}</span>
             ${Number(comment.userId) === Number(session.userId) ? `<button type="button" class="post-comment-delete" data-comment-action="delete" data-comment-id="${escapeAttribute(String(comment.commentId))}" data-post-id="${escapeAttribute(String(comment.postId))}">Delete</button>` : ""}
           </div>
           <p class="post-comment-message">${escapeHtml(comment.message || "")}</p>
