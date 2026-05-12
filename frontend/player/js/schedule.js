@@ -1,5 +1,7 @@
 (() => {
-  const API_BASE = window.GamersHubAuth?.apiBase || `http://${window.location.hostname || "localhost"}:3000`;
+  const API_BASE =
+    window.GamersHubAuth?.apiBase ||
+    `http://${window.location.hostname || "localhost"}:3000`;
   const tournamentId =
     new URLSearchParams(window.location.search).get("tournament") || "1";
   const topNav = document.getElementById("topNav");
@@ -62,14 +64,14 @@
       }
 
       if (titleNode) {
-        titleNode.textContent = payload.tournament?.title || "Tournament Schedule";
+        titleNode.textContent =
+          payload.tournament?.title || "Tournament Schedule";
       }
 
       if (subtitleNode) {
-        subtitleNode.textContent =
-          payload.items?.length
-            ? `Real tournament matches are now loaded from SSMS for ${payload.tournament?.title || "this tournament"}.`
-            : "This tournament exists in SSMS, but there are no saved match records yet.";
+        subtitleNode.textContent = payload.items?.length
+          ? `Real tournament matches are now loaded from SSMS for ${payload.tournament?.title || "this tournament"}.`
+          : "This tournament exists in SSMS, but there are no saved match records yet.";
       }
 
       document.title = `GamersHub - ${payload.tournament?.title || "Tournament Schedule"}`;
@@ -103,10 +105,11 @@
         (match) => `
           <article class="sch-match">
             <div class="sch-team-media">
-              ${match.teamABannerUrl
-                ? `<img class="sch-team-banner" src="${escapeAttribute(resolveAssetUrl(match.teamABannerUrl))}" alt="${escapeHtml(match.teamAName)}" onerror="this.style.display='none';this.nextElementSibling.style.display=''"><div class="sch-team-avatar" style="display:none;">${escapeHtml(getInitials(match.teamAName))}</div>`
-                : `<div class="sch-team-avatar">${escapeHtml(getInitials(match.teamAName))}</div>`
-              }
+             ${
+               match.teamABannerUrl
+                 ? `<img class="sch-team-banner" src="${escapeAttribute(resolveAssetUrl(match.teamABannerUrl))}" alt="${escapeHtml(match.teamAName)}">`
+                 : `<div class="sch-team-avatar">${escapeHtml(getInitials(match.teamAName))}</div>`
+             }s
             </div>
             <div class="sch-team-info">
               <span class="sch-team-label">Team A</span>
@@ -127,9 +130,10 @@
               <span class="sch-team-score">${formatScore(match.teamBScore)}</span>
             </div>
             <div class="sch-team-media">
-              ${match.teamBBannerUrl
-                ? `<img class="sch-team-banner" src="${escapeAttribute(resolveAssetUrl(match.teamBBannerUrl))}" alt="${escapeHtml(match.teamBName)}" onerror="this.style.display='none';this.nextElementSibling.style.display=''"><div class="sch-team-avatar" style="display:none;">${escapeHtml(getInitials(match.teamBName))}</div>`
-                : `<div class="sch-team-avatar">${escapeHtml(getInitials(match.teamBName))}</div>`
+              ${
+                match.teamBBannerUrl
+                  ? `<img class="sch-team-banner" src="${escapeAttribute(resolveAssetUrl(match.teamBBannerUrl))}" alt="${escapeHtml(match.teamBName)}">`
+                  : `<div class="sch-team-avatar">${escapeHtml(getInitials(match.teamBName))}</div>`
               }
             </div>
           </article>
