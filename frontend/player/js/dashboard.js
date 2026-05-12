@@ -1141,6 +1141,14 @@
       .join("");
   }
 
+  const API_BASE_URL = "https://retriever-unwashed-reseller.ngrok-free.dev";
+
+  function resolveMediaUrl(url) {
+    if (!url) return "";
+    if (url.startsWith("http")) return url;
+    return `${API_BASE_URL}${url}`;
+  }ss
+
   function renderMedia(post) {
     if (!post.mediaUrl) {
       return "";

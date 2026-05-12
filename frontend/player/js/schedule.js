@@ -105,11 +105,11 @@
         (match) => `
           <article class="sch-match">
             <div class="sch-team-media">
-             ${
-               match.teamABannerUrl
-                 ? `<img class="sch-team-banner" src="${escapeAttribute(resolveAssetUrl(match.teamABannerUrl))}" alt="${escapeHtml(match.teamAName)}">`
-                 : `<div class="sch-team-avatar">${escapeHtml(getInitials(match.teamAName))}</div>`
-             }s
+              ${
+                match.teamABannerUrl
+                  ? `<img class="sch-team-banner" src="${escapeAttribute(resolveAssetUrl(match.teamABannerUrl))}" alt="${escapeHtml(match.teamAName)}" onerror="this.style.display='none';this.nextElementSibling.style.display=''"><div class="sch-team-avatar" style="display:none;">${escapeHtml(getInitials(match.teamAName))}</div>`
+                  : `<div class="sch-team-avatar">${escapeHtml(getInitials(match.teamAName))}</div>`
+              }
             </div>
             <div class="sch-team-info">
               <span class="sch-team-label">Team A</span>
@@ -132,7 +132,7 @@
             <div class="sch-team-media">
               ${
                 match.teamBBannerUrl
-                  ? `<img class="sch-team-banner" src="${escapeAttribute(resolveAssetUrl(match.teamBBannerUrl))}" alt="${escapeHtml(match.teamBName)}">`
+                  ? `<img class="sch-team-banner" src="${escapeAttribute(resolveAssetUrl(match.teamBBannerUrl))}" alt="${escapeHtml(match.teamBName)}" onerror="this.style.display='none';this.nextElementSibling.style.display=''"><div class="sch-team-avatar" style="display:none;">${escapeHtml(getInitials(match.teamBName))}</div>`
                   : `<div class="sch-team-avatar">${escapeHtml(getInitials(match.teamBName))}</div>`
               }
             </div>
