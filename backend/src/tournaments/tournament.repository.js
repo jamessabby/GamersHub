@@ -102,15 +102,28 @@ async function listScheduleByTournamentId(tournamentId) {
         ON teamA.TEAM_ID = m.TEAM_A_ID
       LEFT JOIN dbo.TEAM teamB
         ON teamB.TEAM_ID = m.TEAM_B_ID
-      -- Join approved registrations to get team banners
-      LEFT JOIN dbo.TOURNAMENT_REGISTRATION regA
-        ON regA.TOURNAMENT_ID = m.TOURNAMENT_ID
-        AND regA.TEAM_NAME = COALESCE(teamA.TEAM_NAME, CONCAT('Team ', m.TEAM_A_ID))
-        AND regA.STATUS = 'approved'
-      LEFT JOIN dbo.TOURNAMENT_REGISTRATION regB
-        ON regB.TOURNAMENT_ID = m.TOURNAMENT_ID
-        AND regB.TEAM_NAME = COALESCE(teamB.TEAM_NAME, CONCAT('Team ', m.TEAM_B_ID))
-        AND regB.STATUS = 'approved'
+      OUTER APPLY (
+        SELECT TOP 1 r.TEAM_BANNER_URL
+        FROM dbo.TOURNAMENT_REGISTRATION r
+        WHERE r.TOURNAMENT_ID = m.TOURNAMENT_ID
+          AND r.TEAM_NAME = COALESCE(teamA.TEAM_NAME, CONCAT('Team ', m.TEAM_A_ID))
+          AND NULLIF(LTRIM(RTRIM(r.TEAM_BANNER_URL)), '') IS NOT NULL
+        ORDER BY
+          CASE WHEN r.STATUS = 'approved' THEN 0 ELSE 1 END,
+          r.UPDATED_AT DESC,
+          r.CREATED_AT DESC
+      ) regA
+      OUTER APPLY (
+        SELECT TOP 1 r.TEAM_BANNER_URL
+        FROM dbo.TOURNAMENT_REGISTRATION r
+        WHERE r.TOURNAMENT_ID = m.TOURNAMENT_ID
+          AND r.TEAM_NAME = COALESCE(teamB.TEAM_NAME, CONCAT('Team ', m.TEAM_B_ID))
+          AND NULLIF(LTRIM(RTRIM(r.TEAM_BANNER_URL)), '') IS NOT NULL
+        ORDER BY
+          CASE WHEN r.STATUS = 'approved' THEN 0 ELSE 1 END,
+          r.UPDATED_AT DESC,
+          r.CREATED_AT DESC
+      ) regB
       WHERE m.TOURNAMENT_ID = @tournamentId
       ORDER BY m.MATCH_DATE, m.MATCH_TIME, m.MATCH_ID
     `);

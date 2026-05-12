@@ -83,6 +83,7 @@
       }
 
       renderSchedule(payload);
+      void hydrateTeamBanners();
     } catch (error) {
       console.error("Schedule loading failed:", error);
       renderScheduleEmptyState(
@@ -194,12 +195,54 @@
     return `
       <img
         class="sch-team-banner"
-        src="${escapeAttribute(src)}"
+        data-banner-src="${escapeAttribute(src)}"
         alt="${escapeAttribute(teamName)}"
         onerror="this.hidden=true;this.nextElementSibling.hidden=false;"
+        hidden
       >
       <div class="sch-team-avatar" hidden>${initials}</div>
     `;
+  }
+
+  async function hydrateTeamBanners() {
+    const banners = document.querySelectorAll(".sch-team-banner[data-banner-src]");
+    await Promise.all(
+      [...banners].map(async (img) => {
+        const fallback = img.nextElementSibling;
+        try {
+          const response = await fetch(img.dataset.bannerSrc, {
+            headers: {
+              "ngrok-skip-browser-warning": "true",
+            },
+          });
+          const contentType = response.headers.get("content-type") || "";
+
+          if (!response.ok || !contentType.toLowerCase().startsWith("image/")) {
+            throw new Error(`Banner image failed to load (${response.status}).`);
+          }
+
+          const blob = await response.blob();
+          img.onload = () => {
+            img.hidden = false;
+            if (fallback) {
+              fallback.hidden = true;
+            }
+          };
+          img.onerror = () => showBannerFallback(img);
+          img.src = URL.createObjectURL(blob);
+        } catch (error) {
+          console.warn("Team banner failed to load:", img.dataset.bannerSrc, error);
+          showBannerFallback(img);
+        }
+      }),
+    );
+  }
+
+  function showBannerFallback(img) {
+    img.hidden = true;
+    if (img.nextElementSibling) {
+      img.nextElementSibling.hidden = false;
+    }
   }
 
   function resolveApiBase() {
