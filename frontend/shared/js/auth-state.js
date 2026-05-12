@@ -10,7 +10,8 @@
 //   • Copy the "Forwarding" https line, e.g. https://xxxx.ngrok-free.app
 //   • Paste it below (replace the existing value)
 //
-window.GAMERSHUB_API_BASE = "https://reputable-amigo-thermos.ngrok-free.dev";
+window.GAMERSHUB_API_BASE =
+  "https://retriever-unwashed-reseller.ngrok-free.dev";
 // ══════════════════════════════════════════════════════════════════════════════
 
 (() => {
@@ -121,7 +122,8 @@ window.GAMERSHUB_API_BASE = "https://reputable-amigo-thermos.ngrok-free.dev";
     }
 
     const profile = getCachedProfile(session.userId);
-    const displayName = profile?.displayName || session.displayName || session.username;
+    const displayName =
+      profile?.displayName || session.displayName || session.username;
 
     root.querySelectorAll("[data-gh-user]").forEach((node) => {
       node.textContent = displayName;
@@ -169,7 +171,11 @@ window.GAMERSHUB_API_BASE = "https://reputable-amigo-thermos.ngrok-free.dev";
       ...profile,
       userId,
     };
-    const { avatar: _avatar, socials: _socials, ...profileForStorage } = nextProfile;
+    const {
+      avatar: _avatar,
+      socials: _socials,
+      ...profileForStorage
+    } = nextProfile;
 
     try {
       localStorage.setItem(
@@ -201,7 +207,8 @@ window.GAMERSHUB_API_BASE = "https://reputable-amigo-thermos.ngrok-free.dev";
     }
 
     const profile = getCachedProfile(session.userId);
-    const displayName = profile?.displayName || session.displayName || session.username;
+    const displayName =
+      profile?.displayName || session.displayName || session.username;
     const avatar = profile?.avatar || "";
 
     root.querySelectorAll("[data-gh-user]").forEach((node) => {
@@ -256,7 +263,9 @@ window.GAMERSHUB_API_BASE = "https://reputable-amigo-thermos.ngrok-free.dev";
   }
 
   function toggleThemePreference() {
-    return setThemePreference(getThemePreference() === "light" ? "dark" : "light");
+    return setThemePreference(
+      getThemePreference() === "light" ? "dark" : "light",
+    );
   }
 
   function applyStoredTheme() {

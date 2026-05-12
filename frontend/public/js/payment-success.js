@@ -6,7 +6,8 @@
 (function () {
   "use strict";
 
-  const DEFAULT_REMOTE_API_BASE = "https://reputable-amigo-thermos.ngrok-free.dev";
+  const DEFAULT_REMOTE_API_BASE =
+    "https://retriever-unwashed-reseller.ngrok-free.dev";
   const API_BASE = resolveApiBase();
   const API = `${API_BASE}/api`;
   const API_HEADERS = API_BASE.includes("ngrok-free")
@@ -31,7 +32,9 @@
   }
 
   function resolveApiBase() {
-    const queryBase = new URLSearchParams(window.location.search).get("apiBase");
+    const queryBase = new URLSearchParams(window.location.search).get(
+      "apiBase",
+    );
     const candidates = [
       queryBase,
       window.GamersHubAuth?.apiBase,
@@ -104,15 +107,20 @@
     headers: API_HEADERS,
   })
     .then((response) =>
-      response.json().catch(() => ({})).then((data) => {
-        if (!response.ok) {
-          const error = new Error(response.status === 404 ? "not_found" : "fetch_failed");
-          error.status = response.status;
-          error.messageFromServer = data?.message || "";
-          throw error;
-        }
-        return data;
-      }),
+      response
+        .json()
+        .catch(() => ({}))
+        .then((data) => {
+          if (!response.ok) {
+            const error = new Error(
+              response.status === 404 ? "not_found" : "fetch_failed",
+            );
+            error.status = response.status;
+            error.messageFromServer = data?.message || "";
+            throw error;
+          }
+          return data;
+        }),
     )
     .then((reg) => {
       const info = $("regInfo");
@@ -191,7 +199,8 @@
     }
 
     uploadZone.addEventListener("click", (event) => {
-      if (event.target === removeBtn || removeBtn.contains(event.target)) return;
+      if (event.target === removeBtn || removeBtn.contains(event.target))
+        return;
       fileInput.click();
     });
 
@@ -265,10 +274,13 @@
       },
     )
       .then((response) =>
-        response.json().catch(() => ({})).then((data) => ({
-          ok: response.ok,
-          data,
-        })),
+        response
+          .json()
+          .catch(() => ({}))
+          .then((data) => ({
+            ok: response.ok,
+            data,
+          })),
       )
       .then(({ ok, data }) => {
         if (!ok) throw new Error(data.message || "Upload failed.");
