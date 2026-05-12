@@ -164,8 +164,10 @@ async function listRegistrations(req, res) {
 
 async function submitRegistration(req, res) {
   try {
-    const paymentProofUrl = req.files?.paymentProof?.[0] ? `/uploads/payment-proofs/${req.files.paymentProof[0].filename}` : null;
-    const teamBannerUrl   = req.files?.teamBanner?.[0]   ? `/uploads/team-banners/${req.files.teamBanner[0].filename}`     : null;
+    const paymentProofFile = req.files?.paymentProof?.[0] || null;
+    const teamBannerFile = req.files?.teamBanner?.[0] || null;
+    const paymentProofUrl = paymentProofFile ? `/uploads/payment-proofs/${paymentProofFile.filename}` : null;
+    const teamBannerUrl = teamBannerFile ? `/uploads/team-banners/${teamBannerFile.filename}` : null;
     const playerCount = parseInt(req.body.playerCount, 10);
     const rosterNotes = !Number.isNaN(playerCount) && playerCount > 0
       ? `${playerCount} player${playerCount === 1 ? "" : "s"}`
@@ -282,10 +284,11 @@ async function getTournamentSummary(req, res) {
 
 async function uploadProofByPublicId(req, res) {
   try {
-    if (!req.file) {
+    const proofFile = req.file || req.files?.paymentProof?.[0] || null;
+    if (!proofFile) {
       return res.status(400).json({ message: "No file uploaded." });
     }
-    const paymentProofUrl = `/uploads/payment-proofs/${req.file.filename}`;
+    const paymentProofUrl = `/uploads/payment-proofs/${proofFile.filename}`;
     const updated = await tournamentService.updateProofByPublicId({
       publicId: req.params.publicId,
       paymentProofUrl,

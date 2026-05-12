@@ -16,10 +16,10 @@ router.get("/:tournamentId/matches/:matchId/stats", tournamentController.getMatc
 router.get("/registration/:publicId", tournamentController.getRegistrationByPublicId);
 
 // Public — upload payment proof after PayMongo redirect
-router.post("/registration/:publicId/upload-proof", registrationUpload.single("paymentProof"), tournamentController.uploadProofByPublicId);
+router.post("/registration/:publicId/upload-proof", registrationUpload, tournamentController.uploadProofByPublicId);
 
 // Public registration (no auth — organizers register from a social link)
-router.post("/register", registrationUpload.single("paymentProof"), tournamentController.submitRegistration);
+router.post("/register", registrationUpload, tournamentController.submitRegistration);
 
 // Backward-compatible admin create path for older cached frontend builds.
 router.post("/", requireAuth, requireRole("admin", "superadmin"), tournamentController.createTournament);

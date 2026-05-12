@@ -468,6 +468,7 @@ async function listRegistrations({ tournamentId = null, status = null } = {}) {
         r.PAYMENT_STATUS    AS paymentStatus,
         r.FEE_AMOUNT        AS feeAmount,
         r.PAYMENT_PROOF_URL AS paymentProofUrl,
+        r.TEAM_BANNER_URL   AS teamBannerUrl,
         r.JOIN_CODE         AS joinCode,
         r.JOIN_CODE_USED    AS joinCodeUsed,
         r.REVIEWED_BY       AS reviewedBy,
@@ -503,6 +504,7 @@ async function findRegistrationByPublicId(publicId) {
         r.PAYMENT_STATUS    AS paymentStatus,
         r.FEE_AMOUNT        AS feeAmount,
         r.PAYMENT_PROOF_URL AS paymentProofUrl,
+        r.TEAM_BANNER_URL   AS teamBannerUrl,
         r.JOIN_CODE         AS joinCode,
         r.JOIN_CODE_USED    AS joinCodeUsed,
         r.REVIEWED_BY       AS reviewedBy,
@@ -586,7 +588,6 @@ async function updateRegistrationPayment({ registrationId, paymentStatus, paymen
     .input("registrationId", sql.Int, registrationId)
     .input("paymentStatus", sql.NVarChar(20), paymentStatus)
     .input("paymentProofUrl", sql.NVarChar(1000), paymentProofUrl || null)
-    .input("teamBannerUrl", sql.NVarChar(1000), teamBannerUrl || null)
     .query(`
       UPDATE dbo.TOURNAMENT_REGISTRATION
       SET PAYMENT_STATUS    = @paymentStatus,
@@ -801,7 +802,6 @@ async function updateRegistrationProof(registrationId, paymentProofUrl) {
     .request()
     .input("registrationId", sql.Int, registrationId)
     .input("paymentProofUrl", sql.NVarChar(1000), paymentProofUrl || null)
-    .input("teamBannerUrl", sql.NVarChar(1000), teamBannerUrl || null)
     .query(`
       UPDATE dbo.TOURNAMENT_REGISTRATION
       SET PAYMENT_PROOF_URL = @paymentProofUrl,

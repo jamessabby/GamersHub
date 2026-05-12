@@ -24,6 +24,7 @@ BEGIN
     -- payment
     PAYMENT_STATUS    NVARCHAR(20)   NOT NULL CONSTRAINT DF_REG_PAY       DEFAULT 'unpaid',
     PAYMENT_PROOF_URL NVARCHAR(1000) NULL,
+    TEAM_BANNER_URL   NVARCHAR(1000) NULL,
     PAYMONGO_LINK_ID  NVARCHAR(255)  NULL,
     -- join code (set on approval, single-use)
     JOIN_CODE         NVARCHAR(20)   NULL,

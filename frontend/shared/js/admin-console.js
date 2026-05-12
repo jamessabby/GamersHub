@@ -2074,11 +2074,11 @@
                </div>
                <label class="console-btn" style="font-size:10px;padding:2px 7px;cursor:pointer;display:inline-block;margin-top:4px;">
                  <input type="file" accept="image/*" style="display:none;" class="reg-banner-file" data-reg-id="${escapeAttribute(r.publicId)}" data-team="${escapeAttribute(r.teamName)}">
-                 Replace
+                 <span data-upload-label>Replace</span>
                </label>`
             : `<label class="console-btn" style="font-size:10px;padding:2px 7px;cursor:pointer;display:inline-block;background:rgba(167,139,250,0.1);border-color:rgba(167,139,250,0.25);color:#a78bfa;">
                  <input type="file" accept="image/*" style="display:none;" class="reg-banner-file" data-reg-id="${escapeAttribute(r.publicId)}" data-team="${escapeAttribute(r.teamName)}">
-                 Upload
+                 <span data-upload-label>Upload</span>
                </label>`
           }</td>
           <td>${r.paymentProofUrl
@@ -2242,13 +2242,16 @@
         const regId = fileInput.dataset.regId;
         const team  = fileInput.dataset.team;
         const label = fileInput.closest("label");
-        if (label) { label.style.opacity = "0.5"; label.textContent = "Uploading..."; }
+        const labelText = label?.querySelector("[data-upload-label]");
+        const originalLabelText = labelText?.textContent || "Upload";
+        if (label) label.style.opacity = "0.5";
+        if (labelText) labelText.textContent = "Uploading...";
         const fd = new FormData();
         fd.append("teamBanner", file, file.name);
         try {
           const res = await fetch(`${auth.apiBase}/api/admin/registrations/${regId}/banner`, {
             method: "PUT",
-            headers: { Authorization: `Bearer ${auth.token}` },
+            headers: { Authorization: `Bearer ${session.token}` },
             body: fd,
           });
           const data = await res.json();
@@ -2257,7 +2260,9 @@
           await renderRegistrationsPage(statusFilter);
         } catch (error) {
           setFlash(error.message || "Failed to update banner.", true);
-          if (label) { label.style.opacity = ""; label.textContent = "Upload"; }
+          if (label) label.style.opacity = "";
+          if (labelText) labelText.textContent = originalLabelText;
+          fileInput.value = "";
         }
       });
     });
