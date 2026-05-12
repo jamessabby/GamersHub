@@ -1,0 +1,696 @@
+/*
+ * GamersHub — Global Responsive Stylesheet
+ * responsive.css
+ *
+ * Link this AFTER all other CSS files on every page.
+ * It patches missing or weak breakpoints across the entire site.
+ *
+ * Breakpoints used:
+ *   1280px  — large laptop / small desktop
+ *   1100px  — tablet landscape
+ *    900px  — tablet portrait
+ *    768px  — large phone / tablet
+ *    600px  — medium phone
+ *    480px  — small phone
+ *    380px  — tiny phone (iPhone SE etc.)
+ */
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   1. BASE — applies everywhere
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+img, video, iframe {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Prevent text from being cut off at any size */
+* {
+  word-break: break-word;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   2. AUTH PAGES (login, register, mfa, school-verification, forgot-password)
+      These all use the same two-column .left-col / .right-col layout
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── MFA page — was completely missing media queries ── */
+@media (max-width: 900px) {
+  .mfa-layout .row > .left-col,
+  .sv-layout .left-col {
+    display: none !important;
+  }
+
+  .mfa-layout .row > .right-col,
+  .sv-layout .right-col {
+    flex: 0 0 100% !important;
+    max-width: 100% !important;
+    width: 100% !important;
+    padding: 24px 20px 40px;
+    min-height: 100vh;
+  }
+}
+
+@media (max-width: 480px) {
+  .mfa-card {
+    padding: 24px 18px 28px !important;
+    border-radius: 18px !important;
+  }
+
+  .mfa-title {
+    font-size: 20px !important;
+  }
+
+  /* MFA digit inputs — shrink on small phones */
+  .mfa-digit {
+    width: 38px !important;
+    height: 46px !important;
+    font-size: 18px !important;
+  }
+}
+
+/* ── School verification page ── */
+@media (max-width: 480px) {
+  .sv-card,
+  .school-verification-card {
+    padding: 24px 16px 28px !important;
+    border-radius: 18px !important;
+  }
+
+  .sv-code-inputs {
+    gap: 6px !important;
+  }
+
+  .sv-digit {
+    width: 36px !important;
+    height: 44px !important;
+    font-size: 17px !important;
+  }
+}
+
+/* ── Forgot password page ── */
+@media (max-width: 900px) {
+  .fp-layout .left-col,
+  .forgot-layout .left-col {
+    display: none !important;
+  }
+
+  .fp-layout .right-col,
+  .forgot-layout .right-col {
+    flex: 0 0 100% !important;
+    max-width: 100% !important;
+    padding: 24px 20px 40px;
+    min-height: 100vh;
+  }
+}
+
+@media (max-width: 480px) {
+  .forgot-card,
+  .fp-card {
+    padding: 24px 16px 28px !important;
+    border-radius: 18px !important;
+  }
+}
+
+/* ── Landing page navbar ── */
+@media (max-width: 768px) {
+  .navbar-custom {
+    padding: 0 16px !important;
+  }
+
+  .nav-links {
+    gap: 12px !important;
+  }
+}
+
+@media (max-width: 600px) {
+  .nav-links {
+    display: none !important;
+  }
+
+  .navbar-custom {
+    justify-content: space-between;
+  }
+}
+
+/* ─── Auth form inputs — full width on mobile ─── */
+@media (max-width: 600px) {
+  .form-row,
+  .auth-form-row {
+    flex-direction: column !important;
+    gap: 12px !important;
+  }
+
+  .form-group,
+  .auth-form-group {
+    width: 100% !important;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   3. DASHBOARD — patch missing gaps + improve what's there
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── 1280px: tighten sidebar widths ── */
+@media (max-width: 1280px) {
+  .left-sidebar {
+    width: 220px !important;
+    min-width: 220px !important;
+  }
+}
+
+/* ── 1100px: hide right (friends) sidebar ── */
+/* already handled but add friend request card fix */
+@media (max-width: 1100px) {
+  .freq-actions {
+    flex-direction: row !important;
+  }
+}
+
+/* ── 900px: compress left sidebar to icons only ── */
+@media (max-width: 900px) and (min-width: 769px) {
+  .left-sidebar {
+    width: 64px !important;
+    min-width: 64px !important;
+    overflow: hidden;
+  }
+
+  .left-sidebar .sidebar-label,
+  .left-sidebar .sidebar-nav-label,
+  .left-sidebar .nav-label {
+    display: none !important;
+  }
+
+  .left-sidebar .sidebar-user-name,
+  .left-sidebar .sidebar-user-tag {
+    display: none !important;
+  }
+
+  .left-sidebar .sidebar-nav-item {
+    justify-content: center;
+    padding: 10px 0 !important;
+  }
+
+  .main-feed {
+    margin-left: 64px !important;
+  }
+}
+
+/* ── 768px: mobile — existing rules + additions ── */
+@media (max-width: 768px) {
+  /* Post card improvements */
+  .post-card {
+    border-radius: 16px !important;
+  }
+
+  .post-header {
+    gap: 10px !important;
+  }
+
+  .post-body {
+    padding: 12px 14px !important;
+  }
+
+  /* Post actions wrap on very small screens */
+  .post-actions {
+    gap: 4px !important;
+    flex-wrap: wrap;
+  }
+
+  .post-action-btn {
+    font-size: 11px !important;
+    padding: 6px 8px !important;
+    min-height: 32px !important;
+  }
+
+  /* Reaction picker — position above button, ensure it doesn't overflow */
+  .post-reaction-picker {
+    left: 0 !important;
+    right: auto !important;
+    max-width: calc(100vw - 32px);
+    flex-wrap: wrap;
+    gap: 6px !important;
+  }
+
+  /* Feed spacing */
+  .feed-stack {
+    gap: 12px !important;
+  }
+
+  /* Create post card */
+  .create-post-card {
+    border-radius: 16px !important;
+  }
+
+  /* Friend request cards stack better */
+  .freq-actions {
+    flex-direction: row !important;
+    gap: 6px !important;
+  }
+
+  .freq-btn {
+    font-size: 10px !important;
+    padding: 0 8px !important;
+    min-height: 26px !important;
+  }
+
+  /* Dashboard friends sidebar (right) when visible at small breakpoint */
+  .dashboard-friends-sidebar {
+    width: 100% !important;
+    max-width: 100% !important;
+    border-left: none !important;
+    border-top: 1px solid rgba(139, 92, 246, 0.12) !important;
+    margin-top: 0 !important;
+  }
+}
+
+/* ── 480px ── */
+@media (max-width: 480px) {
+  .top-nav {
+    height: 52px !important;
+  }
+
+  .nav-inner {
+    padding: 0 10px !important;
+    gap: 6px !important;
+  }
+
+  .nav-logo {
+    height: 26px !important;
+  }
+
+  /* Post reactions row — wrap emoji labels */
+  .post-reactions-row {
+    flex-wrap: wrap;
+    gap: 6px !important;
+  }
+
+  .react-icon {
+    font-size: 12px !important;
+  }
+
+  /* Reaction picker — stack in 2 rows if needed */
+  .post-reaction-picker {
+    padding: 8px !important;
+    gap: 4px !important;
+  }
+
+  .post-reaction-option {
+    padding: 0 7px !important;
+    font-size: 10px !important;
+    min-height: 30px !important;
+  }
+
+  .post-reaction-option img {
+    width: 15px !important;
+    height: 15px !important;
+  }
+
+  /* Profile completeness banner */
+  .pcb-inner {
+    gap: 8px !important;
+  }
+
+  .pcb-link {
+    width: 100%;
+    text-align: center;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   4. TOURNAMENTS LIST PAGE
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@media (max-width: 600px) {
+  /* Tournament row: already column at 768px, tighten further */
+  .trn-row-body {
+    padding: 12px !important;
+    gap: 8px !important;
+  }
+
+  .trn-row-title {
+    font-size: 15px !important;
+  }
+
+  .trn-row-actions {
+    padding: 12px !important;
+    gap: 8px !important;
+  }
+
+  .trn-action-btn {
+    width: 100% !important;
+    justify-content: center !important;
+  }
+
+  /* Filter bar */
+  .trn-filters {
+    flex-direction: column !important;
+    gap: 8px !important;
+  }
+
+  .trn-filter-select,
+  .trn-search-input {
+    width: 100% !important;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   5. SCHEDULE PAGE
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@media (max-width: 480px) {
+  .sch-match {
+    padding: 12px !important;
+    gap: 10px !important;
+  }
+
+  .sch-score {
+    font-size: 18px !important;
+  }
+
+  .sch-team-name {
+    font-size: 13px !important;
+  }
+
+  .sch-team-logo {
+    width: 28px !important;
+    height: 28px !important;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   6. LEADERBOARDS PAGE
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@media (max-width: 480px) {
+  .lb-rank-cell {
+    font-size: 12px !important;
+    padding: 10px 8px !important;
+  }
+
+  .lb-team-name {
+    font-size: 13px !important;
+  }
+
+  .lb-surface {
+    padding: 14px !important;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   7. PROFILE PAGE
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@media (max-width: 480px) {
+  .profile-card {
+    padding: 18px 14px !important;
+    border-radius: 18px !important;
+  }
+
+  .profile-avatar-wrap {
+    width: 72px !important;
+    height: 72px !important;
+  }
+
+  .profile-display-name {
+    font-size: 18px !important;
+  }
+
+  .profile-info-grid,
+  .profile-edit-grid {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+
+  .profile-edit-actions {
+    flex-direction: column !important;
+  }
+
+  .profile-save-btn,
+  .profile-cancel-btn {
+    width: 100% !important;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   8. LIVESTREAM / STREAM VIEW PAGE
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@media (max-width: 900px) {
+  .stream-layout {
+    flex-direction: column !important;
+  }
+
+  .stream-sidebar,
+  .stream-chat-panel {
+    width: 100% !important;
+    max-width: 100% !important;
+    height: 340px !important;
+    border-left: none !important;
+    border-top: 1px solid rgba(139, 92, 246, 0.15) !important;
+  }
+
+  .stream-main {
+    width: 100% !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .stream-title {
+    font-size: 15px !important;
+  }
+
+  .stream-meta {
+    flex-wrap: wrap;
+    gap: 6px !important;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   9. TOURNAMENT REGISTRATION (public page)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@media (max-width: 600px) {
+  .reg-card {
+    padding: 20px 16px !important;
+    border-radius: 18px !important;
+  }
+
+  .reg-layout {
+    padding: 16px 12px !important;
+  }
+
+  /* Participant input rows */
+  .participant-row {
+    flex-direction: column !important;
+    gap: 8px !important;
+  }
+
+  .participant-row button {
+    width: 100% !important;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   10. PAYMENT SUCCESS PAGE
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@media (max-width: 600px) {
+  .ps-card {
+    padding: 24px 16px !important;
+    margin: 16px auto !important;
+    border-radius: 16px !important;
+  }
+
+  .ps-btn {
+    padding: 0.65rem 1.25rem !important;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   11. ADMIN CONSOLE
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@media (max-width: 980px) {
+  /* Reports toolbar stacks */
+  .rpt-toolbar {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 12px !important;
+  }
+
+  .rpt-export-group {
+    flex-wrap: wrap !important;
+  }
+
+  /* Stat cards — 3 per row on tablet */
+  .rpt-cards {
+    grid-template-columns: repeat(3, 1fr) !important;
+  }
+}
+
+@media (max-width: 640px) {
+  /* Console sidebar becomes top bar */
+  .console-shell {
+    flex-direction: column !important;
+  }
+
+  .console-sidebar {
+    width: 100% !important;
+    height: auto !important;
+    flex-direction: row !important;
+    overflow-x: auto !important;
+    padding: 8px !important;
+    border-right: none !important;
+    border-bottom: 1px solid rgba(139, 92, 246, 0.15) !important;
+  }
+
+  .console-nav {
+    flex-direction: row !important;
+    gap: 4px !important;
+    white-space: nowrap;
+  }
+
+  .console-nav-item {
+    padding: 8px 14px !important;
+    border-radius: 8px !important;
+    white-space: nowrap;
+  }
+
+  .console-content {
+    padding: 16px !important;
+  }
+
+  /* Stat cards — 2 per row on mobile */
+  .rpt-cards,
+  .console-grid.cards {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+
+  /* Tables — horizontal scroll */
+  .console-table-wrap {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .console-table {
+    min-width: 540px;
+  }
+}
+
+@media (max-width: 420px) {
+  /* Stat cards — 1 per row on tiny phones */
+  .rpt-cards,
+  .console-grid.cards {
+    grid-template-columns: 1fr !important;
+  }
+
+  .rpt-trend-header {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 10px !important;
+  }
+
+  .rpt-filter-group {
+    align-items: flex-start !important;
+    width: 100%;
+  }
+
+  .rpt-filter-controls {
+    width: 100%;
+  }
+
+  .rpt-month-input {
+    flex: 1 !important;
+  }
+
+  /* Logout modal */
+  .lcm-box {
+    padding: 24px 18px 20px !important;
+  }
+
+  .lcm-actions {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* ── Admin console table actions wrap on mobile ── */
+@media (max-width: 640px) {
+  .console-row-actions {
+    flex-wrap: wrap !important;
+    gap: 6px !important;
+  }
+
+  .console-row-actions .console-btn {
+    flex: 1 !important;
+    min-width: 80px;
+    text-align: center;
+    justify-content: center;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   12. EVENTS PAGE
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@media (max-width: 768px) {
+  .events-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .event-card {
+    flex-direction: row !important;
+    align-items: flex-start !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .event-card {
+    flex-direction: column !important;
+  }
+
+  .event-thumb {
+    width: 100% !important;
+    height: 160px !important;
+    border-radius: 12px 12px 0 0 !important;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   13. GENERAL UTILITY — touch targets, typography, spacing
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Minimum touch target size (WCAG AA) */
+@media (max-width: 768px) {
+  button,
+  [role="button"],
+  a,
+  input[type="submit"],
+  input[type="button"] {
+    min-height: 36px;
+  }
+
+  /* Slightly larger body text on mobile for readability */
+  body {
+    font-size: 14.5px;
+  }
+
+  /* All modal/overlay dialogs — full width on small screens */
+  .modal-box,
+  .lcm-box,
+  .gh-friend-modal-box {
+    margin: 0 12px !important;
+    max-width: calc(100vw - 24px) !important;
+  }
+}
+
+@media (max-width: 380px) {
+  /* Tiny phones — squeeze a bit more */
+  body {
+    font-size: 14px;
+  }
+
+  .top-nav {
+    height: 48px !important;
+  }
+}

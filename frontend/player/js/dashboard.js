@@ -261,6 +261,49 @@
     }
   });
 
+  // Hover to show/hide reaction picker
+  feedList?.addEventListener("mouseenter", (event) => {
+    const btn = event.target.closest(".post-react-btn");
+    if (!btn) return;
+    const postCard = btn.closest("[data-post-id]");
+    if (!postCard) return;
+    const picker = postCard.querySelector("[data-post-reaction-picker]");
+    if (picker) picker.classList.remove("hidden");
+    postCard._reactHoverTimer && clearTimeout(postCard._reactHoverTimer);
+  }, true);
+
+  feedList?.addEventListener("mouseleave", (event) => {
+    const btn = event.target.closest(".post-react-btn");
+    if (!btn) return;
+    const postCard = btn.closest("[data-post-id]");
+    if (!postCard) return;
+    const picker = postCard.querySelector("[data-post-reaction-picker]");
+    if (!picker) return;
+    postCard._reactHoverTimer = setTimeout(() => {
+      // Only hide if mouse isn't over the picker itself
+      if (!postCard.matches(":hover") || !picker.matches(":hover")) {
+        picker.classList.add("hidden");
+      }
+    }, 120);
+  }, true);
+
+  feedList?.addEventListener("mouseenter", (event) => {
+    const picker = event.target.closest("[data-post-reaction-picker]");
+    if (!picker) return;
+    const postCard = picker.closest("[data-post-id]");
+    if (postCard?._reactHoverTimer) clearTimeout(postCard._reactHoverTimer);
+  }, true);
+
+  feedList?.addEventListener("mouseleave", (event) => {
+    const picker = event.target.closest("[data-post-reaction-picker]");
+    if (!picker) return;
+    const postCard = picker.closest("[data-post-id]");
+    if (!postCard) return;
+    postCard._reactHoverTimer = setTimeout(() => {
+      picker.classList.add("hidden");
+    }, 120);
+  }, true);
+
   feedList?.addEventListener("click", (event) => {
     const commentDeleteBtn = event.target.closest(
       "[data-comment-action='delete']",
@@ -1566,21 +1609,27 @@
       : "";
 
     return `
-      <li class="friend-item friend-item-static">
-        <div class="friend-avatar">
+      <li class="friend-item friend-item-static freq-card">
+        <div class="friend-avatar freq-avatar">
           <img src="../assets/icons/player-dashboard-icons/user-profile.png" alt="${escapeAttribute(friend.displayName)}" />
         </div>
-        <div class="friend-info">
+        <div class="friend-info freq-info">
           <div class="friend-meta">
             <span class="friend-name">${escapeHtml(friend.displayName)}</span>
             ${schoolTag}
           </div>
           <span class="friend-username">@${escapeHtml(friend.username)}</span>
-          <span class="friend-status watching">${escapeHtml(friend.primaryGame || friend.school || "Wants to connect")}</span>
+          <span class="friend-status watching freq-game">${escapeHtml(friend.primaryGame || friend.school || "Wants to connect")}</span>
         </div>
-        <div class="friend-actions">
-          <button type="button" class="friend-action-btn" data-request-action="accept" data-request-user-id="${escapeAttribute(String(friend.userId))}">Accept</button>
-          <button type="button" class="friend-action-btn secondary" data-request-action="decline" data-request-user-id="${escapeAttribute(String(friend.userId))}">Decline</button>
+        <div class="freq-actions">
+          <button type="button" class="freq-btn freq-accept" data-request-action="accept" data-request-user-id="${escapeAttribute(String(friend.userId))}">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17l-5-5" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Accept
+          </button>
+          <button type="button" class="freq-btn freq-decline" data-request-action="decline" data-request-user-id="${escapeAttribute(String(friend.userId))}">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>
+            Decline
+          </button>
         </div>
       </li>
     `;
