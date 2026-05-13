@@ -16,6 +16,9 @@ async function findByUserId(userId) {
       SCHOOL AS school,
       COURSE_YEAR AS courseYear,
       PRIMARY_GAME AS primaryGame,
+      INSTAGRAM_URL AS instagramUrl,
+      FACEBOOK_URL AS facebookUrl,
+      TIKTOK_URL AS tiktokUrl,
       ACTIVITY_STATUS AS activityStatus
     FROM dbo.USER_PROFILE
     WHERE USERID = @userId
@@ -172,6 +175,9 @@ async function updateProfile(
     school,
     courseYear,
     primaryGame,
+    instagramUrl,
+    facebookUrl,
+    tiktokUrl,
   },
 ) {
   await poolConnect;
@@ -188,7 +194,10 @@ async function updateProfile(
     .input("phoneNumber", sql.NVarChar(50), phoneNumber || null)
     .input("school", sql.NVarChar(255), school || null)
     .input("courseYear", sql.NVarChar(100), courseYear || null)
-    .input("primaryGame", sql.NVarChar(255), primaryGame || null).query(`
+    .input("primaryGame", sql.NVarChar(255), primaryGame || null)
+    .input("instagramUrl", sql.NVarChar(500), instagramUrl || null)
+    .input("facebookUrl", sql.NVarChar(500), facebookUrl || null)
+    .input("tiktokUrl", sql.NVarChar(500), tiktokUrl || null).query(`
       UPDATE dbo.USER_PROFILE
       SET
         STUDENT_ID = @studentId,
@@ -200,7 +209,10 @@ async function updateProfile(
         PHONE_NUMBER = @phoneNumber,
         SCHOOL = @school,
         COURSE_YEAR = @courseYear,
-        PRIMARY_GAME = @primaryGame
+        PRIMARY_GAME = @primaryGame,
+        INSTAGRAM_URL = @instagramUrl,
+        FACEBOOK_URL = @facebookUrl,
+        TIKTOK_URL = @tiktokUrl
       OUTPUT
         INSERTED.USERID AS userId,
         INSERTED.STUDENT_ID AS studentId,
@@ -212,7 +224,10 @@ async function updateProfile(
         INSERTED.PHONE_NUMBER AS phoneNumber,
         INSERTED.SCHOOL AS school,
         INSERTED.COURSE_YEAR AS courseYear,
-        INSERTED.PRIMARY_GAME AS primaryGame
+        INSERTED.PRIMARY_GAME AS primaryGame,
+        INSERTED.INSTAGRAM_URL AS instagramUrl,
+        INSERTED.FACEBOOK_URL AS facebookUrl,
+        INSERTED.TIKTOK_URL AS tiktokUrl
       WHERE USERID = @userId
     `);
 

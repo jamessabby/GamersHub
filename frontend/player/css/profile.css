@@ -541,8 +541,7 @@
 }
 
 .profile-main.is-readonly .social-btn {
-  cursor: default;
-  pointer-events: none;
+  cursor: pointer;
 }
 
 /* ─── ACTION BAR (edit mode) ────────────────────── */

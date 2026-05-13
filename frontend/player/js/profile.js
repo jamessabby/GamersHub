@@ -235,6 +235,7 @@
   socialButtons.forEach((button) => {
     button.addEventListener("click", () => {
       if (isPublicProfile) {
+        openPublicSocialLink(button.dataset.platform);
         return;
       }
 
@@ -244,7 +245,9 @@
 
   socialModalClose?.addEventListener("click", closeSocialModal);
   socialModalCancel?.addEventListener("click", closeSocialModal);
-  socialModalSave?.addEventListener("click", saveSocialLink);
+  socialModalSave?.addEventListener("click", () => {
+    void saveSocialLink();
+  });
 
   socialModalOverlay?.addEventListener("click", (event) => {
     if (event.target === socialModalOverlay) {
@@ -254,7 +257,7 @@
 
   socialLinkInput?.addEventListener("keydown", (event) => {
     if (event.key === "Enter") {
-      saveSocialLink();
+      void saveSocialLink();
     }
 
     if (event.key === "Escape") {
@@ -294,6 +297,7 @@
       renderView();
       applyProfileMode();
       if (!isPublicProfile) {
+        await syncStoredSocialsToBackend(payload);
         publishCurrentProfile();
       }
     } catch (error) {
@@ -333,6 +337,7 @@
       : profile.primaryGame
         ? [profile.primaryGame]
         : [];
+    state.socials = resolveProfileSocials(profile.socials);
   }
 
   function applyProfileMode() {
@@ -365,9 +370,7 @@
       avatarEditOverlay.classList.toggle("hidden", isPublicProfile);
     }
 
-    if (socialCard) {
-      socialCard.classList.toggle("hidden", isPublicProfile);
-    }
+    syncSocialCardVisibility();
 
     privateProfileFields.forEach((node) => {
       node.classList.toggle("hidden", isPublicProfile);
@@ -730,6 +733,7 @@
           school: draft.school,
           courseYear: draft.courseYear,
           primaryGames: draft.primaryGames,
+          socials: draft.socials,
         }),
       });
 
@@ -868,7 +872,7 @@
     activePlatform = null;
   }
 
-  function saveSocialLink() {
+  async function saveSocialLink() {
     if (!activePlatform || isPublicProfile) {
       return;
     }
@@ -877,10 +881,24 @@
     if (draft) {
       draft.socials[activePlatform] = state.socials[activePlatform];
     }
-    saveUiState();
-    updateSocialButton(activePlatform, socialLinkMap[activePlatform]);
-    socialModalSuccess.classList.remove("hidden");
-    setTimeout(closeSocialModal, 1000);
+    try {
+      socialModalSave.disabled = true;
+      await persistSocials();
+      saveUiState();
+      publishCurrentProfile();
+      updateSocialButton(activePlatform, socialLinkMap[activePlatform]);
+      syncSocialCardVisibility();
+      socialModalSuccess.classList.remove("hidden");
+      setTimeout(closeSocialModal, 1000);
+    } catch (error) {
+      console.error("Social link save failed:", error);
+      window.GamersHubAuth?.toast(
+        error.message || "Could not save social link. Please try again.",
+        "error",
+      );
+    } finally {
+      socialModalSave.disabled = false;
+    }
   }
 
   function updateSocialButton(platform, linkNode) {
@@ -892,6 +910,100 @@
 
     linkNode.textContent = value ? shortenUrl(value) : "";
     button.classList.toggle("has-link", Boolean(value));
+    button.classList.toggle("hidden", isPublicProfile && !value);
+    button.setAttribute(
+      "aria-label",
+      isPublicProfile
+        ? value
+          ? `Open ${PLATFORM_META[platform]?.label || platform}`
+          : `${PLATFORM_META[platform]?.label || platform} not linked`
+        : `Edit ${PLATFORM_META[platform]?.label || platform}`,
+    );
+    button.title = isPublicProfile
+      ? value
+        ? `Open ${PLATFORM_META[platform]?.label || platform}`
+        : `${PLATFORM_META[platform]?.label || platform} not linked`
+      : `Edit ${PLATFORM_META[platform]?.label || platform}`;
+  }
+
+  async function persistSocials() {
+    if (!state.userId || isPublicProfile) {
+      return;
+    }
+
+    const response = await fetch(`${API_BASE}/api/users/profile/${state.userId}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        socials: state.socials,
+      }),
+    });
+    const payload = await response.json();
+    if (!response.ok) {
+      throw new Error(payload.message || "Failed to save social links.");
+    }
+
+    applyBackendProfile(payload);
+    if (draft) {
+      draft.socials = { ...state.socials };
+    }
+  }
+
+  async function syncStoredSocialsToBackend(profile) {
+    const backendSocials = normalizeSocials(profile?.socials);
+    if (hasAnySocialLink(backendSocials) || !hasAnySocialLink(state.socials)) {
+      return;
+    }
+
+    try {
+      await persistSocials();
+      saveUiState();
+    } catch (error) {
+      console.error("Stored social link sync failed:", error);
+    }
+  }
+
+  function resolveProfileSocials(socials = {}) {
+    const backendSocials = normalizeSocials(socials);
+    if (isPublicProfile || hasAnySocialLink(backendSocials)) {
+      return backendSocials;
+    }
+
+    return {
+      ...defaultState.socials,
+      ...state.socials,
+    };
+  }
+
+  function normalizeSocials(socials = {}) {
+    return {
+      instagram: String(socials.instagram || "").trim(),
+      facebook: String(socials.facebook || "").trim(),
+      tiktok: String(socials.tiktok || "").trim(),
+    };
+  }
+
+  function hasAnySocialLink(socials = state.socials) {
+    return Object.values(socials || {}).some((value) => Boolean(String(value || "").trim()));
+  }
+
+  function syncSocialCardVisibility() {
+    if (!socialCard) {
+      return;
+    }
+
+    socialCard.classList.toggle("hidden", isPublicProfile && !hasAnySocialLink());
+  }
+
+  function openPublicSocialLink(platform) {
+    const value = state.socials[platform];
+    if (!value) {
+      return;
+    }
+
+    window.open(value, "_blank", "noopener,noreferrer");
   }
 
   function loadUiState() {

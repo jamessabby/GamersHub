@@ -97,6 +97,15 @@ async function updateProfileByUserId(userId, payload) {
     primaryGame: normalizePrimaryGames(
       payload.primaryGames ?? currentProfile.primaryGame,
     ),
+    instagramUrl: normalizeSocialUrl(
+      payload.socials?.instagram ?? currentProfile.instagramUrl,
+    ),
+    facebookUrl: normalizeSocialUrl(
+      payload.socials?.facebook ?? currentProfile.facebookUrl,
+    ),
+    tiktokUrl: normalizeSocialUrl(
+      payload.socials?.tiktok ?? currentProfile.tiktokUrl,
+    ),
   };
 
   const updatedProfile = await profileRepo.updateProfile(
@@ -412,6 +421,7 @@ function mapProfileResponse(authUser, profile) {
     primaryGame: primaryGames[0] || "",
     schoolTag: buildSchoolTag(profile?.school),
     activityStatus: profile?.activityStatus || "",
+    socials: mapSocials(profile),
   };
 }
 
@@ -433,6 +443,15 @@ function mapPublicProfileResponse(authUser, profile) {
     primaryGame: primaryGames[0] || "",
     schoolTag: buildSchoolTag(profile?.school),
     activityStatus: profile?.activityStatus || "",
+    socials: mapSocials(profile),
+  };
+}
+
+function mapSocials(profile) {
+  return {
+    instagram: profile?.instagramUrl || "",
+    facebook: profile?.facebookUrl || "",
+    tiktok: profile?.tiktokUrl || "",
   };
 }
 
@@ -586,6 +605,19 @@ function normalizeText(value) {
   return trimmed || null;
 }
 
+function normalizeSocialUrl(value) {
+  const trimmed = String(value || "").trim().slice(0, 500);
+  if (!trimmed) {
+    return null;
+  }
+
+  if (/^https?:\/\//i.test(trimmed)) {
+    return trimmed;
+  }
+
+  return `https://${trimmed}`;
+}
+
 function normalizePrimaryGames(primaryGames) {
   if (Array.isArray(primaryGames)) {
     const cleaned = primaryGames
@@ -660,4 +692,3 @@ module.exports = {
   markNotificationReadByUserId,
   markAllNotificationsReadByUserId,
 };
-  
