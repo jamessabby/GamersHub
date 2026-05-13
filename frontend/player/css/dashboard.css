@@ -1547,7 +1547,10 @@ body::before {
   bottom: calc(100% + 10px);
   display: flex;
   align-items: center;
+  flex-wrap: nowrap;
   gap: 8px;
+  width: max-content;
+  max-width: calc(100vw - 32px);
   padding: 10px;
   border-radius: 14px;
   border: 1px solid rgba(139, 92, 246, 0.22);
@@ -1557,10 +1560,13 @@ body::before {
 }
 
 .post-reaction-option {
+  flex: 0 0 auto;
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
   min-height: 34px;
+  min-width: 62px;
   padding: 0 10px;
   border-radius: 999px;
   border: 1px solid transparent;
@@ -1570,10 +1576,17 @@ body::before {
   font-weight: 700;
   font-family: "Syne", sans-serif;
   cursor: pointer;
+  white-space: nowrap;
+  word-break: normal;
   transition:
     background 0.2s ease,
     border-color 0.2s ease,
     transform 0.2s ease;
+}
+
+.post-reaction-option span {
+  white-space: nowrap;
+  word-break: normal;
 }
 
 .post-reaction-option img {

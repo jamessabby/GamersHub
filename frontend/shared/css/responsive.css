@@ -227,8 +227,9 @@ img, video, iframe {
   .post-reaction-picker {
     left: 0 !important;
     right: auto !important;
+    width: max-content;
     max-width: calc(100vw - 32px);
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     gap: 6px !important;
   }
 
@@ -289,16 +290,25 @@ img, video, iframe {
     font-size: 12px !important;
   }
 
-  /* Reaction picker — stack in 2 rows if needed */
+  /* Reaction picker — keep emoji labels horizontal */
   .post-reaction-picker {
     padding: 8px !important;
-    gap: 4px !important;
+    gap: 6px !important;
   }
 
   .post-reaction-option {
+    flex: 0 0 auto;
     padding: 0 7px !important;
     font-size: 10px !important;
     min-height: 30px !important;
+    min-width: 56px;
+    white-space: nowrap;
+    word-break: normal;
+  }
+
+  .post-reaction-option span {
+    white-space: nowrap;
+    word-break: normal;
   }
 
   .post-reaction-option img {
