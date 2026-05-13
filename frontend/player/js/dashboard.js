@@ -1141,14 +1141,6 @@
       .join("");
   }
 
-  const API_BASE_URL = "https://retriever-unwashed-reseller.ngrok-free.dev";
-
-  function resolveMediaUrl(url) {
-    if (!url) return "";
-    if (url.startsWith("http")) return url;
-    return `${API_BASE_URL}${url}`;
-  }ss
-
   function renderMedia(post) {
     if (!post.mediaUrl) {
       return "";
@@ -1169,17 +1161,23 @@
     }
 
     if (post.mediaType === "video") {
-      const videoType = guessVideoMimeType(post.mediaUrl);
+      const useDirectVideo = shouldUseDirectMediaSource(mediaSrc);
       return `
-        <div class="post-video-wrap">
-          <video class="post-video" controls preload="metadata">
-            <source
-              src="${escapeAttribute(mediaSrc)}"
-              ${videoType ? `type="${escapeAttribute(videoType)}"` : ""}
-              data-upload-media-src="${escapeAttribute(mediaSrc)}"
-            />
+        <div class="post-video-wrap" data-post-video-wrap>
+          <video
+            class="post-video"
+            controls
+            preload="metadata"
+            playsinline
+            ${useDirectVideo ? `src="${escapeAttribute(mediaSrc)}"` : ""}
+            data-upload-media-src="${escapeAttribute(mediaSrc)}"
+            data-upload-media-kind="video"
+          >
             Your browser does not support the video tag.
           </video>
+          <div class="post-media-status ${useDirectVideo ? "hidden" : ""}" data-media-status>
+            Loading video...
+          </div>
         </div>
       `;
     }
@@ -1202,18 +1200,6 @@
       : mediaUrl;
   }
 
-  function guessVideoMimeType(mediaUrl) {
-    if (!mediaUrl) return "";
-    const ext = String(mediaUrl).split(".").pop().toLowerCase().split("?")[0];
-    const map = {
-      mp4: "video/mp4",
-      webm: "video/webm",
-      ogg: "video/ogg",
-      mov: "video/mp4",
-    };
-    return map[ext] || "";
-  }
-
   async function hydrateUploadMedia(root) {
     const mediaNodes = Array.from(
       root?.querySelectorAll("[data-upload-media-src]") || [],
@@ -1226,29 +1212,52 @@
           return;
         }
 
+        const mediaKind = node.dataset.uploadMediaKind || "";
+        if (mediaKind === "video" && shouldUseDirectMediaSource(originalSrc)) {
+          applyHydratedMediaSource(node, originalSrc);
+          return;
+        }
+
         const cachedBlobUrl = uploadMediaBlobUrls.get(originalSrc);
         if (cachedBlobUrl) {
           applyHydratedMediaSource(node, cachedBlobUrl);
           return;
         }
 
-        const response = await fetch(originalSrc, {
-          headers: { "ngrok-skip-browser-warning": "true" },
-        });
-        if (!response.ok) {
-          throw new Error(`Media request failed with ${response.status}`);
+        if (mediaKind === "video") {
+          setMediaStatus(node, "Loading video...", "loading");
         }
 
-        const contentType = response.headers.get("content-type") || "";
-        if (!/^(image|video)\//i.test(contentType)) {
-          throw new Error(
-            `Unexpected media content type: ${contentType || "unknown"}`,
-          );
-        }
+        try {
+          const response = await fetch(originalSrc, {
+            headers: { "ngrok-skip-browser-warning": "true" },
+          });
+          if (!response.ok) {
+            if (mediaKind === "video") {
+              setMediaStatus(node, "Video failed to load.", "error");
+            }
+            throw new Error(`Media request failed with ${response.status}`);
+          }
 
-        const blobUrl = URL.createObjectURL(await response.blob());
-        uploadMediaBlobUrls.set(originalSrc, blobUrl);
-        applyHydratedMediaSource(node, blobUrl);
+          const contentType = response.headers.get("content-type") || "";
+          if (!/^(image|video)\//i.test(contentType)) {
+            if (mediaKind === "video") {
+              setMediaStatus(node, "Video failed to load.", "error");
+            }
+            throw new Error(
+              `Unexpected media content type: ${contentType || "unknown"}`,
+            );
+          }
+
+          const blobUrl = URL.createObjectURL(await response.blob());
+          uploadMediaBlobUrls.set(originalSrc, blobUrl);
+          applyHydratedMediaSource(node, blobUrl);
+        } catch (error) {
+          if (mediaKind === "video") {
+            setMediaStatus(node, "Video failed to load.", "error");
+          }
+          throw error;
+        }
       }),
     );
   }
@@ -1267,16 +1276,64 @@
     }
   }
 
+  function shouldUseDirectMediaSource(mediaSrc) {
+    if (!mediaSrc) {
+      return false;
+    }
+
+    try {
+      const mediaUrl = new URL(mediaSrc, window.location.href);
+      const apiUrl = new URL(API_BASE, window.location.href);
+      return (
+        mediaUrl.origin === window.location.origin ||
+        isLocalHostname(mediaUrl.hostname) ||
+        isLocalHostname(apiUrl.hostname) ||
+        !isNgrokHostname(mediaUrl.hostname)
+      );
+    } catch {
+      return true;
+    }
+  }
+
+  function isLocalHostname(hostname = "") {
+    return (
+      hostname === "localhost" ||
+      hostname === "127.0.0.1" ||
+      /^192\.168\./.test(hostname) ||
+      /^10\./.test(hostname) ||
+      /^172\.(1[6-9]|2\d|3[01])\./.test(hostname)
+    );
+  }
+
+  function isNgrokHostname(hostname = "") {
+    return (
+      /\.ngrok-free\.(app|dev)$/i.test(hostname) ||
+      /\.ngrok\.io$/i.test(hostname)
+    );
+  }
+
   function applyHydratedMediaSource(node, src) {
     if (!node || !src) {
       return;
     }
 
     node.src = src;
-    const parentVideo = node.closest?.("video");
-    if (parentVideo) {
-      parentVideo.load();
+    if (node.matches?.("video")) {
+      node.load();
+      setMediaStatus(node, "", "ready");
     }
+  }
+
+  function setMediaStatus(node, message = "", state = "") {
+    const wrap = node?.closest?.("[data-post-video-wrap]");
+    const status = wrap?.querySelector?.("[data-media-status]");
+    if (!status) {
+      return;
+    }
+
+    status.textContent = message;
+    status.classList.toggle("hidden", !message);
+    status.dataset.state = state;
   }
 
   function applyReactionSummary(postId, summary) {

@@ -500,11 +500,6 @@ window.GAMERSHUB_API_BASE =
       return normalizedQueryOverride;
     }
 
-    const globalOverride = normalizeApiBase(window.GAMERSHUB_API_BASE);
-    if (globalOverride) {
-      return globalOverride;
-    }
-
     try {
       const storedOverride = normalizeApiBase(
         localStorage.getItem(API_BASE_KEY),
@@ -516,10 +511,6 @@ window.GAMERSHUB_API_BASE =
       // storage unavailable; fall back to local development default
     }
 
-    // Only trust the page's own hostname when running locally.
-    // On deployed frontends (Vercel etc.) the hostname is unrelated to the
-    // backend, so fall back to localhost. Set gh_api_base in localStorage
-    // (or window.GAMERSHUB_API_BASE) to point at the live ngrok tunnel.
     const host = window.location.hostname || "localhost";
     const isLocal =
       host === "localhost" ||
@@ -527,7 +518,18 @@ window.GAMERSHUB_API_BASE =
       /^192\.168\./.test(host) ||
       /^10\./.test(host) ||
       /^172\.(1[6-9]|2\d|3[01])\./.test(host);
-    return `http://${isLocal ? host : "localhost"}:3000`;
+    if (isLocal) {
+      return `http://${host}:3000`;
+    }
+
+    const globalOverride = normalizeApiBase(window.GAMERSHUB_API_BASE);
+    if (globalOverride) {
+      return globalOverride;
+    }
+
+    // On deployed frontends (Vercel etc.) the hostname is unrelated to the
+    // backend, so fall back to localhost only if no override was configured.
+    return "http://localhost:3000";
   }
 
   function normalizeApiBase(value) {
